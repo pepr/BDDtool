@@ -126,15 +126,14 @@ for featureFname in featureFilenames:
 
             #-----------------------------------------------------
             elif status == 3:   # waiting for "Scenario: ..."
-                if line.strip() == '':  # skip another separator line
-                    continue
-
                 m = rexScenario.search(line)
                 if m is not None:
                     writeScenario(fout, m)
                     status = 4
+                elif line.strip() == '':
+                    pass # skip another separator line
                 else:
-                    flog.write('unknown {}, {}: {}'.format(no, status, line))
+                    flog.write('unknown {}, {}: {!r}\n'.format(no, status, line))
 
             #-----------------------------------------------------
             elif status == 4:
@@ -150,13 +149,13 @@ for featureFname in featureFilenames:
                 if line.strip() == '':  # earlier finished scenario - sep. line
                     fout.write('\n')    # scenario finished
                     status = 3
-
-                m = rexWhen.search(line)
-                if m is not None:
-                    writeWhen(fout, m)
-                    status = 6
                 else:
-                    flog.write('unknown {}, {}: {}'.format(no, status, line))
+                    m = rexWhen.search(line)
+                    if m is not None:
+                        writeWhen(fout, m)
+                        status = 6
+                    else:
+                        flog.write('unknown {}, {}: {}'.format(no, status, line))
 
             #-----------------------------------------------------
             elif status == 6:
@@ -164,6 +163,9 @@ for featureFname in featureFilenames:
                 if m is not None:
                     writeThen(fout, m)
                     status = 7
+                elif line.strip() == '':  # earlier finished "given" - sep. line
+                    fout.write('\n')
+                    status = 3
                 else:
                     flog.write('unknown {}, {}: {}'.format(no, status, line))
 

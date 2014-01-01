@@ -43,6 +43,16 @@ GIVEN("toto je zápis scénáře") {
 SCENARIO("definice scénáře bez detailu za klíčovým slovem") {
 GIVEN("soubor s definicemi scénářů") {
 WHEN("za slovem \"scénář\"") {
+
+// Scenario xyz: 
+SCENARIO("titulek scénáře začíná za dvojtečkou") {
+GIVEN("soubor s definicemi scénářů") {
+WHEN("za slovem \"scénář\"") {
+
+// Scénář 1: 
+SCENARIO("analytické popisy se oddělují do samostatných souborů") {
+GIVEN("adresář se soubory s příponou jmeno.feature") {
+WHEN("nalezneme jmeno.feature") {
 THEN("bude po zpracování existovat jmenoTest.h") {
 
 // Scénář 2: 
