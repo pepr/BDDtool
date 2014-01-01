@@ -17,6 +17,33 @@ def writeScenario(fout, m):
     fout.write(') {\n')
 
 
+def writeGiven(fout, m):
+    fout.write('GIVEN(')
+    text = m.group('text')
+    if text:
+        text = text.rstrip(). replace('"', r'\"')
+        fout.write('"{}"'.format(text))
+    fout.write(') {\n')
+
+
+def writeWhen(fout, m):
+    fout.write('WHEN(')
+    text = m.group('text')
+    if text:
+        text = text.rstrip(). replace('"', r'\"')
+        fout.write('"{}"'.format(text))
+    fout.write(') {\n')
+
+
+def writeThen(fout, m):
+    fout.write('THEN(')
+    text = m.group('text')
+    if text:
+        text = text.rstrip(). replace('"', r'\"')
+        fout.write('"{}"'.format(text))
+    fout.write(') {\n')
+
+
 featuresDir = os.path.abspath('./features')
 testsDir =  os.path.abspath('./tests')
 
@@ -27,16 +54,21 @@ if not os.path.isdir(testsDir):
 
 rexFeature = re.compile('^\s*(Feature|Požadavek)[^:]*:', re.IGNORECASE)
 rexUserStory = re.compile('^\s*(User story)[^:]*:', re.IGNORECASE)
-rexScenario = re.compile('''^\s*(?P<label>
-                                  (Scenario
-                                   |Example
-                                   |Scénář
-                                   |Příklad
-                                  )
+rexScenario = re.compile('''^\s*(?P<label>(Scenario|Example
+                                           |Scénář|Příklad)
                                   (?P<extra>[^:]*):\s*
                                 )
                                 (?P<title>[^[]+)
                                 (?P<tags>\[.+\])?\s*$''',
+                         re.IGNORECASE | re.VERBOSE)
+rexGiven = re.compile('''^\s*(Given|Dáno)\s*:\s*
+                             (?P<text>.+)\s*$''',
+                         re.IGNORECASE | re.VERBOSE)
+rexWhen = re.compile('''^\s*(When|Když)\s*:\s*
+                            (?P<text>.+)\s*$''',
+                         re.IGNORECASE | re.VERBOSE)
+rexThen = re.compile('''^\s*(Then|Pak)\s*:\s*
+                            (?P<text>.+)\s*$''',
                          re.IGNORECASE | re.VERBOSE)
 
 featureFilenames = glob.glob(os.path.join(featuresDir, '*.feature'))
@@ -63,7 +95,12 @@ for featureFname in featureFilenames:
                     fout.write('\n')
                     status = 1
                 else:
-                    flog.write('unknown {}, {}: {}'.format(no, status, line))
+                    m = rexScenario.search(line)
+                    if m is not None:
+                        writeScenario(fout, m)
+                        status = 4
+                    else:
+                        flog.write('unknown {}, {}: {}'.format(no, status, line))
 
             #-----------------------------------------------------
             elif status == 1:
@@ -88,7 +125,7 @@ for featureFname in featureFilenames:
                     status = 3
 
             #-----------------------------------------------------
-            elif status == 3:
+            elif status == 3:   # waiting for "Scenario: ..."
                 if line.strip() == '':  # skip another separator line
                     continue
 
@@ -96,6 +133,45 @@ for featureFname in featureFilenames:
                 if m is not None:
                     writeScenario(fout, m)
                     status = 4
+                else:
+                    flog.write('unknown {}, {}: {}'.format(no, status, line))
+
+            #-----------------------------------------------------
+            elif status == 4:
+                m = rexGiven.search(line)
+                if m is not None:
+                    writeGiven(fout, m)
+                    status = 5
+                else:
+                    flog.write('unknown {}, {}: {}'.format(no, status, line))
+
+            #-----------------------------------------------------
+            elif status == 5:
+                if line.strip() == '':  # earlier finished scenario - sep. line
+                    fout.write('\n')    # scenario finished
+                    status = 3
+
+                m = rexWhen.search(line)
+                if m is not None:
+                    writeWhen(fout, m)
+                    status = 6
+                else:
+                    flog.write('unknown {}, {}: {}'.format(no, status, line))
+
+            #-----------------------------------------------------
+            elif status == 6:
+                m = rexThen.search(line)
+                if m is not None:
+                    writeThen(fout, m)
+                    status = 7
+                else:
+                    flog.write('unknown {}, {}: {}'.format(no, status, line))
+
+            #-----------------------------------------------------
+            elif status == 7:
+                if line.strip() == '':  # separator line
+                    fout.write('\n')    # scenario finished
+                    status = 3
                 else:
                     flog.write('unknown {}, {}: {}'.format(no, status, line))
 
