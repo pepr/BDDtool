@@ -26,3 +26,5 @@ SCENARIO("X alternativní začátek definice scénáře v češtině") {
 // Example: 
 SCENARIO("X alternativní začátek definice scénáře s anglickým klíčovým slovem") {
     GIVEN("toto je zápis scénáře") {
+    }
+}

@@ -35,10 +35,14 @@ class CodeBlock:
 
 
     def closePop(self, identifier=None):
-        assert (identifier is None) or (self.identifier == identifier)
-        self.dedent()
-        self.out('}\n', True)
+        if self.identifier != 'TOP':
+            self.dedent()
+            self.out('}\n', True)
         prev = self.prev
+
+        if (identifier is not None) and (self.identifier != identifier):
+            prev = prev.closePop(identifier)
+
         return prev
 
 
@@ -178,7 +182,6 @@ for featureFname in featureFilenames:
             #-----------------------------------------------------
             elif status == 5:
                 if line.strip() == '':  # earlier finished scenario - sep. line
-                    block = block.closePop('GIVEN')
                     block = block.closePop('SCENARIO')
                     assert block.identifier == 'TOP'
                     status = 3
@@ -199,8 +202,6 @@ for featureFname in featureFilenames:
                     block = block.push('THEN', m)
                     status = 7
                 elif line.strip() == '':  # earlier finished "given" - sep. line
-                    block = block.closePop('WHEN')
-                    block = block.closePop('GIVEN')
                     block = block.closePop('SCENARIO')
                     if block.identifier != 'TOP':
                         flog.write('TOP block expected {}, {}, {}: {}'.format(
@@ -212,9 +213,6 @@ for featureFname in featureFilenames:
             #-----------------------------------------------------
             elif status == 7:
                 if line.strip() == '':  # separator line
-                    block = block.closePop('THEN')
-                    block = block.closePop('WHEN')
-                    block = block.closePop('GIVEN')
                     block = block.closePop('SCENARIO')
                     block.identifier == 'TOP'
                     status = 3
@@ -226,3 +224,8 @@ for featureFname in featureFilenames:
                 flog.write('unknown status {!r} {}, {}:\n{!r}\n'.format(
                               featureFname, no, status, line))
                 break
+
+        #=========================================================
+        # Closing all blocks ended by EOF
+        while block is not None:
+            block = block.closePop()
