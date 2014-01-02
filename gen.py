@@ -17,29 +17,11 @@ def writeScenario(fout, m):
     fout.write(') {\n')
 
 
-def writeGiven(fout, m):
-    fout.write('GIVEN(')
+def writeTextForSection(sec, fout, m):
+    fout.write(sec + '(')
     text = m.group('text')
     if text:
-        text = text.rstrip(). replace('"', r'\"')
-        fout.write('"{}"'.format(text))
-    fout.write(') {\n')
-
-
-def writeWhen(fout, m):
-    fout.write('WHEN(')
-    text = m.group('text')
-    if text:
-        text = text.rstrip(). replace('"', r'\"')
-        fout.write('"{}"'.format(text))
-    fout.write(') {\n')
-
-
-def writeThen(fout, m):
-    fout.write('THEN(')
-    text = m.group('text')
-    if text:
-        text = text.rstrip(). replace('"', r'\"')
+        text = text.rstrip().replace('"', r'\"')
         fout.write('"{}"'.format(text))
     fout.write(') {\n')
 
@@ -139,7 +121,7 @@ for featureFname in featureFilenames:
             elif status == 4:
                 m = rexGiven.search(line)
                 if m is not None:
-                    writeGiven(fout, m)
+                    writeTextForSection('GIVEN', fout, m)
                     status = 5
                 else:
                     flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -152,7 +134,7 @@ for featureFname in featureFilenames:
                 else:
                     m = rexWhen.search(line)
                     if m is not None:
-                        writeWhen(fout, m)
+                        writeTextForSection('WHEN', fout, m)
                         status = 6
                     else:
                         flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -161,7 +143,7 @@ for featureFname in featureFilenames:
             elif status == 6:
                 m = rexThen.search(line)
                 if m is not None:
-                    writeThen(fout, m)
+                    writeTextForSection('THEN', fout, m)
                     status = 7
                 elif line.strip() == '':  # earlier finished "given" - sep. line
                     fout.write('\n')
