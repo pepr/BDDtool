@@ -7,48 +7,69 @@ import re
 
 class CodeBlock:
 
-    def __init__(self, fout, indent_level=0, prev=None):
+    def __init__(self, fout, indent_level=0, identifier='TOP', prev=None):
+        self.identifier = identifier
         self.fout = fout
-        self.flog = flog
         self.indent_level = indent_level
         self.prev = prev
 
-    def out(self, txt, indent=True):
+
+    def out(self, txt, indent=False):
         if indent:
             self.fout.write('    ' * self.indent_level)
         self.fout.write(txt)
 
-    def push(self):
-        block = CodeBlock(self.fout, self.indent_level, self)
+
+    def push(self, identifier, m):
+        block = CodeBlock(self.fout, self.indent_level, identifier, self)
+        assert m is not None    # match object with groups
+        if identifier == 'SCENARIO':
+            block.writeScenarioHead(m)
+            block.indent()
+        elif identifier in ('GIVEN', 'WHEN', 'THEN'):
+            block.writeHeadForSection(identifier, m)
+            block.indent()
+        else:
+            assert False
         return block
-    
+
+
+    def closePop(self, identifier=None):
+        assert (identifier is None) or (self.identifier == identifier)
+        self.dedent()
+        self.out('}\n', True)
+        prev = self.prev
+        return prev
+
+
     def indent(self):
         self.indent_level += 1
+
 
     def dedent(self):
         self.indent_level -= 1
 
 
-    def writeScenario(self, m):
-        self.out('// {}\n'.format(m.group('label')))
-        self.out('SCENARIO(')
+    def writeScenarioHead(self, m):
+        self.out('// {}\n'.format(m.group('label')), True)
+        self.out('SCENARIO(', True)
         title = m.group('title')
         if title:
             title = title.rstrip(). replace('"', r'\"')
-            self.out('"{}"'.format(title), False)
+            self.out('"{}"'.format(title))
         tags = m.group('tags')
         if tags:
-            self.out(', "{}"'.format(tags), False)
-        self.out(') {\n', False)
+            self.out(', "{}"'.format(tags))
+        self.out(') {\n')
 
 
-    def writeTextForSection(self, sec, m, indent=True):
-        self.out(sec + '(', False)
+    def writeHeadForSection(self, sec, m, indent=True):
+        self.out(sec + '(', True)
         text = m.group('text')
         if text:
             text = text.rstrip().replace('"', r'\"')
-            self.out('"{}"'.format(text), False)
-        self.out(') {\n', False)
+            self.out('"{}"'.format(text))
+        self.out(') {\n')
 
 
 featuresDir = os.path.abspath('./features')
@@ -92,21 +113,21 @@ for featureFname in featureFilenames:
 
         status = 0
 
-        code = CodeBlock(fout)
+        block = CodeBlock(fout)
 
         for no, line in enumerate(fin):
             #-----------------------------------------------------
             if status == 0:
                 m = rexFeature.search(line)
                 if m is not None:
-                    code.out('// ' + line)
+                    block.out('// ' + line)
                 elif line.strip() == '':
-                    code.out('\n')
+                    block.out('\n')
                     status = 1
                 else:
                     m = rexScenario.search(line)
                     if m is not None:
-                        code.writeScenario(m)
+                        block = block.push('SCENARIO', m)
                         status = 4
                     else:
                         flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -115,12 +136,12 @@ for featureFname in featureFilenames:
             elif status == 1:
                 m = rexUserStory.search(line)
                 if m is not None:
-                    code.out('// ' + line)
+                    block.out('// ' + line)
                     status = 2
                 else:
                     m = rexScenario.search(line)
                     if m is not None:
-                        code.writeScenario(m)
+                        block = block.push('SCENARIO', m)
                         status = 4
                     else:
                         flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -128,16 +149,16 @@ for featureFname in featureFilenames:
             #-----------------------------------------------------
             elif status == 2:   # collecting other lines of the User Story
                 if line.strip() != '':
-                    code.out('// ' + line)      # line of the story
+                    block.out('// ' + line)      # line of the story
                 else:
-                    code.out('\n', False)       # separator line
+                    block.out('\n', False)       # separator line
                     status = 3
 
             #-----------------------------------------------------
             elif status == 3:   # waiting for "Scenario: ..."
                 m = rexScenario.search(line)
                 if m is not None:
-                    code.writeScenario(m)
+                    block = block.push('SCENARIO', m)
                     status = 4
                 elif line.strip() == '':
                     pass # skip another separator line
@@ -148,8 +169,8 @@ for featureFname in featureFilenames:
             elif status == 4:
                 m = rexGiven.search(line)
                 if m is not None:
-                    code.indent()
-                    code.writeTextForSection('GIVEN', m)
+                    assert block.identifier == 'SCENARIO'
+                    block = block.push('GIVEN', m)
                     status = 5
                 else:
                     flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -157,14 +178,15 @@ for featureFname in featureFilenames:
             #-----------------------------------------------------
             elif status == 5:
                 if line.strip() == '':  # earlier finished scenario - sep. line
-                    code.dedent()
-                    code.out('}\n\n', False)    # scenario finished
+                    block = block.closePop('GIVEN')
+                    block = block.closePop('SCENARIO')
+                    assert block.identifier == 'TOP'
                     status = 3
                 else:
                     m = rexWhen.search(line)
                     if m is not None:
-                        code.indent()
-                        code.writeTextForSection('WHEN', m)
+                        assert block.identifier == 'GIVEN'
+                        block = block.push('WHEN', m)
                         status = 6
                     else:
                         flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -173,14 +195,16 @@ for featureFname in featureFilenames:
             elif status == 6:
                 m = rexThen.search(line)
                 if m is not None:
-                    code.indent()
-                    code.writeTextForSection('THEN', m)
+                    assert block.identifier == 'WHEN'
+                    block = block.push('THEN', m)
                     status = 7
                 elif line.strip() == '':  # earlier finished "given" - sep. line
-                    code.dedent()
-                    code.out('}\n')       # of Given
-                    code.dedent()
-                    code.out('}\n')       # of Scenario
+                    block = block.closePop('WHEN')
+                    block = block.closePop('GIVEN')
+                    block = block.closePop('SCENARIO')
+                    if block.identifier != 'TOP':
+                        flog.write('TOP block expected {}, {}, {}: {}'.format(
+                                    no, status, block.identifier, line))
                     status = 3
                 else:
                     flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -188,12 +212,11 @@ for featureFname in featureFilenames:
             #-----------------------------------------------------
             elif status == 7:
                 if line.strip() == '':  # separator line
-                    code.dedent()
-                    code.out('}\n')    # of Then
-                    code.dedent()
-                    code.out('}\n')    # of When
-                    code.dedent()
-                    code.out('}\n')    # of Scenario
+                    block = block.closePop('THEN')
+                    block = block.closePop('WHEN')
+                    block = block.closePop('GIVEN')
+                    block = block.closePop('SCENARIO')
+                    block.identifier == 'TOP'
                     status = 3
                 else:
                     flog.write('unknown {}, {}: {}'.format(no, status, line))
