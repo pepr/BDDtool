@@ -4,26 +4,51 @@ import glob
 import os
 import re
 
-def writeScenario(fout, m):
-    fout.write('// {}\n'.format(m.group('label')))
-    fout.write('SCENARIO(')
-    title = m.group('title')
-    if title:
-        title = title.rstrip(). replace('"', r'\"')
-        fout.write('"{}"'.format(title))
-    tags = m.group('tags')
-    if tags:
-        fout.write(', "{}"'.format(tags))
-    fout.write(') {\n')
+
+class CodeBlock:
+
+    def __init__(self, fout, indent_level=0, prev=None):
+        self.fout = fout
+        self.flog = flog
+        self.indent_level = indent_level
+        self.prev = prev
+
+    def out(self, txt, indent=True):
+        if indent:
+            self.fout.write('    ' * self.indent_level)
+        self.fout.write(txt)
+
+    def push(self):
+        block = CodeBlock(self.fout, self.indent_level, self)
+        return block
+    
+    def indent(self):
+        self.indent_level += 1
+
+    def dedent(self):
+        self.indent_level -= 1
 
 
-def writeTextForSection(sec, fout, m):
-    fout.write(sec + '(')
-    text = m.group('text')
-    if text:
-        text = text.rstrip().replace('"', r'\"')
-        fout.write('"{}"'.format(text))
-    fout.write(') {\n')
+    def writeScenario(self, m):
+        self.out('// {}\n'.format(m.group('label')))
+        self.out('SCENARIO(')
+        title = m.group('title')
+        if title:
+            title = title.rstrip(). replace('"', r'\"')
+            self.out('"{}"'.format(title), False)
+        tags = m.group('tags')
+        if tags:
+            self.out(', "{}"'.format(tags), False)
+        self.out(') {\n', False)
+
+
+    def writeTextForSection(self, sec, m, indent=True):
+        self.out(sec + '(', False)
+        text = m.group('text')
+        if text:
+            text = text.rstrip().replace('"', r'\"')
+            self.out('"{}"'.format(text), False)
+        self.out(') {\n', False)
 
 
 featuresDir = os.path.abspath('./features')
@@ -67,19 +92,21 @@ for featureFname in featureFilenames:
 
         status = 0
 
+        code = CodeBlock(fout)
+
         for no, line in enumerate(fin):
             #-----------------------------------------------------
             if status == 0:
                 m = rexFeature.search(line)
                 if m is not None:
-                    fout.write('// ' + line)
+                    code.out('// ' + line)
                 elif line.strip() == '':
-                    fout.write('\n')
+                    code.out('\n')
                     status = 1
                 else:
                     m = rexScenario.search(line)
                     if m is not None:
-                        writeScenario(fout, m)
+                        code.writeScenario(m)
                         status = 4
                     else:
                         flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -88,12 +115,12 @@ for featureFname in featureFilenames:
             elif status == 1:
                 m = rexUserStory.search(line)
                 if m is not None:
-                    fout.write('// ' + line)
+                    code.out('// ' + line)
                     status = 2
                 else:
                     m = rexScenario.search(line)
                     if m is not None:
-                        writeScenario(fout, m)
+                        code.writeScenario(m)
                         status = 4
                     else:
                         flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -101,16 +128,16 @@ for featureFname in featureFilenames:
             #-----------------------------------------------------
             elif status == 2:   # collecting other lines of the User Story
                 if line.strip() != '':
-                    fout.write('// ' + line)    # line of the story
+                    code.out('// ' + line)      # line of the story
                 else:
-                    fout.write('\n')            # separator line
+                    code.out('\n', False)       # separator line
                     status = 3
 
             #-----------------------------------------------------
             elif status == 3:   # waiting for "Scenario: ..."
                 m = rexScenario.search(line)
                 if m is not None:
-                    writeScenario(fout, m)
+                    code.writeScenario(m)
                     status = 4
                 elif line.strip() == '':
                     pass # skip another separator line
@@ -121,7 +148,8 @@ for featureFname in featureFilenames:
             elif status == 4:
                 m = rexGiven.search(line)
                 if m is not None:
-                    writeTextForSection('GIVEN', fout, m)
+                    code.indent()
+                    code.writeTextForSection('GIVEN', m)
                     status = 5
                 else:
                     flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -129,12 +157,14 @@ for featureFname in featureFilenames:
             #-----------------------------------------------------
             elif status == 5:
                 if line.strip() == '':  # earlier finished scenario - sep. line
-                    fout.write('\n')    # scenario finished
+                    code.dedent()
+                    code.out('}\n\n', False)    # scenario finished
                     status = 3
                 else:
                     m = rexWhen.search(line)
                     if m is not None:
-                        writeTextForSection('WHEN', fout, m)
+                        code.indent()
+                        code.writeTextForSection('WHEN', m)
                         status = 6
                     else:
                         flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -143,10 +173,14 @@ for featureFname in featureFilenames:
             elif status == 6:
                 m = rexThen.search(line)
                 if m is not None:
-                    writeTextForSection('THEN', fout, m)
+                    code.indent()
+                    code.writeTextForSection('THEN', m)
                     status = 7
                 elif line.strip() == '':  # earlier finished "given" - sep. line
-                    fout.write('\n')
+                    code.dedent()
+                    code.out('}\n')       # of Given
+                    code.dedent()
+                    code.out('}\n')       # of Scenario
                     status = 3
                 else:
                     flog.write('unknown {}, {}: {}'.format(no, status, line))
@@ -154,7 +188,12 @@ for featureFname in featureFilenames:
             #-----------------------------------------------------
             elif status == 7:
                 if line.strip() == '':  # separator line
-                    fout.write('\n')    # scenario finished
+                    code.dedent()
+                    code.out('}\n')    # of Then
+                    code.dedent()
+                    code.out('}\n')    # of When
+                    code.dedent()
+                    code.out('}\n')    # of Scenario
                     status = 3
                 else:
                     flog.write('unknown {}, {}: {}'.format(no, status, line))
