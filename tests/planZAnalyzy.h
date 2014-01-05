@@ -59,14 +59,14 @@ SCENARIO("definice scénáře bez detailu za klíčovým slovem") {
         }
     }
 }
-// Scenario xyz: 
+// Scenario: 
 SCENARIO("titulek scénáře začíná za dvojtečkou") {
     GIVEN("soubor s definicemi scénářů") {
         WHEN("za slovem \"scénář\"") {
         }
     }
 }
-// Scénář 1: 
+// Scénář : 
 SCENARIO("analytické popisy se oddělují do samostatných souborů") {
     GIVEN("adresář se soubory s příponou jmeno.feature") {
         WHEN("nalezneme jmeno.feature") {
@@ -75,7 +75,7 @@ SCENARIO("analytické popisy se oddělují do samostatných souborů") {
         }
     }
 }
-// Scénář 2: 
+// Scénář : 
 SCENARIO("požadavek bez scénářů nevygeneruje žádné testy") {
     GIVEN("existující soubor.feature") {
         WHEN("obsah souboru nedefinuje žádný scénář") {
