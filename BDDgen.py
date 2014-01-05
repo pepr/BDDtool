@@ -1,31 +1,23 @@
 #!python3
 
+import glob
 import os
+import sys
 
-START_DOCUMENT = 'START_DOCUMENT'
-END_DOCUMENT = 'END_DOCUMENT'
+import elemparser
 
-SEPARATOR_LINE = 'SEPARATOR_LINE'
+# Adresář s originálními podadresáři a soubory.
+features_dir = os.path.abspath('./features')
 
-START_FEATURE = 'START_FEATURE'
-END_FEATURE = 'END_FEATURE'
+# Pomocný podadresář pro generované informace.
+aux_dir = os.path.realpath('./aux_dir')
+if not os.path.isdir(aux_dir):
+    os.makedirs(aux_dir)
 
-START_SCENARIO = 'START_SCENARIO'
-END_SCENARIO = 'END_SCENARIO'
+featureFilenames = glob.glob(os.path.join(features_dir, '*.feature'))
 
-START_GIVEN = 'START_GIVEN'
-END_GIVEN = 'END_GIVEN'
-
-START_WHEN = 'START_WHEN'
-END_WHEN = 'END_WHEN'
-
-START_THEN = 'START_THEN'
-END_THEN = 'END_THEN'
-
-class Parser:
-    
-    def parse(self, fname, encoding='utf_8'):
-        self.fin = open(fname, encoding=encoding)
-        yield ''
-        self.fin.close()
-
+for featureFname in featureFilenames:
+    print('Parsing:')
+    pa = elemparser.Parser(featureFname, 'a.h', aux_dir)
+    msg = pa.run()
+    print('\t' + msg)
