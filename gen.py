@@ -55,7 +55,7 @@ class CodeBlock:
 
 
     def writeScenarioHead(self, m):
-        self.out('// {}\n'.format(m.group('label')), True)
+        self.out('\n')
         self.out('SCENARIO(', True)
         title = m.group('title')
         if title:
