@@ -88,6 +88,64 @@ class Feature:
                 # Přidáme informaci o dotčených souborech.
                 self.msg_lst.append('r ' + self.testfname)
 
+    def scenario(self, lst, level):
+        '''Vrací C++ obraz scénáře pro Catch unit testing.'''
+        result = []
+        if len(lst) > 0:
+            elem = lst[0]
+            assert elem.type == 'scenario'
+            identifier = elem.attrib.replace('"', r'\"')
+            indent = '    ' * level
+            result.append('{}SCENARIO("{}") {{'.format(indent, identifier))
+            result.append(self.given(lst[1:], level + 1))
+            result.append(indent + '}')
+
+        return '\n'.join(result)
+
+
+    def given(self, lst, level):
+        '''Vrací obraz sekce GIVEN pro Catch unit testing.'''
+        result = []
+        if len(lst) > 0:
+            elem = lst[0]
+            assert elem.type == 'given'
+            identifier = elem.attrib.replace('"', r'\"')
+            indent = '    ' * level
+            result.append('{}GIVEN("{}") {{'.format(indent, identifier))
+            result.append(self.when(lst[1:], level + 1))
+            result.append(indent + '}')
+
+        return '\n'.join(result)
+
+
+    def when(self, lst, level):
+        '''Vrací obraz sekce WHEN pro Catch unit testing.'''
+        result = []
+        if len(lst) > 0:
+            elem = lst[0]
+            assert elem.type == 'when'
+            identifier = elem.attrib.replace('"', r'\"')
+            indent = '    ' * level
+            result.append('{}WHEN("{}") {{'.format(indent, identifier))
+            result.append(self.then(lst[1:], level + 1))
+            result.append(indent + '}')
+
+        return '\n'.join(result)
+
+
+    def then(self, lst, level):
+        '''Vrací obraz sekce THEN pro Catch unit testing.'''
+        result = []
+        if len(lst) > 0:
+            elem = lst[0]
+            assert elem.type == 'then'
+            identifier = elem.attrib.replace('"', r'\"')
+            indent = '    ' * level
+            result.append('{}THEN("{}") {{'.format(indent, identifier))
+            result.append(indent + '}')
+
+        return '\n'.join(result)
+
 
     def parse(self):
         '''Spouštěč jednotlivých fází parseru.'''
@@ -134,6 +192,15 @@ class Feature:
         # Rozložíme .h -- pokud existuje
         self.loadTestElementList()
         self.flog.write('-' * 70 + '\n')
+
+        # Konverze seznamu elementů pro jeden scénář do podoby .h souboru.
+        with open(self.testfname, 'w', encoding='utf-8') as ftest:
+            for k in lst_id_feature:
+                lst = d_feature[k]
+                ftest.write('\n'.join(repr(e) for e in lst))
+                ftest.write('\n' + ('-' * 70) + '\n')
+                ftest.write(self.scenario(lst, 0))
+                ftest.write('\n' + ('=' * 70) + '\n')
 
         self.closeLogFile()
 
