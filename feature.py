@@ -3,10 +3,11 @@
 import docelement
 import os
 
-class Parser:
-    '''Parser pro rozklad xxx.feature a odpovídajícího xxx.h.'''
+class Feature:
+    '''Třída s parserem pro rozklad xxx.feature a odpovídajícího xxx.h.'''
 
     def __init__(self, featurefname, tests_dir, log_dir):
+        self.identifier = None  # řetězcová identifikace se zjistí až po parse()
         self.featurefname = featurefname        # jméno .feature souboru
         self.tests_dir = tests_dir              # adresář pro soubory testů
         self.log_dir = log_dir                  # adresář pro log soubory
@@ -27,6 +28,12 @@ class Parser:
         self.h_lst = None       # seznam elementů z .h
 
         self.info_files = []    # info pro zobrazování zpracovaných souborů
+
+
+    def id(self):
+        '''Vrací řetězcovou identifikaci feature objektu.'''
+        assert self.identifier is not None
+        return self.identifier
 
 
     def openLogFile(self):
@@ -55,6 +62,15 @@ class Parser:
             self.info_files.append('r ' + self.featurefname)
             self.info_files.append('w ' + self.logfname)
 
+        # Najdeme element typu 'feature' a získáme identifikaci. Nemusí být uvedena,
+        # takže inicializujeme na prázdný řetězec.
+        self.identifier = ''
+        for elem in self.feature_lst:
+            if elem.type == 'feature':
+                self.identifier = elem.attrib
+                break
+
+
 
     def loadTestElementList(self):
         '''Načte elementy z .h do členského seznamu.'''
@@ -74,7 +90,7 @@ class Parser:
                 self.info_files.append('w ' + self.logfname)
 
 
-    def run(self):
+    def parse(self):
         '''Spouštěč jednotlivých fází parseru.'''
 
         self.openLogFile()
