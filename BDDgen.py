@@ -6,8 +6,12 @@ import sys
 
 import featureparser
 
-# Adresář s originálními podadresáři a soubory.
+# Adresář s xxx.feature soubory.
 features_dir = os.path.abspath('./features')
+
+# Adresář pro xxx.h soubory s Catch testy (poprvé generované, ručně upravované
+# a případně aktualizované podle .feature.
+tests_dir = os.path.abspath('./tests')
 
 # Pomocný podadresář pro logy zachycující průběh generování.
 log_dir = os.path.realpath('./log')
@@ -18,7 +22,12 @@ if not os.path.isdir(log_dir):
 featureFilenames = glob.glob(os.path.join(features_dir, '*.feature'))
 
 for featureFname in featureFilenames:
-    print('Parsing:')
-    parser = featureparser.Parser(featureFname, log_dir)
+    print('\nParsing feature: ', end='')
+    parser = featureparser.Parser(featureFname, tests_dir, log_dir)
     msg = parser.run()
+    fe = parser.feature_lst[0]
+    if fe.type == 'feature':
+        print(fe.attrib)
+    else:
+        print()
     print('\t' + msg)
