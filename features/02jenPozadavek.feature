@@ -1,0 +1,1 @@
+Požadavek: pouze feature uvedený českým klíčovým slovem

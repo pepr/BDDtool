@@ -1,0 +1,1 @@
+scénář: prázdný scénář bez feature a bez User story (nepoužívat)

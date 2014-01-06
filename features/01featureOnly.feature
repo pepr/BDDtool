@@ -1,0 +1,1 @@
+Feature: pouze feature uvedený anglickým klíčovým slovem
