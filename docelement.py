@@ -1,21 +1,20 @@
 #!python3
-# -*- coding: utf-8 -*-
 
 import re
-'''Capturing one line of a document and converting it to an object.'''
-
 
 class Element:
     '''Rozpoznané Elementy dokumentu odpovídající řádkům zdrojového textu.'''
 
-    # Pro detekci řádku se stručným popisem požadavku. Na výstup se opisuje
-    # jako komentář.
-    rexFeature = re.compile('^\s*(Feature|Požadavek)\s*:', re.IGNORECASE)
-    
-    # Pro detekci prvního řádku s user story. Tento a následující řádky
-    # se na výstup se opisují jako komentář.
+    # Nejdříve regulární výrazy pro elementy z xxx.feature souboru.
+    #
+    # Pro detekci řádku se stručným popisem požadavku.
+    rexFeature = re.compile('''^\s*(Feature|Požadavek)\s*:\s*
+                                   (?P<text>.+)$''',
+                             re.IGNORECASE | re.VERBOSE)
+
+    # Pro detekci prvního řádku s user story.
     rexUserStory = re.compile('^\s*(User story)\s*:', re.IGNORECASE)
-    
+
     # Pro detekci řádku s identifikací scénáře a pro extrakci textu.
     # Následující regulární výrazy pak detekují další součásti popisu
     # scénáře, které se transformují do podoby příslušných Catch sekcí.
@@ -31,6 +30,37 @@ class Element:
     rexThen = re.compile('''^\s*(Then|Pak)\s*:\s*
                                 (?P<text>.+)\s*$''',
                              re.IGNORECASE | re.VERBOSE)
+
+    # Odpovídající regulární výrazy pro parsing exitujícího generovaného
+    # testu v xxx.h souborech. Regulární výrazy budou mít předponu rexTest.
+    #
+    # Pro detekci řádku se stručným popisem požadavku. Do testu byl opsán
+    # jako C++ komentář.
+    rexTestFeature = re.compile('''^//\s+(Feature|Požadavek)\s*:\s*
+                                         (?P<text>.+)$''',
+                                re.IGNORECASE | re.VERBOSE)
+
+    # Pro detekci prvního řádku s user story. Do testu byl opsán jako C++ komentář.
+    rexTestUserStory = re.compile('^//\s+(User story)\s*:', re.IGNORECASE)
+
+    # Pro detekci řádku s identifikací scénáře a pro extrakci textu.
+    # Následující regulární výrazy pak detekují další součásti popisu
+    # scénáře, které se transformují do podoby příslušných Catch sekcí.
+    rexTestScenario = re.compile('''^\s*SCENARIO\("
+                                    (?P<text>.+)
+                                    "\)\s*{$''', re.VERBOSE)
+    rexTestGiven = re.compile('''^\s*GIVEN\("
+                                 (?P<text>.+)
+                                 "\)\s*{$''', re.VERBOSE)
+    rexTestWhen = re.compile('''^\s*WHEN\("
+                                 (?P<text>.+)
+                                 "\)\s*{$''', re.VERBOSE)
+    rexTestThen = re.compile('''^\s*THEN\("
+                                 (?P<text>.+)
+                                 "\)\s*{$''', re.VERBOSE)
+
+    # Řádek uzavírající blok musí obsahovat jen pravou složenou závorku.
+    rexRCurly =  re.compile('^\s*}')
 
     def __init__(self, fname, lineno, line):
         self.fname = fname      # původní zdrojový soubor
@@ -51,7 +81,7 @@ class Element:
         m = self.rexFeature.search(line)
         if m:
             self.type = 'feature'
-            self.attrib = line.rstrip()
+            self.attrib = m.group('text').rstrip()
             return
 
         # Řádek s User Story.
@@ -87,6 +117,58 @@ class Element:
             self.attrib = m.group('text').rstrip()
             return
 
+        #--------------------------------------------------------------------
+        # Odpovídající řádky ze souboru testu.
+        #
+        # Řádek s Feature.
+        m = self.rexTestFeature.search(line)
+        if m:
+            self.type = 'feature'
+            self.attrib = m.group('text').rstrip()
+            return
+
+        # Řádek s User Story.
+        m = self.rexTestUserStory.search(line)
+        if m:
+            self.type = 'userstory'
+            self.attrib = line.rstrip()
+            return
+
+        # Řádek s identifikací scénáře. Další řádky s Given, When, Then
+        # mají stejnou strukturu. Pocházejí z řetězcového literálu, takže
+        # atribut naplníme hodnotou po odstranění escape \".
+        m = self.rexTestScenario.match(line)
+        if m:
+            self.type = 'scenario'
+            self.attrib = m.group('text').rstrip().replace(r'\"', '"')
+            return
+
+        m = self.rexTestGiven.match(line)
+        if m:
+            self.type = 'given'
+            self.attrib = m.group('text').rstrip().replace(r'\"', '"')
+            return
+
+        m = self.rexTestWhen.match(line)
+        if m:
+            self.type = 'when'
+            self.attrib = m.group('text').rstrip().replace(r'\"', '"')
+            return
+
+        m = self.rexTestThen.match(line)
+        if m:
+            self.type = 'then'
+            self.attrib = m.group('text').rstrip().replace(r'\"', '"')
+            return
+
+        # Pravá složená závorka uzavírající blok.
+        m = self.rexRCurly.search(line)
+        if m:
+            self.type = 'rcurly'
+            self.attrib = None
+            return
+
+        #--------------------------------------------------------------------
         # Prázdný řádek odpovídá situaci, kdy skončil soubor a další řádek
         # nebylo možno načíst. Neměl by nastávat, ale pro jistotu.
         if self.line == '':
