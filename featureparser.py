@@ -6,9 +6,22 @@ import os
 class Parser:
     '''Parser pro rozklad xxx.feature a odpovídajícího xxx.h.'''
 
-    def __init__(self, fname, log_dir):
-        self.fname = fname      # jméno .feature souboru
-        self.log_dir = log_dir  # adresář pro log soubory
+    def __init__(self, featurefname, tests_dir, log_dir):
+        self.featurefname = featurefname        # jméno .feature souboru
+        self.tests_dir = tests_dir              # adresář pro soubory testů
+        self.log_dir = log_dir                  # adresář pro log soubory
+
+        # Odvodíme holé jméno (symbolické, bez přípony), jméno log souboru
+        # a jméno souboru s testy.
+        self.feature_bare_name = os.path.basename(self.featurefname)
+        self.name, ext = os.path.splitext(self.feature_bare_name)
+        self.test_bare_name = self.name + '.h'
+
+        self.logfname = os.path.join(self.log_dir, self.name  + '.log')
+        self.testfname = os.path.join(self.tests_dir, self.test_bare_name)
+
+        # Objekt log souboru.
+        self.flog = None
 
         self.feature_lst = None # seznam elementů z .feature
         self.h_lst = None       # seznam elementů z .h
@@ -16,29 +29,58 @@ class Parser:
         self.info_files = []    # info pro zobrazování zpracovaných souborů
 
 
+    def openLogFile(self):
+        assert self.flog is None
+        self.flog = open(self.logfname, 'w', encoding='utf-8')
+
+
+    def closeLogFile(self):
+        self.flog.close()
+        self.flog = None
+
+
     def loadFeatureElementList(self):
         '''Načte elementy z .feature do členského seznamu.'''
 
-        basename = os.path.basename(self.fname)
-        logname = os.path.join(self.log_dir, basename  + '.log')
         self.feature_lst = []
-        with open(self.fname,  encoding='utf-8') as fin,\
-             open(logname, 'w', encoding='utf-8') as flog:
-            
+        with open(self.featurefname,  encoding='utf-8') as fin:
+
             # Zpracujeme všechny řádky parserem.
             for lineno, line in enumerate(fin, 1):
-                elem = docelement.Element(basename, lineno, line)
+                elem = docelement.Element(self.feature_bare_name, lineno, line)
                 self.feature_lst.append(elem)
-                flog.write(repr(elem) + '\n')
+                self.flog.write(repr(elem) + '\n')
 
             # Přidáme informaci o dotčených souborech.
-            self.info_files.append(self.fname)
-            self.info_files.append(logname)
-            
+            self.info_files.append('r ' + self.featurefname)
+            self.info_files.append('w ' + self.logfname)
+
+
+    def loadTestElementList(self):
+        '''Načte elementy z .h do členského seznamu.'''
+
+        self.h_lst = []
+        if os.path.isfile(self.testfname):
+            with open(self.testfname,  encoding='utf-8') as fin:
+
+                # Zpracujeme všechny řádky parserem.
+                for lineno, line in enumerate(fin, 1):
+                    elem = docelement.Element(self.test_bare_name, lineno, line)
+                    self.feature_lst.append(elem)
+                    self.flog.write(repr(elem) + '\n')
+
+                # Přidáme informaci o dotčených souborech.
+                self.info_files.append('r ' + self.testfname)
+                self.info_files.append('w ' + self.logfname)
+
 
     def run(self):
         '''Spouštěč jednotlivých fází parseru.'''
 
+        self.openLogFile()
         self.loadFeatureElementList()
+        self.flog.write('-' * 70 + '\n')
+        self.loadTestElementList()
+        self.closeLogFile()
 
         return '\n\t'.join(self.info_files)
