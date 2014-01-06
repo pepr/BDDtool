@@ -67,7 +67,7 @@ class Feature:
         self.identifier = ''
         for elem in self.feature_lst:
             if elem.type == 'feature':
-                self.identifier = elem.attrib
+                self.identifier = elem.text
                 break
 
 
@@ -94,8 +94,8 @@ class Feature:
         if len(lst) > 0:
             elem = lst[0]
             assert elem.type == 'scenario'
-            identifier = elem.attrib.replace('"', r'\"')
-            indent = '    ' * level
+            identifier = elem.text.replace('"', r'\"')
+            indent = ' ' * 4 * level
             result.append('{}SCENARIO("{}") {{'.format(indent, identifier))
             result.append(self.given(lst[1:], level + 1))
             result.append(indent + '}')
@@ -109,8 +109,8 @@ class Feature:
         if len(lst) > 0:
             elem = lst[0]
             assert elem.type == 'given'
-            identifier = elem.attrib.replace('"', r'\"')
-            indent = '    ' * level
+            identifier = elem.text.replace('"', r'\"')
+            indent = ' ' * 4 * level
             result.append('{}GIVEN("{}") {{'.format(indent, identifier))
             result.append(self.when(lst[1:], level + 1))
             result.append(indent + '}')
@@ -124,8 +124,8 @@ class Feature:
         if len(lst) > 0:
             elem = lst[0]
             assert elem.type == 'when'
-            identifier = elem.attrib.replace('"', r'\"')
-            indent = '    ' * level
+            identifier = elem.text.replace('"', r'\"')
+            indent = ' ' * 4 * level
             result.append('{}WHEN("{}") {{'.format(indent, identifier))
             result.append(self.then(lst[1:], level + 1))
             result.append(indent + '}')
@@ -139,8 +139,8 @@ class Feature:
         if len(lst) > 0:
             elem = lst[0]
             assert elem.type == 'then'
-            identifier = elem.attrib.replace('"', r'\"')
-            indent = '    ' * level
+            identifier = elem.text.replace('"', r'\"')
+            indent = ' ' * 4 * level
             result.append('{}THEN("{}") {{'.format(indent, identifier))
             result.append(indent + '}')
 
@@ -163,14 +163,14 @@ class Feature:
         for elem in self.feature_lst:
             if status == 0:             # čekáme na 'scenario'
                 if elem.type == 'scenario':
-                    lst_id_feature.append(elem.attrib)
+                    lst_id_feature.append(elem.text)
                     lst = [elem]
-                    self.msg_lst.append('- ' + elem.attrib)
+                    ##self.msg_lst.append('- ' + elem.text)
                     status = 1
 
             elif status == 1:           # sbíráme elementy scénáře
                 if elem.type == 'empty':        # ukončení scénáře
-                    k = lst[0].attrib           # identifikace scénáře
+                    k = lst[0].text           # identifikace scénáře
                     d_feature[k] = lst          # --> seznam elementů scénáře
                     status = 0
                 else:
@@ -178,16 +178,16 @@ class Feature:
 
         if status == 1:
             # Poslední sesbíraný scénář
-            k = lst[0].attrib           # identifikace scénáře
+            k = lst[0].text           # identifikace scénáře
             d_feature[k] = lst          # --> seznam elementů scénáře
 
-        # ???
-        self.msg_lst.append(('=' * 70))
-        for k in lst_id_feature:
-            lst = d_feature[k]
-            for elem in lst:
-                self.msg_lst.append('{}, {!r}'.format(elem.type, elem.attrib))
-            self.msg_lst.append(('-' * 30))
+#         # ???
+#         self.msg_lst.append(('=' * 70))
+#         for k in lst_id_feature:
+#             lst = d_feature[k]
+#             for elem in lst:
+#                 self.msg_lst.append('{}, {!r}'.format(elem.type, elem.text))
+#             self.msg_lst.append(('-' * 30))
 
         # Rozložíme .h -- pokud existuje
         self.loadTestElementList()
