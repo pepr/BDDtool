@@ -4,7 +4,7 @@ import glob
 import os
 import sys
 
-import featureparser
+import feature
 
 # Adresář s xxx.feature soubory.
 features_dir = os.path.abspath('./features')
@@ -23,11 +23,7 @@ featureFilenames = glob.glob(os.path.join(features_dir, '*.feature'))
 
 for featureFname in featureFilenames:
     print('\nParsing feature: ', end='')
-    parser = featureparser.Parser(featureFname, tests_dir, log_dir)
-    msg = parser.run()
-    fe = parser.feature_lst[0]
-    if fe.type == 'feature':
-        print(fe.attrib)
-    else:
-        print()
+    fe = feature.Feature(featureFname, tests_dir, log_dir)
+    msg = fe.parse()
+    print(fe.id())
     print('\t' + msg)
