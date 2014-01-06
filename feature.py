@@ -27,7 +27,7 @@ class Feature:
         self.feature_lst = None # seznam elementů z .feature
         self.h_lst = None       # seznam elementů z .h
 
-        self.info_files = []    # info pro zobrazování zpracovaných souborů
+        self.msg_lst = []    # info pro zobrazování zpracovaných souborů
 
 
     def id(self):
@@ -39,6 +39,7 @@ class Feature:
     def openLogFile(self):
         assert self.flog is None
         self.flog = open(self.logfname, 'w', encoding='utf-8')
+        self.msg_lst.append('w ' + self.logfname)
 
 
     def closeLogFile(self):
@@ -59,8 +60,7 @@ class Feature:
                 self.flog.write(repr(elem) + '\n')
 
             # Přidáme informaci o dotčených souborech.
-            self.info_files.append('r ' + self.featurefname)
-            self.info_files.append('w ' + self.logfname)
+            self.msg_lst.append('r ' + self.featurefname)
 
         # Najdeme element typu 'feature' a získáme identifikaci. Nemusí být uvedena,
         # takže inicializujeme na prázdný řetězec.
@@ -86,17 +86,55 @@ class Feature:
                     self.flog.write(repr(elem) + '\n')
 
                 # Přidáme informaci o dotčených souborech.
-                self.info_files.append('r ' + self.testfname)
-                self.info_files.append('w ' + self.logfname)
+                self.msg_lst.append('r ' + self.testfname)
 
 
     def parse(self):
         '''Spouštěč jednotlivých fází parseru.'''
 
         self.openLogFile()
+
+        # Rozložíme .feature
         self.loadFeatureElementList()
         self.flog.write('-' * 70 + '\n')
+
+        # ??? vytvoříme seznam identifikací scénářů a slovník podseznamů z .feature
+        lst_id_feature = []
+        d_feature = {}
+        status = 0
+        for elem in self.feature_lst:
+            if status == 0:             # čekáme na 'scenario'
+                if elem.type == 'scenario':
+                    lst_id_feature.append(elem.attrib)
+                    lst = [elem]
+                    self.msg_lst.append('- ' + elem.attrib)
+                    status = 1
+
+            elif status == 1:           # sbíráme elementy scénáře
+                if elem.type == 'empty':        # ukončení scénáře
+                    k = lst[0].attrib           # identifikace scénáře
+                    d_feature[k] = lst          # --> seznam elementů scénáře
+                    status = 0
+                else:
+                    lst.append(elem)
+
+        if status == 1:
+            # Poslední sesbíraný scénář
+            k = lst[0].attrib           # identifikace scénáře
+            d_feature[k] = lst          # --> seznam elementů scénáře
+
+        # ???
+        self.msg_lst.append(('=' * 70))
+        for k in lst_id_feature:
+            lst = d_feature[k]
+            for elem in lst:
+                self.msg_lst.append('{}, {!r}'.format(elem.type, elem.attrib))
+            self.msg_lst.append(('-' * 30))
+
+        # Rozložíme .h -- pokud existuje
         self.loadTestElementList()
+        self.flog.write('-' * 70 + '\n')
+
         self.closeLogFile()
 
-        return '\n\t'.join(self.info_files)
+        return '\nParsed feature: {}\n\t'.format(self.id()) + ('\n\t'.join(self.msg_lst))

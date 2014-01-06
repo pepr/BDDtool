@@ -22,8 +22,6 @@ if not os.path.isdir(log_dir):
 featureFilenames = glob.glob(os.path.join(features_dir, '*.feature'))
 
 for featureFname in featureFilenames:
-    print('\nParsing feature: ', end='')
     fe = feature.Feature(featureFname, tests_dir, log_dir)
     msg = fe.parse()
-    print(fe.id())
-    print('\t' + msg)
+    print(msg)
