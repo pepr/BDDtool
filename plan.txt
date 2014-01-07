@@ -1,9 +1,9 @@
 - před výstupem do souboru generovat seznam řádků kvůli možnosti
   výstupu generovaného výsledku do víceřádkového řetězce (testování)
-- přidat parsing z víceřádkového řetězce jako alternativu (testování)
+- testy vlastní funkčnosti pro Catch přes víceřádkové řetězce
+
 - synchronizace feature seznamu se seznamem extrahovaným z jazyka
 - komentáře v angličtině
-- CRLF to LF ending for sources of BDDtool
 
 To be tested
 ============
