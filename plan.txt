@@ -1,22 +1,24 @@
-- rozdìlit docelement.py na elemfeature.py a elemcpp.py
-- synchronizace feature seznamu se seznamem extrahovanım z jazyka
-- komentáøe v angliètinì
+- pÅ™ed vÃ½stupem do souboru generovat seznam Å™Ã¡dkÅ¯ kvÅ¯li moÅ¾nosti
+  vÃ½stupu generovanÃ©ho vÃ½sledku do vÃ­ceÅ™Ã¡dkovÃ©ho Å™etÄ›zce (testovÃ¡nÃ­)
+- pÅ™idat parsing z vÃ­ceÅ™Ã¡dkovÃ©ho Å™etÄ›zce jako alternativu (testovÃ¡nÃ­)
+- synchronizace feature seznamu se seznamem extrahovanÃ½m z jazyka
+- komentÃ¡Å™e v angliÄtinÄ›
 - CRLF to LF ending for sources of BDDtool
 
 Variant prefixes of element descriptions
 ========================================
-- volnìjší forma uvození klíèovıch vìt ve .feature (bez dvojteèky)
-- volnìjší forma rozpoznává, e je volnìjší a upravuje interpunkci
-  na zaèátku a na konci extrahovanıch textù
-- volnìjší i pøísná forma jsou rovnocenné (po øádcích)
+- volnÄ›jÅ¡Ã­ forma uvozenÃ­ klÃ­ÄovÃ½ch vÄ›t ve .feature (bez dvojteÄky)
+- volnÄ›jÅ¡Ã­ forma rozpoznÃ¡vÃ¡, Å¾e je volnÄ›jÅ¡Ã­ a upravuje interpunkci
+  na zaÄÃ¡tku a na konci extrahovanÃ½ch textÅ¯
+- volnÄ›jÅ¡Ã­ i pÅ™Ã­snÃ¡ forma jsou rovnocennÃ© (po Å™Ã¡dcÃ­ch)
 
 
 Internationalization
 ====================
-- jazykové varianty klíèovıch slov na jedno místo pro snadné úpravy
-  (Scenario, Scénáø, Example, Pøíklad)
-- rùzné jazykové elementy lze míchat; default jazyk se rozpoznává
-  podle klíèového slova pouitého pro element Feature
+- jazykovÃ© varianty klÃ­ÄovÃ½ch slov na jedno mÃ­sto pro snadnÃ© Ãºpravy
+  (Scenario, ScÃ©nÃ¡Å™, Example, PÅ™Ã­klad)
+- rÅ¯znÃ© jazykovÃ© elementy lze mÃ­chat; default jazyk se rozpoznÃ¡vÃ¡
+  podle klÃ­ÄovÃ©ho slova pouÅ¾itÃ©ho pro element Feature
 - ability to tell the output human language form via an option
 
 
