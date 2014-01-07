@@ -48,29 +48,54 @@ class Feature:
         self.flog = None
 
 
-    def loadFeatureElementList(self):
-        '''Načte elementy z .feature do členského seznamu.'''
+    def parseString(self, source, sourcenameinfo, elem_module):
+        '''Returns the feature identifier and the list of elements from string.
 
-        self.feature_lst = []
-        with open(self.featurefname,  encoding='utf-8') as fin:
+        source ........... multiline string
+        sourcenameinfo ... whatever identification string
+                           (e.g. bare filename), used for logs
+        elem_module ...... module that implements the Element class
+        '''
 
-            # Zpracujeme všechny řádky parserem.
-            for lineno, line in enumerate(fin, 1):
-                elem = elemfeature.Element(self.feature_bare_name, lineno, line)
-                self.feature_lst.append(elem)
-                self.flog.write(repr(elem) + '\n')
+        # Split the multiline source string to get the lines, recognize
+        # the elements line by line, and append them to the list.
+        lst = []
+        for lineno, line in enumerate(source.split('\n'), 1):
+            elem = elem_module.Element(sourcenameinfo, lineno, line)
+            lst.append(elem)
+            self.flog.write(repr(elem) + '\n') ##
+        self.flog.write('-' * 70 + '\n')       ##
 
-            # Přidáme informaci o dotčených souborech.
-            self.msg_lst.append('r ' + self.featurefname)
-
-        # Najdeme element typu 'feature' a získáme identifikaci. Nemusí být uvedena,
-        # takže inicializujeme na prázdný řetězec.
-        self.identifier = ''
-        for elem in self.feature_lst:
+        # Extract the Feature identifier from the 'feature' element.
+        # It is recommended but not required -- initialized to empty string.
+        identifier = ''
+        for elem in lst:
             if elem.type == 'feature':
-                self.identifier = elem.text
+                identifier = elem.text
                 break
 
+        # Return the resulting feature identifier and the list of elements.
+        return identifier, lst
+
+
+    def parseFeatureFile(self):
+        '''Returns the feature identifier and the list of elements .feature file.'''
+
+        # Read the file content as a multiline string.
+        with open(self.featurefname,  encoding='utf-8') as fin:
+            source = fin.read()
+
+        # Set the sourcenameinfo as a bare name of the input file.
+        sourcenameinfo = self.feature_bare_name
+
+        # Some info for possible output to the display.
+        self.msg_lst.append('r ' + self.featurefname)
+
+        # Call the parser that accepts the multiline string.
+        # Pass the info including the modul that should be used
+        # for the element recognition. Return the resulting tuple with
+        # feature identifier and the list of elements.
+        return self.parseString(source, sourcenameinfo, elemfeature)
 
 
     def loadTestElementList(self):
@@ -89,6 +114,7 @@ class Feature:
                 # Přidáme informaci o dotčených souborech.
                 self.msg_lst.append('r ' + self.testfname)
 
+
     def scenario(self, lst, level):
         '''Vrací C++ obraz scénáře pro Catch unit testing.'''
         result = []
@@ -100,8 +126,9 @@ class Feature:
             result.append('{}SCENARIO("{}") {{'.format(indent, identifier))
             result.append(self.given(lst[1:], level + 1))
             result.append(indent + '}')
-
-        return '\n'.join(result)
+            return '\n'.join(result)
+        else:
+            return ''
 
 
     def given(self, lst, level):
@@ -115,8 +142,9 @@ class Feature:
             result.append('{}GIVEN("{}") {{'.format(indent, identifier))
             result.append(self.when(lst[1:], level + 1))
             result.append(indent + '}')
-
-        return '\n'.join(result)
+            return '\n'.join(result)
+        else:
+            return ''
 
 
     def when(self, lst, level):
@@ -130,8 +158,9 @@ class Feature:
             result.append('{}WHEN("{}") {{'.format(indent, identifier))
             result.append(self.then(lst[1:], level + 1))
             result.append(indent + '}')
-
-        return '\n'.join(result)
+            return '\n'.join(result)
+        else:
+            return ''
 
 
     def then(self, lst, level):
@@ -144,8 +173,9 @@ class Feature:
             indent = ' ' * 4 * level
             result.append('{}THEN("{}") {{'.format(indent, identifier))
             result.append(indent + '}')
-
-        return '\n'.join(result)
+            return '\n'.join(result)
+        else:
+            return ''
 
 
     def parse(self):
@@ -154,8 +184,7 @@ class Feature:
         self.openLogFile()
 
         # Rozložíme .feature
-        self.loadFeatureElementList()
-        self.flog.write('-' * 70 + '\n')
+        self.identifier, self.feature_lst = self.parseFeatureFile()
 
         # ??? vytvoříme seznam identifikací scénářů a slovník podseznamů z .feature
         lst_id_feature = []
