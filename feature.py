@@ -1,6 +1,7 @@
 #!python3
 
-import docelement
+import elemfeature
+import elemcpp
 import os
 
 class Feature:
@@ -55,7 +56,7 @@ class Feature:
 
             # Zpracujeme všechny řádky parserem.
             for lineno, line in enumerate(fin, 1):
-                elem = docelement.Element(self.feature_bare_name, lineno, line)
+                elem = elemfeature.Element(self.feature_bare_name, lineno, line)
                 self.feature_lst.append(elem)
                 self.flog.write(repr(elem) + '\n')
 
@@ -81,7 +82,7 @@ class Feature:
 
                 # Zpracujeme všechny řádky parserem.
                 for lineno, line in enumerate(fin, 1):
-                    elem = docelement.Element(self.test_bare_name, lineno, line)
+                    elem = elemcpp.Element(self.test_bare_name, lineno, line)
                     self.feature_lst.append(elem)
                     self.flog.write(repr(elem) + '\n')
 
