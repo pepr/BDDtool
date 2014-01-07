@@ -5,18 +5,16 @@ import re
 class Element:
     '''Element recognition from the Catch xxx.h source files.'''
 
-    # Pro detekci řádku se stručným popisem požadavku. Do testu byl opsán
-    # jako C++ komentář.
+    # The line with Feature: was included as a C++ comment.
     rexFeature = re.compile(r'''^//\s+(Feature|Požadavek)\s*:\s*
                                 (?P<text>.+)$''',
                             re.IGNORECASE | re.VERBOSE)
 
-    # Pro detekci prvního řádku s user story. Do testu byl opsán jako C++ komentář.
+    # First line of a User Story was included as a C++ comment.
     rexUserStory = re.compile(r'^//\s+(User story)\s*:', re.IGNORECASE)
 
-    # Pro detekci řádku s identifikací scénáře a pro extrakci textu.
-    # Následující regulární výrazy pak detekují další součásti popisu
-    # scénáře, které se transformují do podoby příslušných Catch sekcí.
+    # Detection of the Catch test case and the sections. Notice that
+    # the opening curly brace must be part of the line in this version.
     rexScenario = re.compile(r'''^\s*SCENARIO\("
                                  (?P<text>.+)
                                  "\)\s*{$''', re.VERBOSE)
@@ -30,42 +28,40 @@ class Element:
                              (?P<text>.+)
                              "\)\s*{$''', re.VERBOSE)
 
-    # Řádek uzavírající blok musí obsahovat jen pravou složenou závorku.
+    # A block must be closed by the closing brace at a separate line..
     rexRCurly =  re.compile(r'^\s*}')
 
-    def __init__(self, fname, lineno, line):
-        self.fname = fname      # původní zdrojový soubor
-        self.lineno = lineno    # číslo řádku ve zdrojovém souboru
-        self.line = line        # původní řádek
+    def __init__(self, fnameinfo, lineno, line):
+        self.fnameinfo = fnameinfo  # name of the source file or '<str>'
+        self.lineno = lineno        # in the source
+        self.line = line            # the line to be converted to the element
 
-        self.type = None        # typ elementu
-        self.text = None        # význačný text elementu
-        self.tags = None        # nepovinný atributy elementu scenario
+        self.type = None        # type of the element
+        self.text = None        # the important text of the element
+        self.tags = None        # optional tags of the scenario
 
-        # Řádek obsahující jen whitespace považujeme za prázdný
-        # řádek ve významu oddělovače.
+        # A whitespaces only line is considered empty (separator).
         if self.line.isspace():
             self.type = 'empty'
-            self.text = ''   # reprezentací bude prázdný řetězec
+            self.text = ''      # representation of the empty line
             return
 
-        # Řádek s Feature.
+        # Recognition of the elements (see the related identifiers).
         m = self.rexFeature.search(line)
         if m:
             self.type = 'feature'
             self.text = m.group('text').rstrip()
             return
 
-        # Řádek s User Story.
         m = self.rexUserStory.search(line)
         if m:
             self.type = 'userstory'
             self.text = line.rstrip()
             return
 
-        # Řádek s identifikací scénáře. Další řádky s Given, When, Then
-        # mají stejnou strukturu. Pocházejí z řetězcového literálu, takže
-        # atribut naplníme hodnotou po odstranění escape \".
+        # At the time of writing, only the doublequotes were escaped
+        # in the sources. The string literals must be unescaped (no fancy
+        # solution, yet.
         m = self.rexScenario.match(line)
         if m:
             self.type = 'scenario'
@@ -90,30 +86,21 @@ class Element:
             self.text = m.group('text').rstrip().replace(r'\"', '"')
             return
 
-        # Pravá složená závorka uzavírající blok.
+        # The right curly brace must be placed on a separate line
+        # for this version.
         m = self.rexRCurly.search(line)
         if m:
             self.type = 'rcurly'
             self.text = None
             return
 
-        #--------------------------------------------------------------------
-        # Prázdný řádek odpovídá situaci, kdy skončil soubor a další řádek
-        # nebylo možno načíst. Neměl by nastávat, ale pro jistotu.
-        if self.line == '':
-            # Z pohledu řešeného problému to tedy není prázdný řádek
-            # ve významu oddělovače.
-            self.type = 'EOF'
-            self.text = None
-            return
-
-        # Ostatní případy budeme považovat za řádek.
+        # Other cases are just lines.
         self.type = 'line'
         self.text = line.rstrip()
 
 
     def __repr__(self):
-        return repr((self.fname, self.lineno, self.type, self.text))
+        return repr((self.fnameinfo, self.lineno, self.type, self.text))
 
 
     def __str__(self):
