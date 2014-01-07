@@ -1,1 +1,1 @@
-Feature: pouze feature uvedený anglickým klíčovým slovem
+Feature: introduces the serie of mostly the technical tests (no BDD)

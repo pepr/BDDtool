@@ -2,12 +2,19 @@
   výstupu generovaného výsledku do víceřádkového řetězce (testování)
 - testy vlastní funkčnosti pro Catch přes víceřádkové řetězce
 
+- 'tag' element for both scenarios and test cases -- also for descriptions?
+
 - synchronizace feature seznamu se seznamem extrahovaným z jazyka
 - komentáře v angličtině
+
+- build also Python 2.7 version with the same functionality
 
 To be tested
 ============
 - Scenario with [tags]
+- Recognizing Catch scenarios with various ways of formatting and with
+  nested curly braces (i.e. better parser)
+- eat my own dog's food
 
 Variant prefixes of element descriptions
 ========================================
@@ -26,7 +33,6 @@ Internationalization
 - ability to tell the output human language form via an option
 
 
-Modify BDDtool for testing of Python units
-==========================================
-- implement elempy.py (also elemjava.py, elemcsharp.py, etc.)
-- eat my own dog's food
+Possible extension of the BDDtool
+=================================
+- generating skeletons for Python unit testing, Java, C# etc.

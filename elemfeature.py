@@ -10,7 +10,9 @@ class Element:
                                 (?P<text>.+)$''',
                              re.IGNORECASE | re.VERBOSE)
 
-    rexUserStory = re.compile('^\s*(User story)\s*:', re.IGNORECASE)
+    rexUserStory = re.compile(r'''^\s*(Story)\s*:\s*
+                               (?P<text>.+)$''',
+                              re.IGNORECASE | re.VERBOSE)
 
     # The Scenario may contain [tags], the other only a text.
     rexScenario = re.compile(r'''^\s*(Scenario|Example|Scénář|Příklad)\s*:\s*
@@ -28,6 +30,15 @@ class Element:
                              (?P<text>.+)\s*$''',
                              re.IGNORECASE | re.VERBOSE)
 
+    # The more technical Test Driven Approach uses TEST_CASE and
+    # possibly nested sections (how to describe if ever?). It is more
+    # code oriented.
+    rexTestCase = re.compile(r'''^\s*(Test)\s*:\s*
+                              (?P<text>.+)\s*$''',
+                              re.IGNORECASE | re.VERBOSE)
+    rexSection = re.compile(r'''^\s*(Sec)\s*:\s*
+                             (?P<text>.+)\s*$''',
+                             re.IGNORECASE | re.VERBOSE)
 
     def __init__(self, sourcenameinfo, lineno, line):
         self.sourcenameinfo = sourcenameinfo  # name of the source file or '<str>'
@@ -54,7 +65,7 @@ class Element:
         m = self.rexUserStory.search(line)
         if m:
             self.type = 'userstory'
-            self.text = line.rstrip()
+            self.text = m.group('text').rstrip()
             return
 
         m = self.rexScenario.match(line)
@@ -82,6 +93,17 @@ class Element:
             self.text = m.group('text').rstrip()
             return
 
+        # TDD -------------------------------------------
+        m = self.rexTestCase.match(line)
+        if m:
+            self.type = 'testcase'
+            self.text = m.group('text').rstrip()
+            return
+        m = self.rexSection.match(line)
+        if m:
+            self.type = 'section'
+            self.text = m.group('text').rstrip()
+            return
 
         # Other cases are just lines.
         self.type = 'line'
