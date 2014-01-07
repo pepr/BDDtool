@@ -31,16 +31,16 @@ class Element:
     # A block must be closed by the closing brace at a separate line..
     rexRCurly =  re.compile(r'^\s*}')
 
-    def __init__(self, fnameinfo, lineno, line):
-        self.fnameinfo = fnameinfo  # name of the source file or '<str>'
-        self.lineno = lineno        # in the source
-        self.line = line            # the line to be converted to the element
+    def __init__(self, sourcenameinfo, lineno, line):
+        self.sourcenameinfo = sourcenameinfo  # name of the source file or '<str>'
+        self.lineno = lineno    # in the source
+        self.line = line        # the line to be converted to the element
 
         self.type = None        # type of the element
         self.text = None        # the important text of the element
         self.tags = None        # optional tags of the scenario
 
-        # A whitespaces only line is considered empty (separator).
+        # A whitespaces-only line is considered empty (separator).
         if self.line.isspace():
             self.type = 'empty'
             self.text = ''      # representation of the empty line
@@ -61,7 +61,7 @@ class Element:
 
         # At the time of writing, only the doublequotes were escaped
         # in the sources. The string literals must be unescaped (no fancy
-        # solution, yet.
+        # solution, yet).
         m = self.rexScenario.match(line)
         if m:
             self.type = 'scenario'
@@ -100,7 +100,7 @@ class Element:
 
 
     def __repr__(self):
-        return repr((self.fnameinfo, self.lineno, self.type, self.text))
+        return repr((self.sourcenameinfo, self.lineno, self.type, self.text))
 
 
     def __str__(self):
