@@ -8,7 +8,7 @@ class Element:
     # Pro detekci řádku se stručným popisem požadavku. Do testu byl opsán
     # jako C++ komentář.
     rexFeature = re.compile(r'''^//\s+(Feature|Požadavek)\s*:\s*
-                                (?P<text>.+)$''', 
+                                (?P<text>.+)$''',
                             re.IGNORECASE | re.VERBOSE)
 
     # Pro detekci prvního řádku s user story. Do testu byl opsán jako C++ komentář.

@@ -28,19 +28,19 @@ class FeatureFilePullParserTests(unittest.TestCase):
          parser = BDDgen.Parser()
          self.assertRaises(FileNotFoundError, parser.parse, fname_input)
          self.assertFalse(os.path.isfile(fname_output))
-         
-         
+
+
     def test_empty_input_empty_output(self):
          '''existing but empty.feature file should generate the empty.h'''
          fname_input = os.path.join(self.featuresDir, 'empty.feature')
          fname_output = os.path.join(self.testsDir, 'empty.h')
- 
+
          # Remove the older files.
-         if os.path.isfile(fname_input): 
+         if os.path.isfile(fname_input):
              os.remove(fname_input)
-         if os.path.isfile(fname_output): 
+         if os.path.isfile(fname_output):
              os.remove(fname_output)
-         
+
          with open(fname_input, 'w') as f:
              pass
          self.assertTrue(os.path.isfile(fname_input))
@@ -48,10 +48,10 @@ class FeatureFilePullParserTests(unittest.TestCase):
          parser = BDDgen.Parser()
          with open(fname_output, 'w') as fout:
              fout.write(''.join(parser.parse(fname_input)))
-                  
+
          self.assertTrue(os.path.isfile(fname_output))
          self.assertEqual(os.path.getsize(fname_output), 0)
-         
+
 
 
 if __name__ == '__main__':

@@ -6,22 +6,26 @@ import sys
 
 import feature
 
-# Adresář s xxx.feature soubory.
+# The directory with the xxx.feature source files.
 features_dir = os.path.abspath('./features')
+if not os.path.isdir(testscpp_dir):
+    os.makedirs(testscpp_dir)
 
-# Adresář pro xxx.h soubory s Catch testy (poprvé generované, ručně upravované
-# a případně aktualizované podle .feature.
-tests_dir = os.path.abspath('./tests')
+# The directory with the xxx.h sources with Catch tests.
+testscpp_dir = os.path.abspath('./testscpp')
+if not os.path.isdir(testscpp_dir):
+    os.makedirs(testscpp_dir)
 
-# Pomocný podadresář pro logy zachycující průběh generování.
+# Auxiliary logs.
 log_dir = os.path.realpath('./log')
 if not os.path.isdir(log_dir):
     os.makedirs(log_dir)
 
-# Získáme seznam všech .feature souborů a v cyklu je zpracujeme.
+# Get the list of all *.feature files and process them in the loop
+# to get the *.h files for Catch.
 featureFilenames = glob.glob(os.path.join(features_dir, '*.feature'))
 
-for featureFname in featureFilenames:
-    fe = feature.Feature(featureFname, tests_dir, log_dir)
+for fname in featureFilenames:
+    fe = feature.Feature(fname, testscpp_dir, log_dir)
     msg = fe.parse()
     print(msg)
