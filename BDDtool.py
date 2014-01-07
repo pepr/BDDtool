@@ -8,8 +8,8 @@ import feature
 
 # The directory with the xxx.feature source files.
 features_dir = os.path.abspath('./features')
-if not os.path.isdir(testscpp_dir):
-    os.makedirs(testscpp_dir)
+if not os.path.isdir(features_dir):
+    os.makedirs(features_dir)
 
 # The directory with the xxx.h sources with Catch tests.
 testscpp_dir = os.path.abspath('./testscpp')

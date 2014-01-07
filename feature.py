@@ -178,9 +178,9 @@ class Feature:
                     lst.append(elem)
 
         if status == 1:
-            # Poslední sesbíraný scénář
-            k = lst[0].text           # identifikace scénáře
-            d_feature[k] = lst          # --> seznam elementů scénáře
+            # The last collected scenario.
+            k = lst[0].text     # the scenario identification
+            d_feature[k] = lst  # --> the list of elements of the scenario
 
 #         # ???
 #         self.msg_lst.append(('=' * 70))
@@ -194,14 +194,17 @@ class Feature:
         self.loadTestElementList()
         self.flog.write('-' * 70 + '\n')
 
-        # Konverze seznamu elementů pro jeden scénář do podoby .h souboru.
+        # Converting the list of elements to the .h file.
+        output = []
+        for k in lst_id_feature:
+            lst = d_feature[k]
+            output.append('\n'.join(repr(e) for e in lst))
+            output.append('\n' + ('-' * 70) + '\n')
+            output.append(self.scenario(lst, 0))
+            output.append('\n' + ('=' * 70) + '\n')
+
         with open(self.testfname, 'w', encoding='utf-8') as ftest:
-            for k in lst_id_feature:
-                lst = d_feature[k]
-                ftest.write('\n'.join(repr(e) for e in lst))
-                ftest.write('\n' + ('-' * 70) + '\n')
-                ftest.write(self.scenario(lst, 0))
-                ftest.write('\n' + ('=' * 70) + '\n')
+            ftest.write('\n'.join(output))
 
         self.closeLogFile()
 

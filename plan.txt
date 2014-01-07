@@ -5,6 +5,10 @@
 - komentáře v angličtině
 - CRLF to LF ending for sources of BDDtool
 
+To be tested
+============
+- Scenario with [tags]
+
 Variant prefixes of element descriptions
 ========================================
 - volnější forma uvození klíčových vět ve .feature (bez dvojtečky)
