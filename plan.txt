@@ -35,4 +35,6 @@ Internationalization
 
 Possible extension of the BDDtool
 =================================
-- generating skeletons for Python unit testing, Java, C# etc.
+- generating skeletons for Python unit testing -- then this application
+  could test itself (eat my own dog's food for this Python application).
+- generating skeletons for Java, C# etc.
