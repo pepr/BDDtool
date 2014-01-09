@@ -1,7 +1,7 @@
 #!python3
 
 import elemfeature
-import elemcpp
+import elemcatch
 import os
 
 class Feature:
@@ -28,7 +28,7 @@ class Feature:
         self.feature_lst = None # seznam elementů z .feature
         self.h_lst = None       # seznam elementů z .h
 
-        self.msg_lst = []    # info pro zobrazování zpracovaných souborů
+        self.display_lst = []    # info pro zobrazování zpracovaných souborů
 
 
     def id(self):
@@ -40,7 +40,7 @@ class Feature:
     def openLogFile(self):
         assert self.flog is None
         self.flog = open(self.logfname, 'w', encoding='utf-8')
-        self.msg_lst.append('w ' + self.logfname)
+        self.display_lst.append('w ' + self.logfname)
 
 
     def closeLogFile(self):
@@ -48,13 +48,31 @@ class Feature:
         self.flog = None
 
 
+    def log(self, msg):
+        self.flog.write(msg)
+
+
+    def display(self, msg):
+        '''Collects display lines.
+
+        The result is used by the code that uses the object an need not
+        neccessarily be displayed. The list elements should be considered
+        lines without the \n. When  a multiline string is build from
+        the list content, it should be joined by '\n'.'''
+        self.display_lst.append(msg)
+
+
     def parseString(self, source, sourcenameinfo, elem_module):
-        '''Returns the feature identifier and the list of elements from string.
+        '''Returns the result of parsing a multiline string.
 
         source ........... multiline string
         sourcenameinfo ... whatever identification string
                            (e.g. bare filename), used for logs
         elem_module ...... module that implements the Element class
+
+        Returns:
+        identifier ....... the feature or story string identifier
+        lst .............. list of parsed element objects
         '''
 
         # Split the multiline source string to get the lines, recognize
@@ -63,8 +81,8 @@ class Feature:
         for lineno, line in enumerate(source.split('\n'), 1):
             elem = elem_module.Element(sourcenameinfo, lineno, line)
             lst.append(elem)
-            self.flog.write(repr(elem) + '\n') ##
-        self.flog.write('-' * 70 + '\n')       ##
+            self.log(repr(elem) + '\n') ##
+        self.log('-' * 70 + '\n')       ##
 
         # Extract the Feature identifier from the 'feature' element.
         # It is recommended but not required -- initialized to empty string.
@@ -89,7 +107,7 @@ class Feature:
         sourcenameinfo = self.feature_bare_name
 
         # Some info for possible output to the display.
-        self.msg_lst.append('r ' + self.featurefname)
+        self.display('r ' + self.featurefname)
 
         # Call the parser that accepts the multiline string.
         # Pass the info including the modul that should be used
@@ -107,12 +125,12 @@ class Feature:
 
                 # Zpracujeme všechny řádky parserem.
                 for lineno, line in enumerate(fin, 1):
-                    elem = elemcpp.Element(self.test_bare_name, lineno, line)
+                    elem = elemcatch.Element(self.test_bare_name, lineno, line)
                     self.feature_lst.append(elem)
-                    self.flog.write(repr(elem) + '\n')
+                    self.log(repr(elem) + '\n')
 
                 # Přidáme informaci o dotčených souborech.
-                self.msg_lst.append('r ' + self.testfname)
+                self.display('r ' + self.testfname)
 
 
     def scenario(self, lst, level):
@@ -195,7 +213,7 @@ class Feature:
                 if elem.type == 'scenario':
                     lst_id_feature.append(elem.text)
                     lst = [elem]
-                    ##self.msg_lst.append('- ' + elem.text)
+                    ##self.display('- ' + elem.text)
                     status = 1
 
             elif status == 1:           # sbíráme elementy scénáře
@@ -212,16 +230,16 @@ class Feature:
             d_feature[k] = lst  # --> the list of elements of the scenario
 
 #         # ???
-#         self.msg_lst.append(('=' * 70))
+#         self.display(('=' * 70))
 #         for k in lst_id_feature:
 #             lst = d_feature[k]
 #             for elem in lst:
-#                 self.msg_lst.append('{}, {!r}'.format(elem.type, elem.text))
-#             self.msg_lst.append(('-' * 30))
+#                 self.display('{}, {!r}'.format(elem.type, elem.text))
+#             self.display(('-' * 30))
 
         # Rozložíme .h -- pokud existuje
         self.loadTestElementList()
-        self.flog.write('-' * 70 + '\n')
+        self.log('-' * 70 + '\n')
 
         # Converting the list of elements to the .h file.
         output = []
@@ -237,4 +255,4 @@ class Feature:
 
         self.closeLogFile()
 
-        return '\nParsed feature: {}\n\t'.format(self.id()) + ('\n\t'.join(self.msg_lst))
+        return '\nParsed feature: {}\n\t'.format(self.id()) + ('\n\t'.join(self.display_lst))
