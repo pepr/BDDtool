@@ -18,7 +18,7 @@ import re
 # 0 - exact char sequence, 1 - regular character pattern.
 #
 # The second element captures depends on the on the first element.
-# Or it is the exact string, or it is a compiled regular expression.
+# Or it is the exact string, or it is a regular expression pattern.
 #
 # The third element is the lex item identifier.
 #
@@ -26,7 +26,7 @@ import re
 # be important sometimes (see testing whitespaces only after newline).
 #
 rules = [
-    (1, re.compile(r'"[^"]*"'), 'dqstrlit'), # double quoted string literal
+    (1, r'"[^"]*"',     'dqstrlit'),    # double quoted string literal
 
     (0, 'SCENARIO',     'scenario'),
     (0, 'GIVEN',        'given'),
@@ -44,11 +44,14 @@ rules = [
     (0, '\n',           'newline'),
     (0, '//',           'endlcomment'),
 
-    (1, re.compile(r'\s+'),   'whitespaces'),  # must be tested after \n
+    (1, r'\s+',         'whitespaces'),      # must be tested after \n
 
-    (1, re.compile(r'(User\s+)?Story|(Uživatelský\s+)?Požadavek', re.I), 'story'),
-    (1, re.compile(r'Feature|Rys', re.I), 'feature'),
-    (1, re.compile(r'[^\n]+'),  'restofline')    # default for the rest
+    (1, r'(?i)(User\s+)?Story',            'story'),
+    (1, r'(?i)(Uživatelský\s+)?Požadavek', 'story'),
+    (1, r'(?i)Feature',         'feature'),
+    (1, r'(?i)Rys',             'feature'),
+
+    (1, r'[^\n]+',              'restofline')   # default for the rest
 ]
 
 
@@ -64,12 +67,13 @@ def build_str_closures(s, lexid, container, iterator):
     return (match_str, result_str)
 
 
-def build_rex_closures(rex, lexid, container, iterator):
-    '''Builds the pair of closures for recognition via regular expressions.'''
+def build_rex_closures(pattern, lexid, container, iterator):
+    '''Builds the pair of closures for the regex pattern.'''
 
     def match_rex(container, iterator):
         # Actually returns a match object that can be interpreted
         # in a boolean context as True/False (matches/does not match).
+        rex = re.compile(pattern)
         return rex.match(container.source[iterator.pos:])
 
     def result_rex(container, iterator):
