@@ -12,9 +12,9 @@ if not os.path.isdir(features_dir):
     os.makedirs(features_dir)
 
 # The directory with the xxx.h sources with Catch tests.
-testscpp_dir = os.path.abspath('./testscpp')
-if not os.path.isdir(testscpp_dir):
-    os.makedirs(testscpp_dir)
+testscatch_dir = os.path.abspath('./testscatch')
+if not os.path.isdir(testscatch_dir):
+    os.makedirs(testscatch_dir)
 
 # Auxiliary logs.
 log_dir = os.path.realpath('./log')
@@ -26,6 +26,6 @@ if not os.path.isdir(log_dir):
 featureFilenames = glob.glob(os.path.join(features_dir, '*.feature'))
 
 for fname in featureFilenames:
-    fe = feature.Feature(fname, testscpp_dir, log_dir)
+    fe = feature.Feature(fname, testscatch_dir, log_dir)
     msg = fe.parse()
     print(msg)
