@@ -49,7 +49,7 @@ rules = [
     (0, 'TEST_CASE',    'test_case'),
     (0, 'SECTION',      'section'),
 
-    (1, r'[ \t]',       'whitespaces'),   # ... except the '\n'
+    (1, r'[ \t]+',      'whitespaces'),   # ... except the '\n'
 
     (1, r'(?i)(User\s+)?Story',            'story'),
     (1, r'(?i)(Uživatelský\s+)?Požadavek', 'story'),
