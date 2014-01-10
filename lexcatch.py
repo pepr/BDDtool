@@ -173,44 +173,104 @@ class Container:
 #-----------------------------------------------------------------------
 
 def parse(source):
-    container = Container(source)        # get ready for lexical parsing
-    lexlst = list(container)             # get the list of lexical items
-    for synitem in featureParse(lexlst): # result of syntactic parsing
-        yield synitem
+    container = Container(source)       # get ready for lexical parsing
+    lexlst = list(container)            # get the list of lexical items
+    for item in synParse(lexlst):       # result of syntactic parsing
+        yield item
 
 
-def featureParse(lexlst):
-    # There are some lexical items...
+def synParse(lexlst):
+    synlst = []         # the result with syntactic elements
+    lexsublst = []      # lexical elements for unknown syntax
+
     pos = 0
     while pos < len(lexlst):
         lexid, value = lexlst[pos]
         print(pos, lexid, end=' ')
-        if lexid == 'commentendl':
-            item, pos = commentEndlParse(lexlst, pos)
-            print('({})'.format(pos))
-
-        elif lexid == 'scenario':
-            item, pos = scenarioParse(lexlst, pos)
-            print('({})'.format(pos))
-
-        elif lexid == 'empty':
-            item, pos = emptyParse(lexlst, pos)
-
+        if lexid in ('commentendl', 'commentlpar'):     # comment
+            item, pos = commentParse(lexlst, pos, lexid)
+            synlst.extend(item)
+            lexsublst = []      # sublist already present in the syntactic item
+#         elif lexid == 'scenario':                       # scenario
+#             item, pos = scenarioParse(lexlst, pos, lexid)
+#             synlst.extend(item)
+#             lexsublst = []
+#         elif lexid == 'empty':                          # empty line
+#             item, pos = emptyParse(lexlst, pos, lexid)
+#             lexsublst = []
+#             synlst.extend(item)
         else:
+            lexsublst.append(lexlst[pos])               # another lexem
             pos += 1
 
+    if lexsublst:
+        synlst.append( ('synParse', 'unknown', lexsublst) )
 
-def commentEndlParse(lexlst, pos):
-    lexid, value = lexlst[pos]
-    return ('commentEndlParse', 'not implemented'), pos + 1
+    return synlst
 
-def scenarioParse(lexlst, pos):
-    lexid, value = lexlst[pos]
-    return ('scenarioParse', 'not implemented'), pos + 1
 
-def emptyParse(lexlst, pos):
+def commentParse(lexlst, pos, lexid):
+    synlst = []         # the result with syntactic elements
+    lexsublst = []         # for unrecognized lexems
+
+    if lexid == 'commentendl':                          # C++ comment //
+        item, pos = commentEndlParse(lexlst, pos, lexid)
+        synlst.extend(item)
+        lexsublst = []      # sublist already present in the syntactic item
+    elif lexid == 'commentlpar':                        # C comment /*
+        item, pos = commentCParse(lexlst, pos, lexid)
+        synlst.extend(item)
+        lexsublst = []
+    else:
+        lexsublst.append(lexlst[pos])   # another lexem
+        pos += 1
+
+    if lexsublst:
+        synlst.append( ('commentParse', 'unknown', lexsublst) )
+
+    return synlst, pos
+
+
+def commentEndlParse(lexlst, pos, lexid):
+    assert lexid == 'commentendl'
+    synlst = []
+    lexsublst = [ lexlst[pos] ]         # first lexem of the C++ comment
+    pos += 1
     lexid, value = lexlst[pos]
-    return ('emptyParse', 'not implemented'), pos + 1
+    while pos < len(lexlst):
+        if lexid == 'story':
+            lst, pos = storyParse(lexlst, pos, lexid)
+            synlst.extend(lst)
+            lexsublst = []
+        elif lexid == 'feature':
+            lst, pos = featureParse(lexlst, pos, lexid)
+            synlst.extend(lst)
+            lexsublst = []
+        elif lexid == 'newline':
+            lexsublst.append(lexlst[pos])       # newline quits the loop
+            pos += 1
+            break
+        else:
+            lexsublst.append(lexlst[pos])       # another lexem
+            pos += 1
+
+    if lexsublst:
+        synlst.append( ('commentEndlParse', 'unknown', lexsublst))
+
+    return synlst, pos
+
+
+def scenarioParse(lexlst, pos, lexid):
+    assert lexid == 'scenario'
+    lexsublst = [ lexlst[pos] ]         # first lexem of the scenario
+    return ('scenarioParse', 'not implemented', lexsublst), pos + 1
+
+
+def emptyParse(lexlst, pos, lexid):
+    assert lexid == 'empty'
+    lexsublst = [ lexlst[pos] ]         # first lexem of the scenario
+    return ('emptyParse', 'not implemented', lexsublst), pos + 1
+
 
 #-----------------------------------------------------------------------
 
@@ -238,6 +298,24 @@ if __name__ == '__main__':
                     }
                 }
             }
+        }''')
+
+    source = textwrap.dedent('''\
+        SCENARIO( "name for my scenario" ) {
+            GIVEN( "some initial state" ) {
+                WHEN( "an operation is performed" ) {
+                    THEN( "we arrive at some expected state" ) {
+                    }
+                }
+            }
+        }''')
+
+    source = textwrap.dedent('''\
+        SCENARIO( "name for my scenario" ) {
+        }''')
+
+    source = textwrap.dedent('''\
+        SCENARIO( "name for my scenario" ) {
         }''')
 
     # Lexical parsing.
