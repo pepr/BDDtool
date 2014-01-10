@@ -23,10 +23,24 @@ import re
 # The third element is the lex item identifier.
 #
 # The following rules are evaluated in this order. The order can
-# be important sometimes (see testing whitespaces only after newline).
+# be important sometimes.
 #
 rules = [
-    (1, r'"[^"]*"',     'dqstrlit'),    # double quoted string literal
+    (0, '\\',           'esc'),         # escaping char
+    (0, ':',            'colon'),
+    (0, '(',            'lpar'),
+    (0, ')',            'rpar'),
+    (0, '{',            'lbrace'),
+    (0, '}',            'rbrace'),
+
+##    (1, r'"[^"]*"',     'dqstrlit'),    # double quoted string literal
+    (0, '"',            'dquote'),
+
+    (0, '\n',           'newline'),
+
+    (0, '//',           'commentendl'),   # C++ comment till the end of line
+    (0, '/*',           'commentlpar'),   # C-comment started
+    (0, '*/',           'commentrpar'),   # C-comment finished
 
     (0, 'SCENARIO',     'scenario'),
     (0, 'GIVEN',        'given'),
@@ -35,27 +49,20 @@ rules = [
     (0, 'TEST_CASE',    'test_case'),
     (0, 'SECTION',      'section'),
 
-    (0, ':',            'colon'),
-    (0, '(',            'lpar'),
-    (0, ')',            'rpar'),
-    (0, '{',            'lbrace'),
-    (0, '}',            'rbrace'),
-    (0, '"',            'dquote'),
-    (0, '\n',           'newline'),
-    (0, '//',           'endlcomment'),
-
-    (1, r'\s+',         'whitespaces'),      # must be tested after \n
+    (1, r'[ \t]',       'whitespaces'),   # ... except the '\n'
 
     (1, r'(?i)(User\s+)?Story',            'story'),
     (1, r'(?i)(Uživatelský\s+)?Požadavek', 'story'),
     (1, r'(?i)Feature',         'feature'),
     (1, r'(?i)Rys',             'feature'),
 
-    (1, r'[^\n]+',              'restofline')   # default for the rest
+    (1, r'[^"\\\n\t ]+', 'str'), # a string until esc, whitespace or dquote
+    (1, r'[^\n]+',       'unrecognized')   # ... until the end of the line
 ]
 
+#-----------------------------------------------------------------------
 
-def build_str_closures(s, lexid, container, iterator):
+def build_lex_str_closures(s, lexid, container, iterator):
     '''Builds the pair of closures for recognizing exact strings.'''
 
     def match_str(container, iterator):
@@ -66,8 +73,9 @@ def build_str_closures(s, lexid, container, iterator):
 
     return (match_str, result_str)
 
+#-----------------------------------------------------------------------
 
-def build_rex_closures(pattern, lexid, container, iterator):
+def build_lex_rex_closures(pattern, lexid, container, iterator):
     '''Builds the pair of closures for the regex pattern.'''
 
     def match_rex(container, iterator):
@@ -83,6 +91,7 @@ def build_rex_closures(pattern, lexid, container, iterator):
 
     return (match_rex, result_rex)
 
+#-----------------------------------------------------------------------
 
 def buildMatchAndResultFunctions(container, iterator):
     '''Builds the list of (match_fn, result_fn) closures for the rules.'''
@@ -95,18 +104,19 @@ def buildMatchAndResultFunctions(container, iterator):
     for method, x, lexid in rules:      # x is or string or regex
         if method == 0:
             # Here x is a string.
-            functions.append(build_str_closures(x, lexid, container, iterator))
+            functions.append(build_lex_str_closures(x, lexid, container, iterator))
         elif method == 1:
             # Here x is a compiled regular expression.
-            functions.append(build_rex_closures(x, lexid, container, iterator))
+            functions.append(build_lex_rex_closures(x, lexid, container, iterator))
         else:
             raise NotImplementedError
 
     return functions
 
+#-----------------------------------------------------------------------
 
-
-class LexIterator:
+class Iterator:
+    '''Iterates over the Container and returns lexical elements.'''
 
     def __init__(self, container, startpos):
         self.container = container
@@ -137,11 +147,12 @@ class LexIterator:
         else:
             raise StopIteration
 
+#-----------------------------------------------------------------------
 
-class LexContainer:
-    '''Lexical parsing the Catch-test source multiline string.
+class Container:
+    '''Iterable container for lexical parsing of the Catch-test source.
 
-    Implemented as the iterable container.
+    The source is passed as a multiline string.
     '''
 
     def __init__(self, source):
@@ -149,7 +160,7 @@ class LexContainer:
 
 
     def __iter__(self):
-        return LexIterator(self, 0)
+        return Iterator(self, 0)
 
 
     def __repr__(self):
@@ -159,21 +170,89 @@ class LexContainer:
     def __str__(self):
         return self.line
 
+#-----------------------------------------------------------------------
 
+def parse(source):
+    container = Container(source)        # get ready for lexical parsing
+    lexlst = list(container)             # get the list of lexical items
+    for synitem in featureParse(lexlst): # result of syntactic parsing
+        yield synitem
+
+
+def featureParse(lexlst):
+    # There are some lexical items...
+    pos = 0
+    while pos < len(lexlst):
+        lexid, value = lexlst[pos]
+        print(pos, lexid, end=' ')
+        if lexid == 'commentendl':
+            item, pos = commentEndlParse(lexlst, pos)
+            print('({})'.format(pos))
+
+        elif lexid == 'scenario':
+            item, pos = scenarioParse(lexlst, pos)
+            print('({})'.format(pos))
+
+        elif lexid == 'empty':
+            item, pos = emptyParse(lexlst, pos)
+
+        else:
+            pos += 1
+
+
+def commentEndlParse(lexlst, pos):
+    lexid, value = lexlst[pos]
+    return ('commentEndlParse', 'not implemented'), pos + 1
+
+def scenarioParse(lexlst, pos):
+    lexid, value = lexlst[pos]
+    return ('scenarioParse', 'not implemented'), pos + 1
+
+def emptyParse(lexlst, pos):
+    lexid, value = lexlst[pos]
+    return ('emptyParse', 'not implemented'), pos + 1
+
+#-----------------------------------------------------------------------
 
 if __name__ == '__main__':
-
+    # This is not a serious unit test -- just for initial debugging.
+    # Let the following Catch source was written manually and is maintained
+    # by a programmer.
     import textwrap
-    container = LexContainer(textwrap.dedent('''\
-                        // Story: this is a user story approach
-                        // Uživatelský požadavek: this is the same in Czech
-                        //
-                        SCENARIO("vectors can be sized and resized") {
-                        GIVEN("A vector with some items") {
-                            WHEN("more capacity is reserved") {
-                                THEN("the capacity changes but not the size") {
-                                }
-                            }
-                        }'''))
-    for lexid, value in container:
+    source = textwrap.dedent('''\
+        // Story: BDD oriented description/testing of the problem
+        //
+        //    As a normal user
+        //    I want to capture "my view" to the subproblem as normal sentences
+        //    so that it does not enforce the knowledge of programming.
+        //
+        SCENARIO( "name for \\"my\\" scenario", "[taga][tagb]" ) {
+            GIVEN( "some initial state" ) {
+                // set up initial state
+
+                WHEN( "an operation is performed" ) {
+                    // perform operation
+
+                    THEN( "we arrive at some expected state" ) {
+                        // assert expected state
+                    }
+                }
+            }
+        }''')
+
+    # Lexical parsing.
+    print('-' * 50, '  lexical parsing')
+    container = Container(source)
+    lexlst = list(container)
+    for lexid, value in lexlst:
         print( (lexid, value) )
+
+    # Now a trivial reconstruction of the lex items back to the source content.
+    print('-' * 50, '  lexems back to the source')
+    source = ''.join(value for lexid, value in lexlst)
+    print(source)
+
+    # Extracting higher-level elements (syntactic parsing).
+    print('-' * 50, '  syntactic parsing')
+    for synitem in parse(source):
+        print(synitem)
