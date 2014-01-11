@@ -42,20 +42,24 @@ rules = [
     (0, '/*',           'commentlpar'),   # C-comment started
     (0, '*/',           'commentrpar'),   # C-comment finished
 
-    (0, 'SCENARIO',     'scenario'),
-    (0, 'GIVEN',        'given'),
-    (0, 'WHEN',         'when'),
-    (0, 'THEN',         'then'),
-    (0, 'TEST_CASE',    'test_case'),
-    (0, 'SECTION',      'section'),
+    # Keywords.
+    (0, 'SCENARIO',     'kw_scenario'),
+    (0, 'GIVEN',        'kw_given'),
+    (0, 'WHEN',         'kw_when'),
+    (0, 'THEN',         'kw_then'),
+    (0, 'TEST_CASE',    'kw_test_case'),
+    (0, 'SECTION',      'kw_section'),
+
 
     (1, r'[ \t]+',      'whitespaces'),   # ... except the '\n'
 
-    (1, r'(?i)(User\s+)?Story',            'story'),
-    (1, r'(?i)(Uživatelský\s+)?Požadavek', 'story'),
-    (1, r'(?i)Feature',         'feature'),
-    (1, r'(?i)Rys',             'feature'),
+    # Labels that identify portions via free text.
+    (1, r'(?i)(User\s+)?Story',            'lab_story'),
+    (1, r'(?i)(Uživatelský\s+)?Požadavek', 'lab_story'),
+    (1, r'(?i)Feature',         'lab_feature'),
+    (1, r'(?i)Rys',             'lab_feature'),
 
+    # Other things.
     (1, r'[^"\\\n\t ]+', 'str'), # a string until esc, whitespace or dquote
     (1, r'[^\n]+',       'unrecognized')   # ... until the end of the line
 ]

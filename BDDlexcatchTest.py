@@ -30,35 +30,36 @@ class LexCatchTests(unittest.TestCase):
             return lexid == expected_lexid and keyword == value
 
         # Keywords as exact strings with the exact case.
-        self.assertTrue(chk('SCENARIO',  'scenario'))
-        self.assertTrue(chk('GIVEN',     'given'))
-        self.assertTrue(chk('WHEN',      'when'))
-        self.assertTrue(chk('THEN',      'then'))
-        self.assertTrue(chk('TEST_CASE', 'test_case'))
-        self.assertTrue(chk('SECTION',   'section'))
+        self.assertTrue(chk('SCENARIO',  'kw_scenario'))
+        self.assertTrue(chk('GIVEN',     'kw_given'))
+        self.assertTrue(chk('WHEN',      'kw_when'))
+        self.assertTrue(chk('THEN',      'kw_then'))
+        self.assertTrue(chk('TEST_CASE', 'kw_test_case'))
+        self.assertTrue(chk('SECTION',   'kw_section'))
 
         # Recognized words as keywords for human text. Case ignored.
-        self.assertTrue(chk('user story',   'story'))
-        self.assertTrue(chk('USER STORY',   'story'))
-        self.assertTrue(chk('UsEr StOrY',   'story'))
-        self.assertTrue(chk('USER                 STORY',   'story'))
-        self.assertTrue(chk('story', 'story'))
-        self.assertTrue(chk('Story', 'story'))
-        self.assertTrue(chk('STORY', 'story'))
-        self.assertTrue(chk('StOrY', 'story'))
+        self.assertTrue(chk('user story',   'lab_story'))
+        self.assertTrue(chk('USER STORY',   'lab_story'))
+        self.assertTrue(chk('UsEr StOrY',   'lab_story'))
+        self.assertTrue(chk('USER                 STORY',   'lab_story'))
+        self.assertTrue(chk('story', 'lab_story'))
+        self.assertTrue(chk('Story', 'lab_story'))
+        self.assertTrue(chk('STORY', 'lab_story'))
+        self.assertTrue(chk('StOrY', 'lab_story'))
 
-        self.assertTrue(chk('Uživatelský požadavek', 'story'))
-        self.assertTrue(chk('UŽIVATELSKÝ POŽADAVEK', 'story'))
-        self.assertTrue(chk('UžIvAtElSkÝ PoŽaDaVeK', 'story'))
-        self.assertTrue(chk('Uživatelský požadavek', 'story'))
-        self.assertTrue(chk('POŽADAVEK', 'story'))
-        self.assertTrue(chk('PoŽaDaVeK', 'story'))
+        self.assertTrue(chk('Uživatelský požadavek', 'lab_story'))
+        self.assertTrue(chk('UŽIVATELSKÝ POŽADAVEK', 'lab_story'))
+        self.assertTrue(chk('UžIvAtElSkÝ PoŽaDaVeK', 'lab_story'))
+        self.assertTrue(chk('Uživatelský požadavek', 'lab_story'))
+        self.assertTrue(chk('POŽADAVEK', 'lab_story'))
+        self.assertTrue(chk('PoŽaDaVeK', 'lab_story'))
 
-        self.assertTrue(chk('feature', 'feature'))
-        self.assertTrue(chk('Feature', 'feature'))
-        self.assertTrue(chk('FEATURE', 'feature'))
-        self.assertTrue(chk('FeAtUrE', 'feature'))
+        self.assertTrue(chk('feature', 'lab_feature'))
+        self.assertTrue(chk('Feature', 'lab_feature'))
+        self.assertTrue(chk('FEATURE', 'lab_feature'))
+        self.assertTrue(chk('FeAtUrE', 'lab_feature'))
 
+        self.assertTrue(chk('rys', 'lab_feature'))
 
     def test_body(self):
         '''parsing the body in curly braces'''
@@ -88,6 +89,7 @@ class LexCatchTests(unittest.TestCase):
 
 
     def test_SECTION(self):
+        '''lexical parsing of SECTION constructs.'''
 
         def lex(source):   # auxiliary fn for testing lex analysis
             return list(lexcatch.Container(source))
@@ -96,29 +98,29 @@ class LexCatchTests(unittest.TestCase):
         # and empty body on one line).
         source = 'SECTION(""){}'
         lexlst = lex(source)
-        self.assertTrue(lexlst == [('section', 'SECTION'),
-                                   ('lpar',    '('),
-                                   ('dquote',  '"'),
-                                   ('dquote',  '"'),
-                                   ('rpar',    ')'),
-                                   ('lbrace',  '{'),
-                                   ('rbrace',  '}')])
+        self.assertTrue(lexlst == [('kw_section', 'SECTION'),
+                                   ('lpar',       '('),
+                                   ('dquote',     '"'),
+                                   ('dquote',     '"'),
+                                   ('rpar',       ')'),
+                                   ('lbrace',     '{'),
+                                   ('rbrace',     '}')])
 
         # Usual SECTION with identifier but empty body.
         source = 'SECTION( "identifier" ) {\n}'
-        print(lexlst)
-        self.assertTrue(lexlst == [('section',     'SECTION'),
-                                   ('lpar',        '('),
-                                   ('whitespaces', ' '),
-                                   ('dquote',      '"'),
-                                   ('str',         'identifier'),
-                                   ('dquote',      '"'),
-                                   ('whitespaces', ' '),
-                                   ('rpar',        ')'),
-                                   ('whitespaces', ' '),
-                                   ('lbrace',      '{'),
-                                   ('newline',     '\n'),
-                                   ('rbrace',      '}')
+        lexlst = lex(source)
+        self.assertTrue(lexlst == [('kw_section',     'SECTION'),
+                                   ('lpar',           '('),
+                                   ('whitespaces',    ' '),
+                                   ('dquote',         '"'),
+                                   ('str',            'identifier'),
+                                   ('dquote',         '"'),
+                                   ('whitespaces',    ' '),
+                                   ('rpar',           ')'),
+                                   ('whitespaces',    ' '),
+                                   ('lbrace',         '{'),
+                                   ('newline',        '\n'),
+                                   ('rbrace',         '}')
                                   ])
 
 

@@ -1,6 +1,4 @@
-- před výstupem do souboru generovat seznam řádků kvůli možnosti
-  výstupu generovaného výsledku do víceřádkového řetězce (testování)
-- testy vlastní funkčnosti pro Catch přes víceřádkové řetězce
+- (3, None, 'lexid') as marker for including i18n portions
 
 - 'tag' element for both scenarios and test cases -- also for descriptions?
 
