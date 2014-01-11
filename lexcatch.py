@@ -275,6 +275,15 @@ def emptyParse(lexlst, pos, lexid):
     lexsublst = [ lexlst[pos] ]         # first lexem of the scenario
     return ('emptyParse', 'not implemented', lexsublst), pos + 1
 
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+
+def catchParse(lexlst):
+    '''Recursive syntactic analysis.
+
+    Returns the list of syntactic items.
+    '''
+    return ['a']
 
 #-----------------------------------------------------------------------
 
@@ -322,6 +331,10 @@ if __name__ == '__main__':
         SCENARIO( "name for my scenario" ) {
         }''')
 
+    # Displaying the source.
+    print('-' * 50, '  source')
+    print(source)
+
     # Lexical parsing.
     print('-' * 50, '  lexical parsing')
     container = Container(source)
@@ -329,12 +342,22 @@ if __name__ == '__main__':
     for lexid, value in lexlst:
         print( (lexid, value) )
 
-    # Now a trivial reconstruction of the lex items back to the source content.
+    # Now a trivial reconstruction of the lex items back to the source
+    # content. Report if it is the same or not.
     print('-' * 50, '  lexems back to the source')
-    source = ''.join(value for lexid, value in lexlst)
-    print(source)
+    newsource = ''.join(value for lexid, value in lexlst)
+
+    if newsource == source:
+        print('Reconstrucion OK.')
+    else:
+        print('Reconstrucion failed.')
+
+    # Syntactic parsing.
 
     # Extracting higher-level elements (syntactic parsing).
     print('-' * 50, '  syntactic parsing')
-    for synitem in parse(source):
+    synlst = catchParse(lexlst)
+    for synitem in synlst:
         print(synitem)
+
+    print('=' * 70)
