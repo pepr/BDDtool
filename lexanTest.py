@@ -120,23 +120,49 @@ class LexanTests(unittest.TestCase):
         self.assertEqual(len(lst), 1)   # single item
         self.assertEqual(lst[0], ('comment', ' * * a comment * * ', '/*', '*/') )
 
-###    def test_keywords(self):
-###        '''keywords converted to lex items'''
-###
-###        def chk(keyword, expected_lexid): # aux. function for checking keywords
-###            lst = list(lexcatch.Container(keyword))
-###            self.assertEqual(len(lst), 1)
-###            lexid, value = lst[0]
-###            return lexid == expected_lexid and keyword == value
-###
-###        # Keywords as exact strings with the exact case.
-###        self.assertTrue(chk('SCENARIO',  'kw_scenario'))
-###        self.assertTrue(chk('GIVEN',     'kw_given'))
-###        self.assertTrue(chk('WHEN',      'kw_when'))
-###        self.assertTrue(chk('THEN',      'kw_then'))
-###        self.assertTrue(chk('TEST_CASE', 'kw_test_case'))
-###        self.assertTrue(chk('SECTION',   'kw_section'))
-###
+
+    def test_keywords(self):
+        '''Catch identifiers considered keywords.'''
+
+        def chk(keyword, expected_lexid): # aux. function for checking keywords
+            lst = list(lexcatch.Container(keyword))
+            self.assertEqual(len(lst), 1)
+            lexid, value = lst[0]
+            return lexid == expected_lexid and keyword == value
+
+        # Keywords as exact strings with the exact case.
+        lst = list(lexan.Container('SCENARIO'))
+        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(lst[0], ('scenario', 'SCENARIO', '', None) )
+
+        lst = list(lexan.Container('GIVEN'))
+        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(lst[0], ('given', 'GIVEN', '', None) )
+
+        lst = list(lexan.Container('WHEN'))
+        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(lst[0], ('when', 'WHEN', '', None) )
+
+        lst = list(lexan.Container('THEN'))
+        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(lst[0], ('then', 'THEN', '', None) )
+
+        lst = list(lexan.Container('TEST_CASE'))
+        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(lst[0], ('test_case', 'TEST_CASE', '', None) )
+
+        lst = list(lexan.Container('SECTION'))
+        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(lst[0], ('section', 'SECTION', '', None) )
+
+        # Keyword with spaces around.
+        lst = list(lexan.Container(' SCENARIO '))
+        self.assertEqual(len(lst), 2)   # two items
+        self.assertEqual(lst[0], ('scenario', 'SCENARIO', ' ', None) )
+        self.assertEqual(lst[1], ('skip', ' ', '', None) )
+
+
+
 ###        # Recognized words as keywords for human text. Case ignored.
 ###        self.assertTrue(chk('user story',   'lab_story'))
 ###        self.assertTrue(chk('USER STORY',   'lab_story'))

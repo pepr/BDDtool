@@ -1,5 +1,5 @@
+- lexical analysis -- string literals
 - (3, None, 'lexid') as marker for including i18n portions
-
 - 'tag' element for both scenarios and test cases -- also for descriptions?
 
 - synchronizace feature seznamu se seznamem extrahovaným z jazyka
