@@ -10,67 +10,165 @@ class Iterator:
         self.pos = startpos
 
         self.source = self.container.source
-        self.srclen = len(self.source)
-
-        print(repr(self.source))
-        print(repr(self.srclen))
+        self.srclen = len(self.container.source)
 
         self.status = 0         # of the finite automaton
         self.symbol = None
-        self.lexem = None
         self.lst = []
         self.prelst = []
+        self.post = None        # for src reconstruction -- like '*/'
 
 
     def __iter__(self):
         return self
 
 
+    def notImplemented(self, msg=''):
+        raise NotImplementedError('status={}: {!r}'.format(self.status, msg))
+
+
+    def lexitem(self):
+        '''Forms lexical item from the member variables.'''
+
+        # Form the lexical item.
+        item = (self.symbol, ''.join(self.lst),
+                ''.join(self.prelst), self.post)
+
+        # Warn if symbol was not recognized.
+        if self.symbol is None:
+            print('Warning: symbol not set for', item)
+
+        # Reset the variables.
+        self.symbol = None
+        self.lst = []
+        self.prelst = []
+        self.post = None
+
+        # Return the result.
+        return item
+
+
+    def expected(self, s):
+        '''Forms error lexical item.'''
+
+        # Form the lexical item.
+        current = (self.symbol, ''.join(self.lst),
+                   ''.join(self.prelst), self.post)
+        item = ('error', '{!r} expected'.format(s),
+                repr(current), None)
+
+        # Reset the variables.
+        self.symbol = None
+        self.lst = []
+        self.prelst = []
+        self.post = None
+
+        # Return the result.
+        return item
+
+
+
+
     def __next__(self):
         '''Returns lexical items (symbol, lexem, pre, post).'''
 
-        # Get the next character or set the status for the end of data
-        if self.status != 888:
-            raise StopIteration
+        # Loop until the end of data.
+        while self.status != 888:
 
-        if self.pos < self.srclen:
-            c = self.source[self.pos]
-            self.lst.append(c)
-            print(self.pos, self.lst)
-            self.pos += 1               # advanced to the next one
-        else:
-            self.status = 888           # end of data
-
-
-        #----------------------------   skipping the ignored chars
-        if self.status == 0:
-            print(self.status, c)
-            if c == '/':
-                self.status = 1
+            # Get the next character or set the status for the end of data
+            if self.pos < self.srclen:
+                c = self.source[self.pos]
+                self.lst.append(c)
+                self.pos += 1           # advanced to the next one
             else:
-                raise NotImplementedError('status 0, char={!r}'.format(c))
+                # End of data. If the state is not final, return
+                # the 'error' item.
+                error = None
+                if self.status == 3:    # waiting for end of comment */
+                    error = self.expected('*/')
 
-        #----------------------------   possible start of a comment
-        elif self.status == 1:
-            print(self.status, c)
-            if c == '/':
-                # The // comment recognized.
-                self.prelst.extend(self.lst[:-2])
-                self.symbol = 'comment'
-                self.lst = []
-                self.status = 2
+                self.status = 888       # end of data
+                if error:
+                    return error
 
-        #----------------------------   end of data
-        elif self.status == 888:
-            # Return the last collected lexical item.
-            return (self.symbol, ''.join(self.lst), ''.join(self.prelst))
+            #============================   initial state, nothing known
+            if self.status == 0:
+                assert self.symbol is None
+                if c == '/':            # comment?
+                    self.status = 1
+                elif c in ' \t':
+                    pass                # skip tabs and spaces
+                elif c == '\n':
+                    assert self.symbol is None
+                    self.symbol = 'emptyline'
+                    return self.lexitem()
+                else:
+                    self.notImplemented(c)
 
-        #----------------------------   unknown status
-        else:
-            print(self.status)
-            raise NotImplementedError('Unknown status: {}'.format(self.status))
+            #----------------------------   possible start of a comment
+            elif self.status == 1:
+                if c == '/':
+                    # The C++ // comment recognized.
+                    self.symbol = 'comment'
+                    self.prelst = self.lst
+                    self.lst = []
+                    self.status = 2     # collect content of // comment
+                elif c == '*':
+                    # The C /* comment started.
+                    self.symbol = 'comment'
+                    self.prelst = self.lst
+                    self.lst = []
+                    self.status = 3     # collect content of the  /* comment */
+                else:
+                    self.notImplemented(c)
 
-        print(self.pos, self.srclen, repr(c))
+            #----------------------------   comment till the end of line
+            elif self.status == 2:
+                if c == '\n':
+                    # End of line -- form the lex item.
+                    self.status = 0
+                    return self.lexitem()
+
+                # All other characters are consumed as the comment content.
+
+            #----------------------------   collecting comment till */
+            elif self.status == 3:
+                if c == '*':
+                    self.status = 4     # possibly end of C comment
+
+                # All other characters are consumed as the comment content.
+
+            #----------------------------   comment */ closed
+            elif self.status == 4:
+                if c == '/':
+                    # Here the self.post will be filled with the '*/'.
+                    # This is important for the text reconstruction.
+                    self.status = 0
+                    assert self.post == None
+                    self.lst[-2:] = []  # delete, not part of the content
+                    self.post = '*/'
+                    return self.lexitem()
+                elif c == '*':
+                    pass                # extra star, stay in this state
+                else:
+                    self.status = 3     # collecting other chars
+
+            #----------------------------   end of data
+            elif self.status == 888:
+                # If nothing was collected, just stop iteration.
+                if self.symbol is None and not self.lst and not self.prelst:
+                    raise StopIteration
+
+                # Return the last collected lexical item.
+                if self.symbol is None:
+                    self.symbol = 'skip'
+                return self.lexitem()
+
+            #----------------------------   unknown status
+            else:
+                raise NotImplementedError('Unknown status: {}'.format(self.status))
+
+        raise StopIteration
 
 #-----------------------------------------------------------------------
 
@@ -88,10 +186,9 @@ class Container:
         return Iterator(self, 0)
 
 
-    def __repr__(self):
-        return repr((self.sourcenameinfo, self.lineno, self.line))
+#-----------------------------------------------------------------------
 
-
-    def __str__(self):
-        return self.line
-
+if __name__ == '__main__':
+    source = '// komentář'
+    for e in Container(source):
+        print(e)
