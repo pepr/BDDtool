@@ -238,6 +238,98 @@ class LexanTests(unittest.TestCase):
         self.assertEqual(item, ('rbrace', '}', '', None) )
 
 
+    def test_simple_testcase_and_sections(self):
+        '''recognizing simple sections with empty body (lexical)'''
+
+        source = 'TEST_CASE("identifier"){}'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(lst, [('test_case', 'TEST_CASE', '', None),
+                               ('lpar', '(', '', None),
+                               ('stringlit', 'identifier', '"', '"'),
+                               ('rpar', ')', '', None),
+                               ('lbrace', '{', '', None),
+                               ('rbrace', '}', '', None)
+                              ])
+
+        source = 'SCENARIO("identifier"){}'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(lst, [('scenario', 'SCENARIO', '', None),
+                               ('lpar', '(', '', None),
+                               ('stringlit', 'identifier', '"', '"'),
+                               ('rpar', ')', '', None),
+                               ('lbrace', '{', '', None),
+                               ('rbrace', '}', '', None)
+                              ])
+
+        source = 'SECTION("identifier"){}'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(lst, [('section', 'SECTION', '', None),
+                               ('lpar', '(', '', None),
+                               ('stringlit', 'identifier', '"', '"'),
+                               ('rpar', ')', '', None),
+                               ('lbrace', '{', '', None),
+                               ('rbrace', '}', '', None)
+                              ])
+
+        source = 'GIVEN("identifier"){}'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(lst, [('given', 'GIVEN', '', None),
+                               ('lpar', '(', '', None),
+                               ('stringlit', 'identifier', '"', '"'),
+                               ('rpar', ')', '', None),
+                               ('lbrace', '{', '', None),
+                               ('rbrace', '}', '', None)
+                              ])
+
+        source = 'WHEN("identifier"){}'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(lst, [('when', 'WHEN', '', None),
+                               ('lpar', '(', '', None),
+                               ('stringlit', 'identifier', '"', '"'),
+                               ('rpar', ')', '', None),
+                               ('lbrace', '{', '', None),
+                               ('rbrace', '}', '', None)
+                              ])
+
+        source = 'THEN("identifier"){}'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(lst, [('then', 'THEN', '', None),
+                               ('lpar', '(', '', None),
+                               ('stringlit', 'identifier', '"', '"'),
+                               ('rpar', ')', '', None),
+                               ('lbrace', '{', '', None),
+                               ('rbrace', '}', '', None)
+                              ])
+
+        source = 'AND_THEN("identifier"){}'
+        lst = list(lexan.Container(source))
+        print(lst)
+        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(lst, [('and_then', 'AND_THEN', '', None),
+                               ('lpar', '(', '', None),
+                               ('stringlit', 'identifier', '"', '"'),
+                               ('rpar', ')', '', None),
+                               ('lbrace', '{', '', None),
+                               ('rbrace', '}', '', None)
+                              ])
+
+        source = 'AND_WHEN("identifier"){}'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(lst, [('and_when', 'AND_WHEN', '', None),
+                               ('lpar', '(', '', None),
+                               ('stringlit', 'identifier', '"', '"'),
+                               ('rpar', ')', '', None),
+                               ('lbrace', '{', '', None),
+                               ('rbrace', '}', '', None)
+                              ])
+
 ###        # Recognized words as keywords for human text. Case ignored.
 ###        self.assertTrue(chk('user story',   'lab_story'))
 ###        self.assertTrue(chk('USER STORY',   'lab_story'))

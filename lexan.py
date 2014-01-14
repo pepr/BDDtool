@@ -36,6 +36,8 @@ rules = [
     (0, 'GIVEN',        'given'),
     (0, 'WHEN',         'when'),
     (0, 'THEN',         'then'),
+    (0, 'AND_WHEN',     'and_when'),
+    (0, 'AND_THEN',     'and_then'),
     (0, 'TEST_CASE',    'test_case'),
     (0, 'SECTION',      'section'),
 
