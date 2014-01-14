@@ -1,4 +1,5 @@
-- lexical analysis -- string literals
+- simple sections with empty body
+- nested sections with empty body
 - catchtest to features -- generating missing .feature documents from tests
 - (3, None, 'lexid') as marker for including i18n portions for lexan
 

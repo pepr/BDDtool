@@ -30,7 +30,6 @@ rules = [
     (0, ')',            'rpar'),
     (0, '{',            'lbrace'),
     (0, '}',            'rbrace'),
-    (0, '\n',           'newline'),
 
     # Catch identifiers.
     (0, 'SCENARIO',     'scenario'),

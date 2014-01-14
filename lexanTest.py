@@ -203,6 +203,41 @@ class LexanTests(unittest.TestCase):
         item = lst[0]
         self.assertEqual(item, ('stringlit', r'\n', '"', '"') )
 
+
+    def test_terminals(self):
+        '''recognizing one-char terminal symbols'''
+
+        source = '('
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]          # (symbol, lexem, pre, post)
+        self.assertEqual(item, ('lpar', '(', '', None) )
+
+        source = '\t('
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]
+        self.assertEqual(item, ('lpar', '(', '\t', None) )
+
+        source = ')'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]
+        self.assertEqual(item, ('rpar', ')', '', None) )
+
+        source = '{'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]
+        self.assertEqual(item, ('lbrace', '{', '', None) )
+
+        source = '}'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]
+        self.assertEqual(item, ('rbrace', '}', '', None) )
+
+
 ###        # Recognized words as keywords for human text. Case ignored.
 ###        self.assertTrue(chk('user story',   'lab_story'))
 ###        self.assertTrue(chk('USER STORY',   'lab_story'))
