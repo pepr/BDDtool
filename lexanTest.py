@@ -30,21 +30,21 @@ class LexanTests(unittest.TestCase):
         source = '//'
         lst = list(lexan.Container(source))
         self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]          # (symbol, lexem, pre)
+        item = lst[0]          # (symbol, lexem, pre, post)
         self.assertEqual(item, ('comment', '', '//', None) )
 
         # Empty comment till the end of line (newline included).
         source = '//\n'
         lst = list(lexan.Container(source))
         self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]          # (symbol, lexem, pre)
+        item = lst[0]          # (symbol, lexem, pre, post)
         self.assertEqual(item, ('comment', '\n', '//', None) )
 
         # Non-empty comment with spaces in front of it.
         source = ' // a comment \n'
         lst = list(lexan.Container(source))
         self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]          # (symbol, lexem, pre)
+        item = lst[0]          # (symbol, lexem, pre, post)
         self.assertEqual(item, ('comment', ' a comment \n', ' //', None) )
 
         # Two comments with spaces (two lines).
@@ -124,12 +124,6 @@ class LexanTests(unittest.TestCase):
     def test_keywords(self):
         '''Catch identifiers considered keywords.'''
 
-        def chk(keyword, expected_lexid): # aux. function for checking keywords
-            lst = list(lexcatch.Container(keyword))
-            self.assertEqual(len(lst), 1)
-            lexid, value = lst[0]
-            return lexid == expected_lexid and keyword == value
-
         # Keywords as exact strings with the exact case.
         lst = list(lexan.Container('SCENARIO'))
         self.assertEqual(len(lst), 1)   # single item
@@ -162,6 +156,53 @@ class LexanTests(unittest.TestCase):
         self.assertEqual(lst[1], ('skip', ' ', '', None) )
 
 
+    def test_string_literals(self):
+        '''recognizing string literals
+
+        String literals are considered test/section identifiers for Catch.
+        '''
+
+        # Empty string literal.
+        source = '""'
+        lst = list(lexan.Container(source))
+        print(lst)
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]          # (symbol, lexem, pre, post)
+        self.assertEqual(item, ('stringlit', '', '"', '"') )
+
+        # Simple string literal.
+        source = '"simple"'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]
+        self.assertEqual(item, ('stringlit', 'simple', '"', '"') )
+
+        source = '""'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]
+        self.assertEqual(item, ('stringlit', 'words and spaces', '"', '"') )
+
+        # Escaped double quote.
+        source = r'"\""'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]
+        self.assertEqual(item, ('stringlit', r'\"', '"', '"') )
+
+        # Escaped tab.
+        source = r'"\t"'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]
+        self.assertEqual(item, ('stringlit', r'\t', '"', '"') )
+
+        # Escaped newline.
+        source = r'"\n"'
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]
+        self.assertEqual(item, ('stringlit', r'\n', '"', '"') )
 
 ###        # Recognized words as keywords for human text. Case ignored.
 ###        self.assertTrue(chk('user story',   'lab_story'))

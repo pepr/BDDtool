@@ -1,11 +1,15 @@
 - lexical analysis -- string literals
-- (3, None, 'lexid') as marker for including i18n portions
+- catchtest to features -- generating missing .feature documents from tests
+- (3, None, 'lexid') as marker for including i18n portions for lexan
+
 - 'tag' element for both scenarios and test cases -- also for descriptions?
 
 - synchronizace feature seznamu se seznamem extrahovaným z jazyka
 - komentáře v angličtině
 
 - build also Python 2.7 version with the same functionality
+- possibly a C++ implementation of the BDDtool
+
 
 To be tested
 ============
@@ -13,6 +17,7 @@ To be tested
 - Recognizing Catch scenarios with various ways of formatting and with
   nested curly braces (i.e. better parser)
 - eat my own dog's food
+
 
 Variant prefixes of element descriptions
 ========================================

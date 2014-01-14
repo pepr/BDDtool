@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 '''Lexical analysis for the Catch test sources.'''
 
+import re
 
 # The Catch-defined identifiers are considered keywords for this purpose.
 # Also the BDD text that were generated into comments are considered
@@ -29,7 +30,6 @@ rules = [
     (0, ')',            'rpar'),
     (0, '{',            'lbrace'),
     (0, '}',            'rbrace'),
-    (0, '"',            'dquote'),
     (0, '\n',           'newline'),
 
     # Catch identifiers.
