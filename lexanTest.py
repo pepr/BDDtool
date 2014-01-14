@@ -165,7 +165,6 @@ class LexanTests(unittest.TestCase):
         # Empty string literal.
         source = '""'
         lst = list(lexan.Container(source))
-        print(lst)
         self.assertEqual(len(lst), 1)   # single item
         item = lst[0]          # (symbol, lexem, pre, post)
         self.assertEqual(item, ('stringlit', '', '"', '"') )
@@ -177,7 +176,7 @@ class LexanTests(unittest.TestCase):
         item = lst[0]
         self.assertEqual(item, ('stringlit', 'simple', '"', '"') )
 
-        source = '""'
+        source = '"words and spaces"'
         lst = list(lexan.Container(source))
         self.assertEqual(len(lst), 1)   # single item
         item = lst[0]

@@ -203,9 +203,13 @@ class Iterator:
                 elif c in ' \t':
                     pass                # skip tabs and spaces
                 elif c == '\n':
-                    assert self.symbol is None
                     self.symbol = 'emptyline'
                     return self.lexitem()
+                elif c == '"':          # string literal started
+                    self.symbol = 'stringlit'
+                    self.prelst = self.lst
+                    self.lst = []
+                    self.status = 5
                 else:
                     # Loop through the closure pairs to find the lex item.
                     # When the match is found, return early.
@@ -271,6 +275,25 @@ class Iterator:
                     pass                # extra star, stay in this state
                 else:
                     self.status = 3     # collecting other chars
+
+            #----------------------------   collecting string literal chars
+            elif self.status == 5:
+                if c == '"':
+                    # String literal finished.
+                    self.status = 0
+                    self.lst[-1:] = []  # delete, not part of the content
+                    self.post = '"'
+                    return self.lexitem()
+                elif c == '\\':         # backlash starts an escape sequence
+                    self.status = 6
+
+                # Any other char collected as a part of the literal.
+
+            #----------------------------   the char after the escape
+            elif self.status == 6:
+                # Any char after esc was collected to self.lst. Now
+                # back to collecting other characters of the string literal
+                self.status = 5
 
             #----------------------------   end of data
             elif self.status == 888:
