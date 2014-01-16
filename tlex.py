@@ -188,15 +188,18 @@ class Iterator:
                 self.lst.append(c)
                 self.pos += 1           # advanced to the next one
             else:
-                # End of data. If the state is not final, return
-                # the 'error' item.
-                error = None
+                # End of data.
                 if self.status == 3:    # waiting for end of comment */
+                    # The state is not final, return the error
                     error = self.expected('*/')
-
-                self.status = 888       # end of data
-                if error:
+                    self.status = 888
                     return error
+                elif self.status == 2:  # empty // comment just before end of data
+                    item = self.lexitem()
+                    self.status = 888
+                    return item
+                else:
+                    self.status = 888
 
             #============================   initial state, nothing known
             if self.status == 0:
@@ -300,14 +303,19 @@ class Iterator:
 
             #----------------------------   end of data
             elif self.status == 888:
-                # If nothing was collected, just stop iteration.
-                if self.symbol is None and not self.lst and not self.prelst:
-                    raise StopIteration
-
-                # Return the last collected lexical item.
-                if self.symbol is None:
-                    self.symbol = 'skip'
+                self.symbol = 'endofdata'
+                self.prelst = self.lst
+                self.lst = []
                 return self.lexitem()
+
+###                 # If nothing was collected, just stop iteration.
+###                 if self.symbol is None and not self.lst and not self.prelst:
+###                     raise StopIteration
+###
+###                 # Return the last collected lexical item.
+###                 if self.symbol is None:
+###                     self.symbol = 'skip'
+###                 return self.lexitem()
 
             #----------------------------   unknown status
             else:
