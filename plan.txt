@@ -1,3 +1,7 @@
+- fix tlex.py to pass tlexTest.py
+- fix tsyn.py
+- write tsynTest.py
+
 - catchtest to features -- generating missing .feature documents
   from tests as .featurenew
 - (3, None, 'lexid') as marker for including i18n portions for lexan
