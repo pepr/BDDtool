@@ -30,6 +30,7 @@ rules = [
     (0, ')',            'rpar'),
     (0, '{',            'lbrace'),
     (0, '}',            'rbrace'),
+    (0, ',',            'comma'),
 
     # Catch identifiers.
     (0, 'SCENARIO',     'scenario'),
@@ -41,11 +42,12 @@ rules = [
     (0, 'TEST_CASE',    'test_case'),
     (0, 'SECTION',      'section'),
 
-    # Labels that identify portions via free text.
-    (1, r'(?i)(User\s+)?Story',            'lab_story'),
-    (1, r'(?i)(Uživatelský\s+)?Požadavek', 'lab_story'),
-    (1, r'(?i)Feature',         'lab_feature'),
-    (1, r'(?i)Rys',             'lab_feature'),
+    # Labels that identify portions via free text (inside comments
+    # of the Catch test sources).
+    (1, r'(?i)(User\s+)?Story:',            'story'),
+    (1, r'(?i)(Uživatelský\s+)?Požadavek:', 'story'),
+    (1, r'(?i)Feature:',         'feature'),
+    (1, r'(?i)Rys:',             'feature'),
 
     # Other things.
     (1, r'[^"\\\n\t ]+', 'str'), # a string until esc, whitespace or dquote

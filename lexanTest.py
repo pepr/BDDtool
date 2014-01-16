@@ -237,6 +237,12 @@ class LexanTests(unittest.TestCase):
         item = lst[0]
         self.assertEqual(item, ('rbrace', '}', '', None) )
 
+        source = ','
+        lst = list(lexan.Container(source))
+        self.assertEqual(len(lst), 1)   # single item
+        item = lst[0]
+        self.assertEqual(item, ('comma', ',', '', None) )
+
 
     def test_simple_testcase_and_sections(self):
         '''recognizing simple sections with empty body (lexical)'''
@@ -309,7 +315,6 @@ class LexanTests(unittest.TestCase):
 
         source = 'AND_THEN("identifier"){}'
         lst = list(lexan.Container(source))
-        print(lst)
         self.assertEqual(len(lst), 6)   # six items
         self.assertEqual(lst, [('and_then', 'AND_THEN', '', None),
                                ('lpar', '(', '', None),
@@ -330,29 +335,45 @@ class LexanTests(unittest.TestCase):
                                ('rbrace', '}', '', None)
                               ])
 
-###        # Recognized words as keywords for human text. Case ignored.
-###        self.assertTrue(chk('user story',   'lab_story'))
-###        self.assertTrue(chk('USER STORY',   'lab_story'))
-###        self.assertTrue(chk('UsEr StOrY',   'lab_story'))
-###        self.assertTrue(chk('USER                 STORY',   'lab_story'))
-###        self.assertTrue(chk('story', 'lab_story'))
-###        self.assertTrue(chk('Story', 'lab_story'))
-###        self.assertTrue(chk('STORY', 'lab_story'))
-###        self.assertTrue(chk('StOrY', 'lab_story'))
-###
-###        self.assertTrue(chk('Uživatelský požadavek', 'lab_story'))
-###        self.assertTrue(chk('UŽIVATELSKÝ POŽADAVEK', 'lab_story'))
-###        self.assertTrue(chk('UžIvAtElSkÝ PoŽaDaVeK', 'lab_story'))
-###        self.assertTrue(chk('Uživatelský požadavek', 'lab_story'))
-###        self.assertTrue(chk('POŽADAVEK', 'lab_story'))
-###        self.assertTrue(chk('PoŽaDaVeK', 'lab_story'))
-###
-###        self.assertTrue(chk('feature', 'lab_feature'))
-###        self.assertTrue(chk('Feature', 'lab_feature'))
-###        self.assertTrue(chk('FEATURE', 'lab_feature'))
-###        self.assertTrue(chk('FeAtUrE', 'lab_feature'))
-###
-###        self.assertTrue(chk('rys', 'lab_feature'))
+#    def test_labels(self):
+#        '''free text labels recognized as lexical symbols'''
+#
+#        def chk(text, lexid
+#
+#        # Recognized words as keywords for human text. Case ignored.
+#        self.assertTrue(chk('user story:',   'story'))
+#        self.assertTrue(chk('USER STORY:',   'story'))
+#        self.assertTrue(chk('UsEr StOrY:',   'story'))
+#        self.assertTrue(chk('USER                 STORY:',   'story'))
+#        self.assertTrue(chk('story', 'story'))
+#        self.assertTrue(chk('Story', 'story'))
+#        self.assertTrue(chk('STORY', 'story'))
+#        self.assertTrue(chk('StOrY', 'story'))
+#
+#        self.assertTrue(chk('Uživatelský požadavek', 'story'))
+#        self.assertTrue(chk('UŽIVATELSKÝ POŽADAVEK', 'story'))
+#        self.assertTrue(chk('UžIvAtElSkÝ PoŽaDaVeK', 'lab_story'))
+#        self.assertTrue(chk('Uživatelský požadavek', 'lab_story'))
+#        self.assertTrue(chk('POŽADAVEK', 'lab_story'))
+#        self.assertTrue(chk('PoŽaDaVeK', 'lab_story'))
+#
+#        self.assertTrue(chk('feature', 'lab_feature'))
+#        self.assertTrue(chk('Feature', 'lab_feature'))
+#        self.assertTrue(chk('FEATURE', 'lab_feature'))
+#        self.assertTrue(chk('FeAtUrE', 'lab_feature'))
+#
+#        self.assertTrue(chk('rys', 'lab_feature'))
+#
+#    def test_story_or_feature(self):
+#        '''story or feature recognition inside the comment'''
+#
+#        source = '// Story: story identifier'
+#        lst = list(lexan.Container(source))
+#        self.assertEqual(len(lst), 1)   # single item
+#        item = lst[0]
+#        self.assertEqual(item, ('story', 'story identifier', '// Story: ', None))
+
+
 ###
 ###    def test_body(self):
 ###        '''parsing the body in curly braces'''

@@ -1,8 +1,5 @@
-- simple sections with empty body
-- nested sections with empty body
-- story converted from comment
-- comment lines after story as story body (syntactic analysis)
-- catchtest to features -- generating missing .feature documents from tests
+- catchtest to features -- generating missing .feature documents
+  from tests as .featurenew
 - (3, None, 'lexid') as marker for including i18n portions for lexan
 
 - 'tag' element for both scenarios and test cases -- also for descriptions?
@@ -16,10 +13,8 @@
 
 To be tested
 ============
-- Scenario with [tags]
 - Recognizing Catch scenarios with various ways of formatting and with
   nested curly braces (i.e. better parser)
-- eat my own dog's food
 
 
 Variant prefixes of element descriptions
