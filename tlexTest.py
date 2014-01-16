@@ -9,14 +9,10 @@ import tlex
 class LexAnalyzerForCatchTests(unittest.TestCase):
     '''Testing lex analyzer for the Catch test sources.'''
 
-    def setUp(self):
-        pass
-
-
     def test_empty_source(self):
         '''empty source for lexical analysis'''
-        source = ''   # empty string as a source
 
+        source = ''   # empty string as a source
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 1)
         self.assertEqual(lst[0], ('endofdata', '', '', None))
@@ -31,9 +27,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         # The shortest comment (empty) till the end of data.
         source = '//'
         lst = list(tlex.Container(source))
-        print(lst)
         self.assertEqual(len(lst), 2)
-        item = lst[0]          # (symbol, lexem, pre, post)
         self.assertEqual(lst, [('comment', '', '//', None),
                                ('endofdata', '', '', None)
                               ])
@@ -41,23 +35,35 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         # Empty comment till the end of line (newline included).
         source = '//\n'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]          # (symbol, lexem, pre, post)
-        self.assertEqual(item, ('comment', '\n', '//', None) )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('comment', '\n', '//', None),
+                               ('endofdata', '', '', None)
+                              ])
 
-        # Non-empty comment with spaces in front of it.
-        source = ' // a comment \n'
+        # Non-empty comment without newline.
+        source = '// a comment'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]          # (symbol, lexem, pre, post)
-        self.assertEqual(item, ('comment', ' a comment \n', ' //', None) )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('comment', ' a comment', '//', None),
+                               ('endofdata', '', '', None)
+                              ])
+
+        # Non-empty comment with newline.
+        source = '// a comment \n'
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('comment', ' a comment \n', '//', None),
+                               ('endofdata', '', '', None)
+                              ])
 
         # Two comments with spaces (two lines).
         source = ' // a comment 1 \n // a comment 2 \n'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 2)   # two items
-        self.assertEqual(lst[0], ('comment', ' a comment 1 \n', ' //', None) )
-        self.assertEqual(lst[1], ('comment', ' a comment 2 \n', ' //', None) )
+        self.assertEqual(len(lst), 3)
+        self.assertEqual(lst, [('comment', ' a comment 1 \n', ' //', None),
+                               ('comment', ' a comment 2 \n', ' //', None),
+                               ('endofdata', '', '', None)
+                              ])
 
         #---------------------------------------------------------------
         # C comments, i.e. /* ... */
@@ -65,65 +71,80 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         # The shortest unclosed comment till the end of data (error).
         source = '/*'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # one error item
-        self.assertEqual(lst[0], ('error',
-                                  "'*/' expected",
-                                  "('comment', '', '/*', None)",
-                                  None) )
+        self.assertEqual(len(lst), 2)   # one error item plus endofdata
+        self.assertEqual(lst, [('error', "'*/' expected",
+                                 "('comment', '', '/*', None)", None),
+                               ('endofdata', '', '', None)
+                              ])
 
         # The shortest comment (empty) till the end of data.
         source = '/**/'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # two items
-        self.assertEqual(lst[0], ('comment', '', '/*', '*/') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('comment', '', '/*', '*/'),
+                               ('endofdata', '', '', None)
+                              ])
 
         # Empty comment till the end of line (newline).
         source = '/**/\n'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 2)
-        self.assertEqual(lst[0], ('comment', '', '/*', '*/') )
-        self.assertEqual(lst[1], ('emptyline', '\n', '', None) )
+        self.assertEqual(len(lst), 3)
+        self.assertEqual(lst, [('comment', '', '/*', '*/'),
+                               ('emptyline', '\n', '', None),
+                               ('endofdata', '', '', None)
+                              ])
 
         # Empty comment till the end of line -- newline and space.
         source = '/**/\n '
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 3)
-        self.assertEqual(lst[0], ('comment', '', '/*', '*/') )
-        self.assertEqual(lst[1], ('emptyline', '\n', '', None) )
-        self.assertEqual(lst[2], ('skip', ' ', '', None) )
+        self.assertEqual(lst, [('comment', '', '/*', '*/'),
+                               ('emptyline', '\n', '', None),
+                               ('endofdata', '', ' ', None)
+                              ])
 
         # Empty comment till the end of line -- space and newline.
         source = '/**/ \n'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 2)
-        self.assertEqual(lst[0], ('comment', '', '/*', '*/') )
-        self.assertEqual(lst[1], ('emptyline', ' \n', '', None) )
+        self.assertEqual(len(lst), 3)
+        self.assertEqual(lst, [('comment', '', '/*', '*/'),
+                               ('emptyline', ' \n', '', None),
+                               ('endofdata', '', '', None)
+                              ])
 
         # Non-empty comment with spaces.
         source = ' /* a comment */'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        self.assertEqual(lst[0], ('comment', ' a comment ', ' /*', '*/') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('comment', ' a comment ', ' /*', '*/'),
+                               ('endofdata', '', '', None)
+                              ])
 
         # A comment with spaces -- three lines.
         source = ' /* a comment 1 \n    a comment 2 \n */'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)
-        self.assertEqual(lst[0], ('comment',
-                         ' a comment 1 \n    a comment 2 \n ',
-                         ' /*', '*/') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('comment',
+                                ' a comment 1 \n    a comment 2 \n ',
+                                ' /*', '*/'),
+                               ('endofdata', '', '', None)
+                              ])
 
         # A comment with extra stars.
         source = '/*** a comment ***/'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        self.assertEqual(lst[0], ('comment', '** a comment **', '/*', '*/') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('comment', '** a comment **', '/*', '*/'),
+                               ('endofdata', '', '', None)
+                              ])
 
         # A comment with stars inside (separated from open/close sequences.
         source = '/* * * a comment * * */'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        self.assertEqual(lst[0], ('comment', ' * * a comment * * ', '/*', '*/') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('comment', ' * * a comment * * ', '/*', '*/'),
+                               ('endofdata', '', '', None)
+                              ])
 
 
     def test_keywords(self):
@@ -131,34 +152,47 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
 
         # Keywords as exact strings with the exact case.
         lst = list(tlex.Container('SCENARIO'))
-        self.assertEqual(len(lst), 1)   # single item
-        self.assertEqual(lst[0], ('scenario', 'SCENARIO', '', None) )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('scenario', 'SCENARIO', '', None),
+                               ('endofdata', '', '', None)
+                              ])
 
         lst = list(tlex.Container('GIVEN'))
-        self.assertEqual(len(lst), 1)   # single item
-        self.assertEqual(lst[0], ('given', 'GIVEN', '', None) )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('given', 'GIVEN', '', None),
+                               ('endofdata', '', '', None)
+                              ])
 
         lst = list(tlex.Container('WHEN'))
-        self.assertEqual(len(lst), 1)   # single item
-        self.assertEqual(lst[0], ('when', 'WHEN', '', None) )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('when', 'WHEN', '', None),
+                               ('endofdata', '', '', None)
+                              ])
 
         lst = list(tlex.Container('THEN'))
-        self.assertEqual(len(lst), 1)   # single item
-        self.assertEqual(lst[0], ('then', 'THEN', '', None) )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('then', 'THEN', '', None),
+                               ('endofdata', '', '', None)
+                              ])
 
         lst = list(tlex.Container('TEST_CASE'))
-        self.assertEqual(len(lst), 1)   # single item
-        self.assertEqual(lst[0], ('test_case', 'TEST_CASE', '', None) )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('test_case', 'TEST_CASE', '', None),
+                               ('endofdata', '', '', None)
+                              ])
 
         lst = list(tlex.Container('SECTION'))
-        self.assertEqual(len(lst), 1)   # single item
-        self.assertEqual(lst[0], ('section', 'SECTION', '', None) )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('section', 'SECTION', '', None),
+                               ('endofdata', '', '', None)
+                              ])
 
         # Keyword with spaces around.
         lst = list(tlex.Container(' SCENARIO '))
-        self.assertEqual(len(lst), 2)   # two items
-        self.assertEqual(lst[0], ('scenario', 'SCENARIO', ' ', None) )
-        self.assertEqual(lst[1], ('skip', ' ', '', None) )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('scenario', 'SCENARIO', ' ', None),
+                               ('endofdata', '', ' ', None)
+                              ])
 
 
     def test_string_literals(self):
@@ -170,43 +204,59 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         # Empty string literal.
         source = '""'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]          # (symbol, lexem, pre, post)
-        self.assertEqual(item, ('stringlit', '', '"', '"') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('stringlit', '', '"', '"'),
+                               ('endofdata', '', '', None)
+                              ])
 
         # Simple string literal.
         source = '"simple"'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]
-        self.assertEqual(item, ('stringlit', 'simple', '"', '"') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('stringlit', 'simple', '"', '"'),
+                               ('endofdata', '', '', None)
+                              ])
 
         source = '"words and spaces"'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]
-        self.assertEqual(item, ('stringlit', 'words and spaces', '"', '"') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('stringlit', 'words and spaces', '"', '"'),
+                               ('endofdata', '', '', None)
+                              ])
 
         # Escaped double quote.
         source = r'"\""'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]
-        self.assertEqual(item, ('stringlit', r'\"', '"', '"') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('stringlit', r'\"', '"', '"'),
+                               ('endofdata', '', '', None)
+                              ])
 
         # Escaped tab.
         source = r'"\t"'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]
-        self.assertEqual(item, ('stringlit', r'\t', '"', '"') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('stringlit', r'\t', '"', '"'),
+                               ('endofdata', '', '', None)
+                              ])
 
         # Escaped newline.
         source = r'"\n"'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
-        item = lst[0]
-        self.assertEqual(item, ('stringlit', r'\n', '"', '"') )
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('stringlit', r'\n', '"', '"'),
+                               ('endofdata', '', '', None)
+                              ])
+
+        # Not closed literal.
+        source = r'"not closed'
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('error', '\'"\' expected',
+               '(\'stringlit\', \'not closed\', \'"\', None)', None),
+                               ('endofdata', '', '', None)
+                              ])
+
 
 
     def test_terminals(self):
@@ -214,37 +264,37 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
 
         source = '('
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(len(lst), 2)
         item = lst[0]          # (symbol, lexem, pre, post)
         self.assertEqual(item, ('lpar', '(', '', None) )
 
         source = '\t('
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(len(lst), 2)
         item = lst[0]
         self.assertEqual(item, ('lpar', '(', '\t', None) )
 
         source = ')'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(len(lst), 2)
         item = lst[0]
         self.assertEqual(item, ('rpar', ')', '', None) )
 
         source = '{'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(len(lst), 2)
         item = lst[0]
         self.assertEqual(item, ('lbrace', '{', '', None) )
 
         source = '}'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(len(lst), 2)
         item = lst[0]
         self.assertEqual(item, ('rbrace', '}', '', None) )
 
         source = ','
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 1)   # single item
+        self.assertEqual(len(lst), 2)
         item = lst[0]
         self.assertEqual(item, ('comma', ',', '', None) )
 
@@ -254,90 +304,98 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
 
         source = 'TEST_CASE("identifier"){}'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(len(lst), 7)
         self.assertEqual(lst, [('test_case', 'TEST_CASE', '', None),
                                ('lpar', '(', '', None),
                                ('stringlit', 'identifier', '"', '"'),
                                ('rpar', ')', '', None),
                                ('lbrace', '{', '', None),
-                               ('rbrace', '}', '', None)
+                               ('rbrace', '}', '', None),
+                               ('endofdata', '', '', None)
                               ])
 
         source = 'SCENARIO("identifier"){}'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(len(lst), 7)
         self.assertEqual(lst, [('scenario', 'SCENARIO', '', None),
                                ('lpar', '(', '', None),
                                ('stringlit', 'identifier', '"', '"'),
                                ('rpar', ')', '', None),
                                ('lbrace', '{', '', None),
-                               ('rbrace', '}', '', None)
+                               ('rbrace', '}', '', None),
+                               ('endofdata', '', '', None)
                               ])
 
         source = 'SECTION("identifier"){}'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(len(lst), 7)
         self.assertEqual(lst, [('section', 'SECTION', '', None),
                                ('lpar', '(', '', None),
                                ('stringlit', 'identifier', '"', '"'),
                                ('rpar', ')', '', None),
                                ('lbrace', '{', '', None),
-                               ('rbrace', '}', '', None)
+                               ('rbrace', '}', '', None),
+                               ('endofdata', '', '', None)
                               ])
 
         source = 'GIVEN("identifier"){}'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(len(lst), 7)
         self.assertEqual(lst, [('given', 'GIVEN', '', None),
                                ('lpar', '(', '', None),
                                ('stringlit', 'identifier', '"', '"'),
                                ('rpar', ')', '', None),
                                ('lbrace', '{', '', None),
-                               ('rbrace', '}', '', None)
+                               ('rbrace', '}', '', None),
+                               ('endofdata', '', '', None)
                               ])
 
         source = 'WHEN("identifier"){}'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(len(lst), 7)
         self.assertEqual(lst, [('when', 'WHEN', '', None),
                                ('lpar', '(', '', None),
                                ('stringlit', 'identifier', '"', '"'),
                                ('rpar', ')', '', None),
                                ('lbrace', '{', '', None),
-                               ('rbrace', '}', '', None)
+                               ('rbrace', '}', '', None),
+                               ('endofdata', '', '', None)
                               ])
 
         source = 'THEN("identifier"){}'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(len(lst), 7)
         self.assertEqual(lst, [('then', 'THEN', '', None),
                                ('lpar', '(', '', None),
                                ('stringlit', 'identifier', '"', '"'),
                                ('rpar', ')', '', None),
                                ('lbrace', '{', '', None),
-                               ('rbrace', '}', '', None)
+                               ('rbrace', '}', '', None),
+                               ('endofdata', '', '', None)
                               ])
 
         source = 'AND_THEN("identifier"){}'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(len(lst), 7)
         self.assertEqual(lst, [('and_then', 'AND_THEN', '', None),
                                ('lpar', '(', '', None),
                                ('stringlit', 'identifier', '"', '"'),
                                ('rpar', ')', '', None),
                                ('lbrace', '{', '', None),
-                               ('rbrace', '}', '', None)
+                               ('rbrace', '}', '', None),
+                               ('endofdata', '', '', None)
                               ])
 
         source = 'AND_WHEN("identifier"){}'
         lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 6)   # six items
+        self.assertEqual(len(lst), 7)
         self.assertEqual(lst, [('and_when', 'AND_WHEN', '', None),
                                ('lpar', '(', '', None),
                                ('stringlit', 'identifier', '"', '"'),
                                ('rpar', ')', '', None),
                                ('lbrace', '{', '', None),
-                               ('rbrace', '}', '', None)
+                               ('rbrace', '}', '', None),
+                               ('endofdata', '', '', None)
                               ])
 
 #    def test_labels(self):
@@ -374,7 +432,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
 #
 #        source = '// Story: story identifier'
 #        lst = list(tlex.Container(source))
-#        self.assertEqual(len(lst), 1)   # single item
+#        self.assertEqual(len(lst), 2)
 #        item = lst[0]
 #        self.assertEqual(item, ('story', 'story identifier', '// Story: ', None))
 

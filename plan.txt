@@ -1,4 +1,3 @@
-- fix tlex.py to pass tlexTest.py
 - fix tsyn.py
 - write tsynTest.py
 

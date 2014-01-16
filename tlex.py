@@ -180,7 +180,7 @@ class Iterator:
         '''Returns lexical items (symbol, lexem, pre, post).'''
 
         # Loop until the end of data.
-        while self.status != 888:
+        while self.status != 1000:
 
             # Get the next character or set the status for the end of data
             if self.pos < self.srclen:
@@ -188,18 +188,23 @@ class Iterator:
                 self.lst.append(c)
                 self.pos += 1           # advanced to the next one
             else:
-                # End of data.
+                # End of data, but the previous element may not be
+                # entirely collected/finalized.
                 if self.status == 3:    # waiting for end of comment */
                     # The state is not final, return the error
                     error = self.expected('*/')
-                    self.status = 888
+                    self.status = 800
                     return error
                 elif self.status == 2:  # empty // comment just before end of data
                     item = self.lexitem()
-                    self.status = 888
+                    self.status = 800
                     return item
+                elif self.status == 5:  # closing dquote of "literal" missing
+                    error = self.expected('"')
+                    self.status = 800
+                    return error
                 else:
-                    self.status = 888
+                    self.status = 800
 
             #============================   initial state, nothing known
             if self.status == 0:
@@ -302,10 +307,11 @@ class Iterator:
                 self.status = 5
 
             #----------------------------   end of data
-            elif self.status == 888:
+            elif self.status == 800:
                 self.symbol = 'endofdata'
                 self.prelst = self.lst
                 self.lst = []
+                self.status = 1000
                 return self.lexitem()
 
 ###                 # If nothing was collected, just stop iteration.
