@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 '''Syntactic analysis for the Catch test sources.'''
 
-import lexan
+import tlex
 import textwrap
 import sys
 
-class SyntacticAnalyzer:
-
+class SyntacticAnalyzerForCatch:
 
 
     def __init__(self, source):
@@ -18,18 +17,18 @@ class SyntacticAnalyzer:
         self.lexitem = None
         self.sym = None
 
-        self.it = iter(lexan.Container(self.source))
+        self.it = iter(tlex.Container(self.source))
         self.info_lst = []      # auxiliary list for extracted info
 
 
     def lex(self):
         '''Get the next lexical item.'''
-        ##print(self.lexitem)
+        print(self.lexitem)
         try:
             self.lexitem = next(self.it)
+            self.sym = self.lexitem[0]
         except StopIteration:
-            self.lexitem = ('endofdata', '', '', None)
-        self.sym = self.lexitem[0]
+            self.expect('endofdata')
 
 
     def unexpected(self):
@@ -63,13 +62,13 @@ class SyntacticAnalyzer:
             self.unexpected()
 
 
-    def start(self):
+    def Start(self):
         '''Implements the start nonterminal.'''
-        self.feature_or_story_comments()
-        self.test_case_serie()
+        self.Feature_or_story_comments()
+        self.Test_case_serie()
 
 
-    def feature_or_story_comments(self):
+    def Feature_or_story_comments(self):
         '''Nonterminal for processing the info inside comment items.'''
 
         if self.sym == 'comment':
@@ -79,28 +78,31 @@ class SyntacticAnalyzer:
             if 'Story:' in self.lexitem[1] or not self.info_is_empty():
                 self.append_info(self.lexitem[1])
             self.lex()  # advance to the next lex item
-            self.feature_or_story_comments()    # extract the next comments
+            self.Feature_or_story_comments()    # extract the next comments
         else:
             # Produce the collected result.
             print(self.info_as_string())
             self.clear_info()
 
 
-    def test_case_serie(self):
+    def Test_case_serie(self):
 
         if self.sym in ('scenario', 'test_case'):
-            self.test_case(self.sym)
+            self.Test_case(self.sym)
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the test cases.
+            print('+++emptyline')
             self.lex()
-            self.test_case_serie()
+            print('  ', self.sym) 
+            self.Test_case_serie()
         elif self.sym == 'endofdata':
+            print('--- endofdata')
             return
         else:
             self.unexpected()
 
 
-    def test_case(self, variant):
+    def Test_case(self, variant):
         '''Nonterminal for TEST_CASE or SCENARIO.'''
 
         self.append_info('\n{}: '.format(variant))
@@ -129,24 +131,24 @@ class SyntacticAnalyzer:
         print(self.info_as_string())
         self.clear_info()
 
-        self.code_body()
+        self.Code_body()
         self.expect('rbrace')
-        self.test_case_serie()
+        self.Test_case_serie()
 
 
-    def code_body(self):
+    def Code_body(self):
         '''Nonterminal for any other code between the {}.'''
 
         if self.sym == 'rbrace':
             return              # empty rule
         elif self.sym in ('section', 'given', 'when', 'then'):
-            self.section(self.sym)
+            self.Section(self.sym)
 
         self.lex()
-        self.code_body()
+        self.Code_body()
 
 
-    def section(self, variant):
+    def Section(self, variant):
         '''Nonterminal for SECTION, GIVEN, WHEN, ...'''
 
         self.append_info('  {}: '.format(variant))
@@ -166,7 +168,7 @@ class SyntacticAnalyzer:
         print(self.info_as_string())
         self.clear_info()
 
-        self.code_body()
+        self.Code_body()
         self.expect('rbrace')
 
 
@@ -216,6 +218,6 @@ if __name__ == '__main__':
         }
         ''')
 
-    sa = SyntacticAnalyzer(source)
+    sa = SyntacticAnalyzerForCatch(source)
     sa.lex()            # prepare the first lexical item
-    sa.start()          # run from the start nonterminal
+    sa.Start()          # run from the start nonterminal
