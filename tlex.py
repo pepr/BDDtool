@@ -5,58 +5,30 @@
 import re
 
 # The Catch-defined identifiers are considered keywords for this purpose.
-# Also the BDD text that were generated into comments are considered
-# keywords for the purpose -- that is because we want to reconstruct
-# the *.feature file information from the comment. The matched keyword
-# may have more forms (think about more human languages used for keywords
-# in comments).
-#
 # The following list of items contain the tuples with the following
-# meaning...
-#
-# The first element determines the method of recognition of the item:
-# 0 - exact char sequence, 1 - regular character pattern.
-#
-# The second element captures a pattern depending on the on the first element.
-# Or it is the exact string, or it is a regular expression pattern.
-#
-# The third element is the lex symbol identifier.
-#
-# The following rules are evaluated in this order. The order can
-# be important sometimes.
-#
+# meaning. The first element captures a pattern. The second element
+# is the lexical symbol identifier.
 rules = [
-    (0, '(',            'lpar'),
-    (0, ')',            'rpar'),
-    (0, '{',            'lbrace'),
-    (0, '}',            'rbrace'),
-    (0, ',',            'comma'),
+    ('(',            'lpar'),
+    (')',            'rpar'),
+    ('{',            'lbrace'),
+    ('}',            'rbrace'),
+    (',',            'comma'),
 
     # Catch identifiers.
-    (0, 'SCENARIO',     'scenario'),
-    (0, 'GIVEN',        'given'),
-    (0, 'WHEN',         'when'),
-    (0, 'THEN',         'then'),
-    (0, 'AND_WHEN',     'and_when'),
-    (0, 'AND_THEN',     'and_then'),
-    (0, 'TEST_CASE',    'test_case'),
-    (0, 'SECTION',      'section'),
-
-    # Labels that identify portions via free text (inside comments
-    # of the Catch test sources).
-    (1, r'(?i)(User\s+)?Story:',            'story'),
-    (1, r'(?i)(Uživatelský\s+)?Požadavek:', 'story'),
-    (1, r'(?i)Feature:',         'feature'),
-    (1, r'(?i)Rys:',             'feature'),
-
-    # Other things.
-    (1, r'[^"\\\n\t ]+', 'str'), # a string until esc, whitespace or dquote
-    (1, r'[^\n]+',       'unrecognized')   # ... until the end of the line
+    ('SCENARIO',     'scenario'),
+    ('GIVEN',        'given'),
+    ('WHEN',         'when'),
+    ('THEN',         'then'),
+    ('AND_WHEN',     'and_when'),
+    ('AND_THEN',     'and_then'),
+    ('TEST_CASE',    'test_case'),
+    ('SECTION',      'section'),
 ]
 
 #-----------------------------------------------------------------------
 
-def build_lex_str_closures(s, lexid, container, iterator):
+def build_lex_closures(s, lexid, container, iterator):
     '''Builds the pair of closures for recognizing exact strings.'''
 
     def match_str(container, iterator):
@@ -69,24 +41,6 @@ def build_lex_str_closures(s, lexid, container, iterator):
 
 #-----------------------------------------------------------------------
 
-def build_lex_rex_closures(pattern, lexid, container, iterator):
-    '''Builds the pair of closures for the regex pattern.'''
-
-    def match_rex(container, iterator):
-        # Actually returns a match object that can be interpreted
-        # in a boolean context as True/False (matches/does not match).
-        rex = re.compile(pattern)
-        return rex.match(container.source[iterator.pos:])
-
-    def result_rex(container, iterator):
-        m = match_rex(container, iterator)  # see the match_rex() above
-        s = m.group(0)                      # the matched text
-        return lexid, s, iterator.pos + len(s)
-
-    return (match_rex, result_rex)
-
-#-----------------------------------------------------------------------
-
 def buildMatchAndResultFunctions(container, iterator):
     '''Builds the list of (match_fn, result_fn) closures for the rules.'''
 
@@ -95,15 +49,8 @@ def buildMatchAndResultFunctions(container, iterator):
     # The rules are defined by the global one; hence, captured inside
     functions = []
 
-    for method, x, lexid in rules:      # x is or string or regex
-        if method == 0:
-            # Here x is a string.
-            functions.append(build_lex_str_closures(x, lexid, container, iterator))
-        elif method == 1:
-            # Here x is a compiled regular expression.
-            functions.append(build_lex_rex_closures(x, lexid, container, iterator))
-        else:
-            raise NotImplementedError
+    for s, symbol in rules:
+        functions.append(build_lex_closures(s, symbol, container, iterator))
 
     return functions
 
