@@ -1,4 +1,3 @@
-- fix tsyn.py
 - write tsynTest.py
 
 - catchtest to features -- generating missing .feature documents
