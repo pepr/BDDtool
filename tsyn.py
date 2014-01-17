@@ -6,15 +6,25 @@ import tlex
 import textwrap
 import sys
 
+#    # Labels that identify portions via free text (inside comments
+#    # of the Catch test sources).
+#    (1, r'(?i)(User\s+)?Story:',            'story'),
+#    (1, r'(?i)(Uživatelský\s+)?Požadavek:', 'story'),
+#    (1, r'(?i)Feature:',         'feature'),
+#    (1, r'(?i)Rys:',             'feature'),
+#
+#    # Other things.
+#    (1, r'[^"\\\n\t ]+', 'str'), # a string until esc, whitespace or dquote
+#    (1, r'[^\n]+',       'unrecognized')   # ... until the end of the line
+
+
 class SyntacticAnalyzerForCatch:
 
 
     def __init__(self, source):
         self.source = source
 
-        self.lexlst = []        # processed lex items (i.e. history)
-
-        self.lexitem = None
+        self.lextoken = None
         self.sym = None
 
         self.it = iter(tlex.Container(self.source))
@@ -22,33 +32,33 @@ class SyntacticAnalyzerForCatch:
 
 
     def lex(self):
-        '''Get the next lexical item.'''
-        ##print(self.lexitem)
+        '''Get the next lexical token.'''
+        ##print(self.lextoken)
         try:
-            self.lexitem = next(self.it)
-            self.sym = self.lexitem[0]
+            self.lextoken = next(self.it)
+            self.sym = self.lextoken[0]
         except StopIteration:
             pass
 
 
     def unexpected(self):
-        print('Unexpected symbol: {!r}, {!r}'.format(self.sym, self.lexitem))
+        print('Unexpected symbol: {!r}, {!r}'.format(self.sym, self.lextoken))
         sys.exit()
 
 
-    def clear_info(self):
+    def clear_output(self):
         self.info_lst = []
 
 
-    def info_is_empty(self):
+    def output_is_empty(self):
         return len(self.info_lst) == 0
 
 
-    def append_info(self, s):
+    def out(self, s):
         self.info_lst.append(s)
 
 
-    def info_as_string(self, joinseparator=''):
+    def output_as_string(self, joinseparator=''):
         return joinseparator.join(self.info_lst)
 
 
@@ -70,20 +80,20 @@ class SyntacticAnalyzerForCatch:
 
 
     def Feature_or_story_comments(self):
-        '''Nonterminal for processing the info inside comment items.'''
+        '''Nonterminal for processing the info inside comment tokens.'''
 
         if self.sym == 'comment':
 
             # Check whether the comment contains the story/feature
             # label. If yes, start collecting the story.
-            if 'Story:' in self.lexitem[1] or not self.info_is_empty():
-                self.append_info(self.lexitem[1])
-            self.lex()  # advance to the next lex item
+            if 'Story:' in self.lextoken[1] or not self.output_is_empty():
+                self.out(self.lextoken[1])
+            self.lex()  # advance to the next lex token
             self.Feature_or_story_comments()    # extract the next comments
         else:
             # Produce the collected result.
-            print(self.info_as_string())
-            self.clear_info()
+            print(self.output_as_string())
+            self.clear_output()
 
 
     def Test_case_serie(self):
@@ -103,11 +113,11 @@ class SyntacticAnalyzerForCatch:
     def Test_case(self, variant):
         '''Nonterminal for TEST_CASE or SCENARIO.'''
 
-        self.append_info('\n{}: '.format(variant))
+        self.out('\n{}: '.format(variant))
         self.lex()
         self.expect('lpar')
         if self.sym == 'stringlit':
-            self.append_info(self.lexitem[1])
+            self.out(self.lextoken[1])
             self.lex()
         else:
             self.expect('stringlit')
@@ -116,7 +126,7 @@ class SyntacticAnalyzerForCatch:
         if self.sym == 'comma':
             self.lex()
             if self.sym == 'stringlit':
-                self.append_info('  ' + self.lexitem[1])
+                self.out('  ' + self.lextoken[1])
                 self.lex()
             else:
                 expect('stringlit')
@@ -126,8 +136,8 @@ class SyntacticAnalyzerForCatch:
         # Output the previously collected result. It is because
         # the following body contains sections, and they in turn
         # other sections. All of them must be reported in the order.
-        print(self.info_as_string())
-        self.clear_info()
+        print(self.output_as_string())
+        self.clear_output()
 
         self.Code_body()
         self.expect('rbrace')
@@ -149,11 +159,11 @@ class SyntacticAnalyzerForCatch:
     def Section(self, variant):
         '''Nonterminal for SECTION, GIVEN, WHEN, ...'''
 
-        self.append_info('  {}: '.format(variant))
+        self.out('  {}: '.format(variant))
         self.lex()
         self.expect('lpar')
         if self.sym == 'stringlit':
-            self.append_info(self.lexitem[1])
+            self.out(self.lextoken[1])
             self.lex()
         else:
             self.expect('stringlit')
@@ -163,8 +173,8 @@ class SyntacticAnalyzerForCatch:
 
         # Output the previously collected result. It is because
         # the following body contains sections...
-        print(self.info_as_string())
-        self.clear_info()
+        print(self.output_as_string())
+        self.clear_output()
 
         self.Code_body()
         self.expect('rbrace')
@@ -217,5 +227,5 @@ if __name__ == '__main__':
         ''')
 
     sa = SyntacticAnalyzerForCatch(source)
-    sa.lex()            # prepare the first lexical item
+    sa.lex()            # prepare the first lexical token
     sa.Start()          # run from the start nonterminal
