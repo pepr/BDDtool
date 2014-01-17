@@ -23,12 +23,12 @@ class SyntacticAnalyzerForCatch:
 
     def lex(self):
         '''Get the next lexical item.'''
-        print(self.lexitem)
+        ##print(self.lexitem)
         try:
             self.lexitem = next(self.it)
             self.sym = self.lexitem[0]
         except StopIteration:
-            self.expect('endofdata')
+            pass
 
 
     def unexpected(self):
@@ -66,6 +66,7 @@ class SyntacticAnalyzerForCatch:
         '''Implements the start nonterminal.'''
         self.Feature_or_story_comments()
         self.Test_case_serie()
+        self.expect('endofdata')
 
 
     def Feature_or_story_comments(self):
@@ -91,12 +92,9 @@ class SyntacticAnalyzerForCatch:
             self.Test_case(self.sym)
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the test cases.
-            print('+++emptyline')
             self.lex()
-            print('  ', self.sym) 
             self.Test_case_serie()
         elif self.sym == 'endofdata':
-            print('--- endofdata')
             return
         else:
             self.unexpected()
