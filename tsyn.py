@@ -2,23 +2,27 @@
 # -*- coding: utf-8 -*-
 '''Syntactic analysis for the Catch test sources.'''
 
+import re
+import sys
 import tlex
 import textwrap
-import sys
-
-#    # Labels that identify portions via free text (inside comments
-#    # of the Catch test sources).
-#    (1, r'(?i)(User\s+)?Story:',            'story'),
-#    (1, r'(?i)(Uživatelský\s+)?Požadavek:', 'story'),
-#    (1, r'(?i)Feature:',         'feature'),
-#    (1, r'(?i)Rys:',             'feature'),
-#
-#    # Other things.
-#    (1, r'[^"\\\n\t ]+', 'str'), # a string until esc, whitespace or dquote
-#    (1, r'[^\n]+',       'unrecognized')   # ... until the end of the line
-
 
 class SyntacticAnalyzerForCatch:
+
+    # Regular expressions for recognizing the Feature/Story lines.
+    rexStory = re.compile(r'''\s*
+                              ((User\s+)?Story
+                               |(Uživatelský\s+)?Požadavek
+                               |Feature
+                               |Rys
+                              )
+                              :''', re.VERBOSE | re.IGNORECASE)
+
+    rexFeature = re.compile(r'''\s*
+                              (Feature
+                               |Rys
+                              )
+                              :''', re.VERBOSE | re.IGNORECASE)
 
 
     def __init__(self, source):
@@ -29,6 +33,10 @@ class SyntacticAnalyzerForCatch:
 
         self.it = iter(tlex.Container(self.source))
         self.info_lst = []      # auxiliary list for extracted info
+        self.comment_lines = [] # list for lines extracted from comment blocks
+        self.syntax_root = []   # root node of the syntax tree
+        self.bodylst = []       # lines of the story/feature description
+        self.testcaselst = []   # test case subtrees
 
 
     def lex(self):
@@ -74,40 +82,93 @@ class SyntacticAnalyzerForCatch:
 
     def Start(self):
         '''Implements the start nonterminal.'''
-        self.Feature_or_story_comments()
-        self.Test_case_serie()
+
+        self.syntax_tree = []   # no childrend for the root node, yet
+
+        lst = self.Feature_or_story_comments()
+        self.syntax_tree.extend(lst)
+
+        lst = self.Test_case_serie()
+        self.syntax_tree.extend(lst)
+
         self.expect('endofdata')
 
 
     def Feature_or_story_comments(self):
-        '''Nonterminal for processing the info inside comment tokens.'''
+        '''Nonterminal for processing the story/feature inside comment tokens.'''
+
+        subtree = []    # syntax subtree node with no children, yet
 
         if self.sym == 'comment':
+            m = self.rexStory.match(self.lextoken[1])
+            if m is not None:
+                # Extract the Story identifier.
+                storyid = self.lextoken[1][m.endpos:]
+                subtree.append( ('story', storyid) )
+            else:
+                m = self.rexFeature.match(self.lextoken[1])
+                if m is not None:
+                    # Extract the Story identifier.
+                    featureid = self.lextoken[1][m.endpos:]
+                    subtree.append( ('feature', featureid) )
+                else:
+                    self.expect('story or feature')
 
-            # Check whether the comment contains the story/feature
-            # label. If yes, start collecting the story.
-            if 'Story:' in self.lextoken[1] or not self.output_is_empty():
-                self.out(self.lextoken[1])
-            self.lex()  # advance to the next lex token
-            self.Feature_or_story_comments()    # extract the next comments
-        else:
-            # Produce the collected result.
-            print(self.output_as_string())
-            self.clear_output()
+            body = self.Feature_or_story_text()
+            subtree.append(body)
+
+        return subtree
+
+#        # The same info can be part of more single-line comments (// ...) or one
+#        # multi-line comments (/* ... */). To unify their processing, the comment
+#        # block is firstly converted to the list of lines constructed from
+#        # the comment lines.
+#        self.comment_lines = []
+#        while self.sym == 'comment':
+#            if self.lextoken[2].endswith('//'):
+#                self.comment_lines.append(self.lextoken[1]) # a // C++ comment
+#            else:
+#                self.comment_lines.extend(self.lextoken[1].split('\n'))
+#            self.lex()
+#
+#        if self.comment_lines:          # if there are any comment lines
+#            self.Feature_or_story_comments_from_list()
+#        else:
+#            # Produce the collected result.
+#            print(self.output_as_string())
+#            self.clear_output()
+
+
+    def Feature_or_story_text(self):
+        '''Nonterminal for processing the story/feature description text.'''
+
+        if self.sym == 'comment':
+            self.bodylst.append(self.lextoken[1].strip())
+            self.lex()
+            self.Feature_or_story_text()
+
+        body = '\n'.join(self.bodylst)
+        self.bodylst = []
+        return body
 
 
     def Test_case_serie(self):
 
         if self.sym in ('scenario', 'test_case'):
-            self.Test_case(self.sym)
+            subtree = self.Test_case(self.sym)
+            self.testcaselst.append(subtree)
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the test cases.
             self.lex()
-            self.Test_case_serie()
+            tclist = self.Test_case_serie()
+            self.testcaselst.extend(tclist)
+
         elif self.sym == 'endofdata':
             return
         else:
             self.unexpected()
+
+        return []  ##??? fake
 
 
     def Test_case(self, variant):
@@ -141,7 +202,8 @@ class SyntacticAnalyzerForCatch:
 
         self.Code_body()
         self.expect('rbrace')
-        self.Test_case_serie()
+        lst = self.Test_case_serie()
+        return [].extend(lst)  ##??? fake
 
 
     def Code_body(self):
