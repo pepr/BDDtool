@@ -498,7 +498,15 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'story identifier', '/*\n Story: ',
-                                             ' \n  comment2 \n comment3 \n'),
+                                             ' \n  comment2 \n comment3 \n*/'),
+                               ('endofdata', '', '', None)
+                              ])
+
+        source = '/*\n Feature: feature identifier \n  comment2 \n comment3 \n*/'
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('feature', 'feature identifier', '/*\n Feature: ',
+                                             ' \n  comment2 \n comment3 \n*/'),
                                ('endofdata', '', '', None)
                               ])
 

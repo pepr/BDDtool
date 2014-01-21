@@ -28,20 +28,22 @@ rulesStr = [
     ('SECTION',      'section'),
 ]
 
-# Also the BDD text that were generated into comments are considered
-# for the purpose -- that is because we want to reconstruct the *.feature file
-# information from the comment. The matched label may have more forms (think
-# about more human languages in the comment). The label is followed by the text
-# that is interpreted as the value for the label.
+# The BDD text Story/Feature with title that was generated into comments
+# is recognized as a special token when postprocessint a comment token.
+# If recognized, the 'comment' is changed to 'story' or 'feature'.
+# The matched label may have more forms (think about more human languages
+# in the comment). The subpaterns for label are only described here.
+# The related full patterns are constructed in the build_rex_closures()
+# below.
 rulesRex = [
     # Labels that identify portions via free text (inside comments
     # of the Catch test sources).
-    (r'(?i)\s*(User\s+)?Story:\s*(?P<text>.+?)\s*$',    'story'),
-    (r'(?i)\s*Feature:\s*(?P<text>.+?)\s*$',            'feature'),
+    (r'(User\s+)?Story',    'story'),
+    (r'Feature',            'feature'),
 
     # Czech equivalents.
-    (r'(?i)\s*(Uživatelský\s+)?Požadavek:\s*(?P<text>.+?)\s*$', 'story'),
-    (r'(?i)\s*Rys:\s*(?P<text>.+?)\s*$',                        'feature'),
+    (r'(Uživatelský\s+)?Požadavek',  'story'),
+    (r'Rys',                         'feature'),
 ]
 
 #-----------------------------------------------------------------------
@@ -70,7 +72,7 @@ def build_rex_closures(pattern, lexid, source, pos):
     def match_rex(source, pos):
         # Actually returns a match object that can be interpreted
         # in a boolean context as True/False (matches/does not match).
-        rex = re.compile(pattern)
+        rex = re.compile(pattern, re.IGNORECASE)
         return rex.match(source[pos:])
 
     def result_rex(source, pos):
@@ -107,7 +109,13 @@ def buildRegexMatchFunctions(container, iterator):
     # The rules are defined by the global one; hence, captured inside.
     functions = []
 
-    for pattern, lexid in rulesRex:
+    for pat, lexid in rulesRex:
+        # Variant for a single line.
+        pattern = r'\s*' + pat + r':\s*(?P<text>.+?)\s*$'
+        functions.append(build_rex_closures(pattern, lexid, container, iterator))
+
+        # Variant for a multi line.
+        pattern = r'\s*' + pat + r':\s*(?P<text>.+?)\s*\n'
         functions.append(build_rex_closures(pattern, lexid, container, iterator))
 
     return functions
