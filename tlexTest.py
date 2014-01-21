@@ -399,40 +399,6 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                               ])
 
 
-#    def test_story_or_feature(self):
-#        '''story or feature recognition inside the comment'''
-#
-#        def chk(keyword, expected_lexid): # aux. function for checking keywords
-#            lst = list(tlex.Container(keyword))
-#            self.assertEqual(len(lst), 1)
-#            lexid, value = lst[0]
-#            return lexid == expected_lexid and keyword == value
-#
-#        # Recognized words as keywords for human text. Case ignored.
-#        self.assertTrue(chk('user story',   'story'))
-#        self.assertTrue(chk('USER STORY',   'story'))
-#        self.assertTrue(chk('UsEr StOrY',   'story'))
-#        self.assertTrue(chk('USER                 STORY',   'story'))
-#        self.assertTrue(chk('story', 'story'))
-#        self.assertTrue(chk('Story', 'story'))
-#        self.assertTrue(chk('STORY', 'story'))
-#        self.assertTrue(chk('StOrY', 'story'))
-#
-#        self.assertTrue(chk('Uživatelský požadavek', 'story'))
-#        self.assertTrue(chk('UŽIVATELSKÝ POŽADAVEK', 'story'))
-#        self.assertTrue(chk('UžIvAtElSkÝ PoŽaDaVeK', 'story'))
-#        self.assertTrue(chk('Uživatelský požadavek', 'story'))
-#        self.assertTrue(chk('POŽADAVEK', 'story'))
-#        self.assertTrue(chk('PoŽaDaVeK', 'story'))
-#
-#        self.assertTrue(chk('feature', 'feature'))
-#        self.assertTrue(chk('Feature', 'feature'))
-#        self.assertTrue(chk('FEATURE', 'feature'))
-#        self.assertTrue(chk('FeAtUrE', 'feature'))
-#
-#        self.assertTrue(chk('rys', 'feature'))
-
-
     def test_story_or_feature(self):
         '''story or feature recognition inside the comment'''
 
@@ -444,10 +410,24 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('endofdata', '', '', None)
                               ])
 
+        source = '// Story: story identifier '  # with trailing space
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'story identifier', '// Story: ', ' '),
+                               ('endofdata', '', '', None)
+                              ])
+
         source = '// Story: story identifier\n' # with newline
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'story identifier', '// Story: ', '\n'),
+                               ('endofdata', '', '', None)
+                              ])
+
+        source = '// Story: story identifier \n' # with trailing space and newline
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'story identifier', '// Story: ', ' \n'),
                                ('endofdata', '', '', None)
                               ])
 
@@ -466,6 +446,12 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('endofdata', '', '', None)
                               ])
 
+        source = '// Feature: feature identifier \n' # with trailing space and newline
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('feature', 'feature identifier', '// Feature: ', ' \n'),
+                               ('endofdata', '', '', None)
+                              ])
 
         # UsEr StOrY
         source = '// UsEr StOrY: story identifier'      # without newline
@@ -498,70 +484,24 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                               ])
 
 
-###
-###    def test_body(self):
-###        '''parsing the body in curly braces'''
-###
-###        def lex(source):   # auxiliary fn for testing lex analysis
-###            return list(lexcatch.Container(source))
-###
-###        # Empty body.
-###        source = '{}'
-###        lexlst = lex(source)
-###        self.assertTrue(lexlst == [('lbrace', '{'), ('rbrace', '}')])
-###
-###        # Empty body with newline.
-###        source = '{\n}'
-###        lexlst = lex(source)
-###        self.assertTrue(lexlst == [('lbrace',  '{'),
-###                                   ('newline', '\n'),
-###                                   ('rbrace',  '}')])
-###
-###        # Empty body with trivial C comment.
-###        source = '{/**/}'
-###        lexlst = lex(source)
-###        self.assertTrue(lexlst == [('lbrace',  '{'),
-###                                   ('commentlpar', '/*'),
-###                                   ('commentrpar', '*/'),
-###                                   ('rbrace',  '}')])
-###
-###
-###    def test_SECTION(self):
-###        '''lexical parsing of SECTION constructs.'''
-###
-###        def lex(source):   # auxiliary fn for testing lex analysis
-###            return list(lexcatch.Container(source))
-###
-###        # The smallest SECTION with body (empty identification string,
-###        # and empty body on one line).
-###        source = 'SECTION(""){}'
-###        lexlst = lex(source)
-###        self.assertTrue(lexlst == [('kw_section', 'SECTION'),
-###                                   ('lpar',       '('),
-###                                   ('dquote',     '"'),
-###                                   ('dquote',     '"'),
-###                                   ('rpar',       ')'),
-###                                   ('lbrace',     '{'),
-###                                   ('rbrace',     '}')])
-###
-###        # Usual SECTION with identifier but empty body.
-###        source = 'SECTION( "identifier" ) {\n}'
-###        lexlst = lex(source)
-###        self.assertTrue(lexlst == [('kw_section',     'SECTION'),
-###                                   ('lpar',           '('),
-###                                   ('whitespaces',    ' '),
-###                                   ('dquote',         '"'),
-###                                   ('str',            'identifier'),
-###                                   ('dquote',         '"'),
-###                                   ('whitespaces',    ' '),
-###                                   ('rpar',           ')'),
-###                                   ('whitespaces',    ' '),
-###                                   ('lbrace',         '{'),
-###                                   ('newline',        '\n'),
-###                                   ('rbrace',         '}')
-###                                  ])
-###
-###
+        # C-comment.
+        source = '/* Story: story identifier */'        # single line
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'story identifier', '/* Story: ', ' */'),
+                               ('endofdata', '', '', None)
+                              ])
+
+
+        # Multiline C-comment.
+        source = '/*\n Story: story identifier \n  comment2 \n comment3 \n*/'
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'story identifier', '/*\n Story: ',
+                                             ' \n  comment2 \n comment3 \n'),
+                               ('endofdata', '', '', None)
+                              ])
+
 
 if __name__ == '__main__':
     unittest.main()

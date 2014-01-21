@@ -36,12 +36,12 @@ rulesStr = [
 rulesRex = [
     # Labels that identify portions via free text (inside comments
     # of the Catch test sources).
-    (r'(?i)\s*(User\s+)?Story:\s*(?P<text>[^\n]*)',     'story'),
-    (r'(?i)\s*Feature:\s*(?P<text>[^\n]*)',             'feature'),
+    (r'(?i)\s*(User\s+)?Story:\s*(?P<text>.+?)\s*$',    'story'),
+    (r'(?i)\s*Feature:\s*(?P<text>.+?)\s*$',            'feature'),
 
     # Czech equivalents.
-    (r'(?i)\s*(Uživatelský\s+)?Požadavek:\s*(?P<text>[^\n]*)',  'story'),
-    (r'(?i)\s*Rys:\s*(?P<text>[^\n]*)',                         'feature'),
+    (r'(?i)\s*(Uživatelský\s+)?Požadavek:\s*(?P<text>.+?)\s*$', 'story'),
+    (r'(?i)\s*Rys:\s*(?P<text>.+?)\s*$',                        'feature'),
 ]
 
 #-----------------------------------------------------------------------
@@ -211,9 +211,12 @@ class Iterator:
 
                 # Move the characters after the text to the post. This must
                 # be done earlier than the following to get the correct positions.
-                assert self.post is None
                 if textend < len(self.lst):
-                    self.post = ''.join(self.lst[textend:])
+                    post = ''.join(self.lst[textend:])
+                    if self.post is None:
+                        self.post = post
+                    else:
+                        self.post = post + self.post
                     self.lst[textend:] = []
 
                 # Move the character before text from the lst to the prelst.
@@ -338,7 +341,7 @@ class Iterator:
                     assert self.post == None
                     self.lst[-2:] = []  # delete, not part of the content
                     self.post = '*/'
-                    return self.lextoken()
+                    return self.comment_or_feature()
                 elif c == '*':
                     pass                # extra star, stay in this state
                 else:
