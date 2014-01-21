@@ -6,9 +6,11 @@ import re
 
 # The Catch-defined identifiers are considered keywords for this purpose.
 # The following list of items contain the tuples with the following
-# meaning. The first element captures a pattern. The second element
-# is the lexical symbol identifier.
-rules = [
+# meaning...
+#
+# The first element captures an exact string pattern (not a regular expression),
+# the second element is the lex symbol identifier.
+rulesStr = [
     ('(',            'lpar'),
     (')',            'rpar'),
     ('{',            'lbrace'),
@@ -26,9 +28,25 @@ rules = [
     ('SECTION',      'section'),
 ]
 
+# Also the BDD text that were generated into comments are considered
+# for the purpose -- that is because we want to reconstruct the *.feature file
+# information from the comment. The matched label may have more forms (think
+# about more human languages in the comment). The label is followed by the text
+# that is interpreted as the value for the label.
+rulesRex = [
+    # Labels that identify portions via free text (inside comments
+    # of the Catch test sources).
+    (r'(?i)\s*(User\s+)?Story:\s*(?P<text>[^\n]*)',     'story'),
+    (r'(?i)\s*Feature:\s*(?P<text>[^\n]*)',             'feature'),
+
+    # Czech equivalents.
+    (r'(?i)\s*(Uživatelský\s+)?Požadavek:\s*(?P<text>[^\n]*)',  'story'),
+    (r'(?i)\s*Rys:\s*(?P<text>[^\n]*)',                         'feature'),
+]
+
 #-----------------------------------------------------------------------
 
-def build_lex_closures(s, lexid, container, iterator):
+def build_str_closures(s, lexid, container, iterator):
     '''Builds the pair of closures for recognizing exact strings.'''
 
     def match_str(container, iterator):
@@ -41,16 +59,51 @@ def build_lex_closures(s, lexid, container, iterator):
 
 #-----------------------------------------------------------------------
 
-def buildMatchAndResultFunctions(container, iterator):
-    '''Builds the list of (match_fn, result_fn) closures for the rules.'''
+def build_rex_closures(pattern, lexid, source, pos):
+    '''Builds the pair of closures for the regex pattern.'''
+
+    def match_rex(source, pos):
+        # Actually returns a match object that can be interpreted
+        # in a boolean context as True/False (matches/does not match).
+        rex = re.compile(pattern)
+        return rex.match(source[pos:])
+
+    def result_rex(source, pos):
+        m = match_rex(source, pos)      # see the match_rex() above
+        text = m.group('text')          # the matched text
+        textstart, textend = m.span('text')
+        endpos = m.endpos
+        return lexid, text, textstart, textend, endpos
+
+    return (match_rex, result_rex)
+
+#-----------------------------------------------------------------------
+
+def buildExactStrMatchFunctions(container, iterator):
+    '''Builds the list of (match_fn, result_fn) closures for exact strings.'''
 
     # As a container can be iterated by several iterators, both the container
     # and the iterator must be passed (not captured inside the closures).
-    # The rules are defined by the global one; hence, captured inside
+    # The rules are defined by the global one; hence, captured inside/
     functions = []
 
-    for s, symbol in rules:
-        functions.append(build_lex_closures(s, symbol, container, iterator))
+    for s, lexid in rulesStr:
+        functions.append(build_str_closures(s, lexid, container, iterator))
+
+    return functions
+
+#-----------------------------------------------------------------------
+
+def buildRegexMatchFunctions(container, iterator):
+    '''Builds the list of (match_fn, result_fn) closures for regular expressions.'''
+
+    # As a container can be iterated by several iterators, both the container
+    # and the iterator must be passed (not captured inside the closures).
+    # The rules are defined by the global one; hence, captured inside.
+    functions = []
+
+    for pattern, lexid in rulesRex:
+        functions.append(build_rex_closures(pattern, lexid, container, iterator))
 
     return functions
 
@@ -72,7 +125,8 @@ class Iterator:
         self.prelst = []
         self.post = None        # for src reconstruction -- like '*/'
 
-        self.match_and_result_fns = buildMatchAndResultFunctions(container, self)
+        self.exact_str_match_fns = buildExactStrMatchFunctions(container, self)
+        self.regex_match_fns = buildRegexMatchFunctions(container, self)
 
 
     def __iter__(self):
@@ -121,6 +175,53 @@ class Iterator:
 
         # Return the result.
         return item
+
+
+    def comment_or_feature(self):
+        '''Checks and possibly converts the token from comment to feature/story.'''
+
+##        print('comment_or_feature')
+        assert self.symbol == 'comment'
+##        print('sym =', self.symbol)
+##        print('lst =', self.lst)
+        content = ''.join(self.lst)
+##        print('content = {!r}'.format(content))
+
+        for match_fn, result_fn in self.regex_match_fns:
+##            print('loop')
+            pos = 0
+            if match_fn(content, pos):
+                symbol, text, textstart, textend, endpos = result_fn(content, pos)
+                assert symbol == 'story' or symbol == 'feature'
+                assert self.symbol == 'comment'
+
+##               print('mmm:', (symbol, text, textstart, textend, endpos))
+##               print('prelst:', self.prelst)
+##               print('lst:', self.lst)
+##               print('post:', self.post)
+##               print('-----')
+
+                # Change the symbol identifier.
+                self.symbol = symbol
+
+                # Move the characters after the text to the post. This must
+                # be done earlier than the following to get the correct positions.
+                assert self.post is None
+                self.post = ''.join(self.lst[textend:])
+                self.lst[textend:] = []
+
+                # Move the character before text from the lst to the prelst.
+                self.prelst.extend(self.lst[0:textstart])
+                self.lst[0:textstart] = []
+
+##                print('prelst:', self.prelst)
+##                print('lst:', self.lst)
+##                print('post:', repr(self.post))
+
+                # Terminate the loop prematurely.
+                break
+
+        return self.lexitem()
 
 
     def __next__(self):
@@ -174,7 +275,7 @@ class Iterator:
                     self.pos -= 1       # back from the advanced position
                     del self.lst[-1]    # remove the last char from the list
 
-                    for match_fn, result_fn in self.match_and_result_fns:
+                    for match_fn, result_fn in self.exact_str_match_fns:
                         if match_fn(self.container, self):
                             symbol, lexem, newpos = result_fn(self.container, self)
                             self.pos = newpos
@@ -206,9 +307,12 @@ class Iterator:
             #----------------------------   comment till the end of line
             elif self.status == 2:
                 if c == '\n':
-                    # End of line -- form the lex item.
+                    # End of line -- end of the // comment. It could be
+                    # the Story or Feature inside. Return or 'comment', or
+                    # 'story', or 'feature'.
+                    item = self.comment_or_feature()
                     self.status = 0
-                    return self.lexitem()
+                    return item
 
                 # All other characters are consumed as the comment content.
 

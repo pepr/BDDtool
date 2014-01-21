@@ -398,16 +398,21 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('endofdata', '', '', None)
                               ])
 
-#    def test_labels(self):
-#        '''free text labels recognized as lexical symbols'''
+
+#    def test_story_or_feature(self):
+#        '''story or feature recognition inside the comment'''
 #
-#        def chk(text, lexid
+#        def chk(keyword, expected_lexid): # aux. function for checking keywords
+#            lst = list(tlex.Container(keyword))
+#            self.assertEqual(len(lst), 1)
+#            lexid, value = lst[0]
+#            return lexid == expected_lexid and keyword == value
 #
 #        # Recognized words as keywords for human text. Case ignored.
-#        self.assertTrue(chk('user story:',   'story'))
-#        self.assertTrue(chk('USER STORY:',   'story'))
-#        self.assertTrue(chk('UsEr StOrY:',   'story'))
-#        self.assertTrue(chk('USER                 STORY:',   'story'))
+#        self.assertTrue(chk('user story',   'story'))
+#        self.assertTrue(chk('USER STORY',   'story'))
+#        self.assertTrue(chk('UsEr StOrY',   'story'))
+#        self.assertTrue(chk('USER                 STORY',   'story'))
 #        self.assertTrue(chk('story', 'story'))
 #        self.assertTrue(chk('Story', 'story'))
 #        self.assertTrue(chk('STORY', 'story'))
@@ -415,26 +420,28 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
 #
 #        self.assertTrue(chk('Uživatelský požadavek', 'story'))
 #        self.assertTrue(chk('UŽIVATELSKÝ POŽADAVEK', 'story'))
-#        self.assertTrue(chk('UžIvAtElSkÝ PoŽaDaVeK', 'lab_story'))
-#        self.assertTrue(chk('Uživatelský požadavek', 'lab_story'))
-#        self.assertTrue(chk('POŽADAVEK', 'lab_story'))
-#        self.assertTrue(chk('PoŽaDaVeK', 'lab_story'))
+#        self.assertTrue(chk('UžIvAtElSkÝ PoŽaDaVeK', 'story'))
+#        self.assertTrue(chk('Uživatelský požadavek', 'story'))
+#        self.assertTrue(chk('POŽADAVEK', 'story'))
+#        self.assertTrue(chk('PoŽaDaVeK', 'story'))
 #
-#        self.assertTrue(chk('feature', 'lab_feature'))
-#        self.assertTrue(chk('Feature', 'lab_feature'))
-#        self.assertTrue(chk('FEATURE', 'lab_feature'))
-#        self.assertTrue(chk('FeAtUrE', 'lab_feature'))
+#        self.assertTrue(chk('feature', 'feature'))
+#        self.assertTrue(chk('Feature', 'feature'))
+#        self.assertTrue(chk('FEATURE', 'feature'))
+#        self.assertTrue(chk('FeAtUrE', 'feature'))
 #
-#        self.assertTrue(chk('rys', 'lab_feature'))
-#
-#    def test_story_or_feature(self):
-#        '''story or feature recognition inside the comment'''
-#
-#        source = '// Story: story identifier'
-#        lst = list(tlex.Container(source))
-#        self.assertEqual(len(lst), 2)
-#        item = lst[0]
-#        self.assertEqual(item, ('story', 'story identifier', '// Story: ', None))
+#        self.assertTrue(chk('rys', 'feature'))
+
+
+    def test_story_or_feature(self):
+        '''story or feature recognition inside the comment'''
+
+        source = '// Story: story identifier\n'
+        lst = list(tlex.Container(source))
+        ##print('tsf:', lst)
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('story', 'story identifier', '// Story: ', '\n'))
 
 
 ###
