@@ -436,12 +436,66 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
     def test_story_or_feature(self):
         '''story or feature recognition inside the comment'''
 
-        source = '// Story: story identifier\n'
+        # Story
+        source = '// Story: story identifier'   # without newline
         lst = list(tlex.Container(source))
-        ##print('tsf:', lst)
         self.assertEqual(len(lst), 2)
-        item = lst[0]
-        self.assertEqual(item, ('story', 'story identifier', '// Story: ', '\n'))
+        self.assertEqual(lst, [('story', 'story identifier', '// Story: ', None),
+                               ('endofdata', '', '', None)
+                              ])
+
+        source = '// Story: story identifier\n' # with newline
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'story identifier', '// Story: ', '\n'),
+                               ('endofdata', '', '', None)
+                              ])
+
+        # Feature
+        source = '// Feature: feature identifier'   # without newline
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('feature', 'feature identifier', '// Feature: ', None),
+                               ('endofdata', '', '', None)
+                              ])
+
+        source = '// Feature: feature identifier\n' # with newline
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('feature', 'feature identifier', '// Feature: ', '\n'),
+                               ('endofdata', '', '', None)
+                              ])
+
+
+        # UsEr StOrY
+        source = '// UsEr StOrY: story identifier'      # without newline
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'story identifier', '// UsEr StOrY: ', None),
+                               ('endofdata', '', '', None)
+                              ])
+
+        source = '// UsEr StOrY: story identifier\n'    # with newline
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'story identifier', '// UsEr StOrY: ', '\n'),
+                               ('endofdata', '', '', None)
+                              ])
+
+        # Czech equivalents.
+        source = '// PoŽadavek: identifikace požadavku' # without newline
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'identifikace požadavku', '// PoŽadavek: ', None),
+                               ('endofdata', '', '', None)
+                              ])
+
+        source = '// rys: identifikace rysu'            # without newline
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('feature', 'identifikace rysu', '// rys: ', None),
+                               ('endofdata', '', '', None)
+                              ])
 
 
 ###

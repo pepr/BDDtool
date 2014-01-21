@@ -207,8 +207,9 @@ class Iterator:
                 # Move the characters after the text to the post. This must
                 # be done earlier than the following to get the correct positions.
                 assert self.post is None
-                self.post = ''.join(self.lst[textend:])
-                self.lst[textend:] = []
+                if textend < len(self.lst):
+                    self.post = ''.join(self.lst[textend:])
+                    self.lst[textend:] = []
 
                 # Move the character before text from the lst to the prelst.
                 self.prelst.extend(self.lst[0:textstart])
@@ -218,8 +219,8 @@ class Iterator:
 ##                print('lst:', self.lst)
 ##                print('post:', repr(self.post))
 
-                # Terminate the loop prematurely.
-                break
+                # Return the token.
+                return self.lexitem()
 
         return self.lexitem()
 
@@ -244,7 +245,7 @@ class Iterator:
                     self.status = 800
                     return error
                 elif self.status == 2:  # empty // comment just before end of data
-                    item = self.lexitem()
+                    item = self.comment_or_feature()
                     self.status = 800
                     return item
                 elif self.status == 5:  # closing dquote of "literal" missing

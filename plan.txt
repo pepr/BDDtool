@@ -1,3 +1,6 @@
+- tlexTest.py -- various Story/feature comments
+- How to capture the story body from the following comments?
+
 - write tsynTest.py
 
 - catchtest to features -- generating missing .feature documents
