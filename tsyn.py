@@ -9,22 +9,6 @@ import textwrap
 
 class SyntacticAnalyzerForCatch:
 
-    # Regular expressions for recognizing the Feature/Story lines.
-    rexStory = re.compile(r'''\s*
-                              ((User\s+)?Story
-                               |(Uživatelský\s+)?Požadavek
-                               |Feature
-                               |Rys
-                              )
-                              :''', re.VERBOSE | re.IGNORECASE)
-
-    rexFeature = re.compile(r'''\s*
-                              (Feature
-                               |Rys
-                              )
-                              :''', re.VERBOSE | re.IGNORECASE)
-
-
     def __init__(self, source):
         self.source = source
 
