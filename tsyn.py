@@ -83,96 +83,54 @@ class SyntacticAnalyzerForCatch:
     def Start(self):
         '''Implements the start nonterminal.'''
 
-        self.syntax_tree = []   # no childrend for the root node, yet
-
-        lst = self.Feature_or_story_comments()
-        self.syntax_tree.extend(lst)
-
-        lst = self.Test_case_serie()
-        self.syntax_tree.extend(lst)
-
+        self.Feature_or_story()
+        self.Test_case_serie()
         self.expect('endofdata')
 
 
-    def Feature_or_story_comments(self):
+    def Feature_or_story(self):
         '''Nonterminal for processing the story/feature inside comment tokens.'''
 
-        subtree = []    # syntax subtree node with no children, yet
-
-        if self.sym == 'comment':
-            m = self.rexStory.match(self.lextoken[1])
-            if m is not None:
-                # Extract the Story identifier.
-                storyid = self.lextoken[1][m.endpos:]
-                subtree.append( ('story', storyid) )
-            else:
-                m = self.rexFeature.match(self.lextoken[1])
-                if m is not None:
-                    # Extract the Story identifier.
-                    featureid = self.lextoken[1][m.endpos:]
-                    subtree.append( ('feature', featureid) )
-                else:
-                    self.expect('story or feature')
-
-            body = self.Feature_or_story_text()
-            subtree.append(body)
-
-        return subtree
-
-#        # The same info can be part of more single-line comments (// ...) or one
-#        # multi-line comments (/* ... */). To unify their processing, the comment
-#        # block is firstly converted to the list of lines constructed from
-#        # the comment lines.
-#        self.comment_lines = []
-#        while self.sym == 'comment':
-#            if self.lextoken[2].endswith('//'):
-#                self.comment_lines.append(self.lextoken[1]) # a // C++ comment
-#            else:
-#                self.comment_lines.extend(self.lextoken[1].split('\n'))
-#            self.lex()
-#
-#        if self.comment_lines:          # if there are any comment lines
-#            self.Feature_or_story_comments_from_list()
-#        else:
-#            # Produce the collected result.
-#            print(self.output_as_string())
-#            self.clear_output()
-
-
-    def Feature_or_story_text(self):
-        '''Nonterminal for processing the story/feature description text.'''
-
-        if self.sym == 'comment':
-            self.bodylst.append(self.lextoken[1].strip())
+        if self.sym == 'story':
+            print('Story:', self.lextoken[1])
             self.lex()
-            self.Feature_or_story_text()
+            self.Comments()
+        elif self.sym == 'feature':
+            print('Story:', self.lextoken[1])
+            self.Comments()
+        elif self.sym == 'comment':
+            print(self.lextoken[1])
+            self.Comments()
+        else:
+            self.expect('story', 'feature', 'comment')
 
-        body = '\n'.join(self.bodylst)
-        self.bodylst = []
-        return body
+
+    def Comments(self):
+        '''Nonterminal for skipping the block of comments.'''
+
+        if self.sym == 'comment':
+            print(self.lextoken[1])
+            self.lex()
+            self.Comments()
 
 
     def Test_case_serie(self):
+        '''Nonterminal for a serie of test cases or scenarios.'''
 
         if self.sym in ('scenario', 'test_case'):
-            subtree = self.Test_case(self.sym)
-            self.testcaselst.append(subtree)
+            self.Test_case(self.sym)
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the test cases.
             self.lex()
-            tclist = self.Test_case_serie()
-            self.testcaselst.extend(tclist)
-
+            self.Test_case_serie()
         elif self.sym == 'endofdata':
             return
         else:
             self.unexpected()
 
-        return []  ##??? fake
-
 
     def Test_case(self, variant):
-        '''Nonterminal for TEST_CASE or SCENARIO.'''
+        '''Nonterminal for one TEST_CASE or one SCENARIO.'''
 
         self.out('\n{}: '.format(variant))
         self.lex()
@@ -202,8 +160,7 @@ class SyntacticAnalyzerForCatch:
 
         self.Code_body()
         self.expect('rbrace')
-        lst = self.Test_case_serie()
-        return [].extend(lst)  ##??? fake
+        self.Test_case_serie()
 
 
     def Code_body(self):
