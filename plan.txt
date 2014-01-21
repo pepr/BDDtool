@@ -1,4 +1,5 @@
-- tlexTest.py -- various /* Story/feature comments */
+- feaparse.py -- .feature parser
+- generator of catch sources based on the elements from feaparse.py
 - How to capture the story body from the following comments?
 - remove debug prints from tlex.py and tlexTest.py
 
