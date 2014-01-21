@@ -62,6 +62,11 @@ def build_str_closures(s, lexid, container, iterator):
 def build_rex_closures(pattern, lexid, source, pos):
     '''Builds the pair of closures for the regex pattern.'''
 
+    # Unlike the above build_str_closures(), it works directly with a string
+    # variable and positions -- i.e. can be used independently on Container/Iterator
+    # of the lexical analyzer. The result function also returns a tuple
+    # with more elements.
+
     def match_rex(source, pos):
         # Actually returns a match object that can be interpreted
         # in a boolean context as True/False (matches/does not match).
@@ -137,16 +142,16 @@ class Iterator:
         raise NotImplementedError('status={}: {!r}'.format(self.status, msg))
 
 
-    def lexitem(self):
-        '''Forms lexical item from the member variables.'''
+    def lextoken(self):
+        '''Forms lexical token from the member variables.'''
 
-        # Form the lexical item.
-        item = (self.symbol, ''.join(self.lst),
+        # Form the lexical token.
+        token = (self.symbol, ''.join(self.lst),
                 ''.join(self.prelst), self.post)
 
         # Warn if symbol was not recognized.
         if self.symbol is None:
-            print('Warning: symbol not set for', item)
+            print('Warning: symbol not set for', token)
 
         # Reset the variables.
         self.symbol = None
@@ -155,16 +160,16 @@ class Iterator:
         self.post = None
 
         # Return the result.
-        return item
+        return token
 
 
     def expected(self, s):
-        '''Forms error lexical item.'''
+        '''Forms error lexical token.'''
 
-        # Form the lexical item.
+        # Form the lexical token.
         current = (self.symbol, ''.join(self.lst),
                    ''.join(self.prelst), self.post)
-        item = ('error', '{!r} expected'.format(s),
+        token = ('error', '{!r} expected'.format(s),
                 repr(current), None)
 
         # Reset the variables.
@@ -174,7 +179,7 @@ class Iterator:
         self.post = None
 
         # Return the result.
-        return item
+        return token
 
 
     def comment_or_feature(self):
@@ -220,13 +225,13 @@ class Iterator:
 ##                print('post:', repr(self.post))
 
                 # Return the token.
-                return self.lexitem()
+                return self.lextoken()
 
-        return self.lexitem()
+        return self.lextoken()
 
 
     def __next__(self):
-        '''Returns lexical items (symbol, lexem, pre, post).'''
+        '''Returns lexical tokens (symbol, lexem, pre, post).'''
 
         # Loop until the end of data.
         while self.status != 1000:
@@ -245,9 +250,9 @@ class Iterator:
                     self.status = 800
                     return error
                 elif self.status == 2:  # empty // comment just before end of data
-                    item = self.comment_or_feature()
+                    token = self.comment_or_feature()
                     self.status = 800
-                    return item
+                    return token
                 elif self.status == 5:  # closing dquote of "literal" missing
                     error = self.expected('"')
                     self.status = 800
@@ -264,14 +269,14 @@ class Iterator:
                     pass                # skip tabs and spaces
                 elif c == '\n':
                     self.symbol = 'emptyline'
-                    return self.lexitem()
+                    return self.lextoken()
                 elif c == '"':          # string literal started
                     self.symbol = 'stringlit'
                     self.prelst = self.lst
                     self.lst = []
                     self.status = 5
                 else:
-                    # Loop through the closure pairs to find the lex item.
+                    # Loop through the closure pairs to find the lex token.
                     # When the match is found, return early.
                     self.pos -= 1       # back from the advanced position
                     del self.lst[-1]    # remove the last char from the list
@@ -283,7 +288,7 @@ class Iterator:
                             self.symbol = symbol
                             self.prelst = self.lst
                             self.lst = [ lexem ]
-                            return self.lexitem()
+                            return self.lextoken()
 
                     # No element found. Something is new, not implemented.
                     self.notImplemented(c)
@@ -311,9 +316,9 @@ class Iterator:
                     # End of line -- end of the // comment. It could be
                     # the Story or Feature inside. Return or 'comment', or
                     # 'story', or 'feature'.
-                    item = self.comment_or_feature()
+                    token = self.comment_or_feature()
                     self.status = 0
-                    return item
+                    return token
 
                 # All other characters are consumed as the comment content.
 
@@ -333,7 +338,7 @@ class Iterator:
                     assert self.post == None
                     self.lst[-2:] = []  # delete, not part of the content
                     self.post = '*/'
-                    return self.lexitem()
+                    return self.lextoken()
                 elif c == '*':
                     pass                # extra star, stay in this state
                 else:
@@ -346,7 +351,7 @@ class Iterator:
                     self.status = 0
                     self.lst[-1:] = []  # delete, not part of the content
                     self.post = '"'
-                    return self.lexitem()
+                    return self.lextoken()
                 elif c == '\\':         # backlash starts an escape sequence
                     self.status = 6
 
@@ -364,16 +369,16 @@ class Iterator:
                 self.prelst = self.lst
                 self.lst = []
                 self.status = 1000
-                return self.lexitem()
+                return self.lextoken()
 
 ###                 # If nothing was collected, just stop iteration.
 ###                 if self.symbol is None and not self.lst and not self.prelst:
 ###                     raise StopIteration
 ###
-###                 # Return the last collected lexical item.
+###                 # Return the last collected lexical token.
 ###                 if self.symbol is None:
 ###                     self.symbol = 'skip'
-###                 return self.lexitem()
+###                 return self.lextoken()
 
             #----------------------------   unknown status
             else:

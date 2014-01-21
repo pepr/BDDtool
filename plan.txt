@@ -1,4 +1,3 @@
-- tlex.py -- rename lexitem to lextoken and item to token...
 - tlexTest.py -- various /* Story/feature comments */
 - How to capture the story body from the following comments?
 - remove debug prints from tlex.py and tlexTest.py
