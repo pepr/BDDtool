@@ -32,6 +32,7 @@ rulesRex = [
     (r'Given:',                 'given'),
     (r'When:',                  'when'),
     (r'Then:',                  'then'),
+    (r'And:',                   'and'),
 
     (r'Test:',                  'test_case'),
     (r'Sec(tion)?:',            'section'),
@@ -43,6 +44,7 @@ rulesRex = [
     (r'Dáno:',                  'given'),
     (r'Když:',                  'when'),
     (r'Pak:',                   'then'),
+    (r'a:',                     'and'),
 
 ]
 

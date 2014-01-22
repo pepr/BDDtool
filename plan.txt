@@ -1,22 +1,19 @@
-- refactoring tlex (symbol, value, lexem, extra_info)
-- refactoring felex (symbol, value, lexem, extra_info)
+- felex: given, when, then
+- tsyn.py -- Catch test syntactic analyzer
 - fesyn.py -- .feature syntactic parser
-- generator of catch sources based on the elements from feaparse.py
 
-- revision of buildRegexMatchFunctions in tlex (? container, iterator?)
+- generator of catch sources based on fesyn
 - How to capture the story body from the following comments?
-- remove debug prints from tlex.py and tlexTest.py
 
 - write tsynTest.py
+- tlex: adding tests for syntactically wrong sources
+- felex: adding tests for syntactically wrong sources
 
-- catchtest to features -- generating missing .feature documents
+- c2f.py = catchtest to features -- generating missing .feature documents
   from tests as .featurenew
-- (3, None, 'lexid') as marker for including i18n portions for lexan
-
-- 'tag' element for both scenarios and test cases -- also for descriptions?
+- How to include include i18n portions for the tokens?
 
 - synchronizace feature seznamu se seznamem extrahovaným z jazyka
-- komentáře v angličtině
 
 - build also Python 2.7 version with the same functionality
 - possibly a C++ implementation of the BDDtool
