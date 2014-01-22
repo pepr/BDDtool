@@ -1,4 +1,3 @@
-- felex: given, when, then
 - tsyn.py -- Catch test syntactic analyzer
 - fesyn.py -- .feature syntactic parser
 
