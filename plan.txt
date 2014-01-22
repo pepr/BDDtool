@@ -1,5 +1,9 @@
-- feaparse.py -- .feature parser
+- refactoring tlex (symbol, value, lexem, extra_info)
+- refactoring felex (symbol, value, lexem, extra_info)
+- fesyn.py -- .feature syntactic parser
 - generator of catch sources based on the elements from feaparse.py
+
+- revision of buildRegexMatchFunctions in tlex (? container, iterator?)
 - How to capture the story body from the following comments?
 - remove debug prints from tlex.py and tlexTest.py
 

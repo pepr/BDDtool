@@ -29,6 +29,38 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
                                ('endofdata', '', '', None)
                               ])
 
+        # Story with text
+        source = 'Story: text'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'Story:', 'text', None),
+                               ('endofdata', '', '', None)
+                              ])
+
+        # Story with text and extra spaces
+        source = '      Story:              text and extra      '
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'Story:', 'text and extra', None),
+                               ('endofdata', '', '', None)
+                              ])
+
+        # User story as the alternative to Story.
+        source = 'User story: text'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'User story:', 'text', None),
+                               ('endofdata', '', '', None)
+                              ])
+
+        # User story as the alternative to Story.
+        source = 'User story: text'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('story', 'User story:', 'text', None),
+                               ('endofdata', '', '', None)
+                              ])
+
 
     def test_testcase_and_scenario(self):
         '''recognizing test_case and scenario lines'''
