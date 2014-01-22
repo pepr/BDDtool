@@ -21,7 +21,7 @@ import re
 # below.
 rulesRex = [
     # Empty lines.
-    (r'',                       'emptyline'),
+    (r'emptyline dummy pat.',   'emptyline'),
 
 
     # Labels that identify portions via free text (inside comments
@@ -59,17 +59,13 @@ def build_rex_closures(pattern, lexsym):
 
     def result_rex(line):
         m = match_rex(line)             # see the match_rex() above
-        lexem = m.group('lexem')        # lexem is always present
-        if lexsym == 'emptyline':
-            text = None                 # empty line whitespaces are in the lexem
-        else:
-            text = m.group('text')      # the matched text
+        text = m.group('text')          # the matched text
 
         tags = None
         if lexsym in ('scenario', 'test_case'):
             tags = m.group('tags')
 
-        return lexsym, lexem, text, tags
+        return lexsym, text, tags
 
     return match_rex, result_rex
 
@@ -110,8 +106,8 @@ class Iterator:
 
         self.status = 0         # of the finite automaton
         self.symbol = None
+        self.value = None
         self.lexem = None
-        self.text = None
         self.tags = None        # for scenario/test
 
         self.regex_match_fns = buildRegexMatchFunctions()
@@ -129,7 +125,8 @@ class Iterator:
         '''Forms lexical token from the member variables.'''
 
         # Form the lexical token.
-        token = (self.symbol, self.lexem, self.text, self.tags)
+        tags = self.tags if self.tags else None
+        token = (self.symbol, self.value, self.lexem, tags)
 
         # Warn if symbol was not recognized.
         if self.symbol is None:
@@ -138,7 +135,7 @@ class Iterator:
         # Reset the variables.
         self.symbol = None
         self.lexem = None
-        self.text = None
+        self.value = None
         self.tags = None
 
         # Return the result.
@@ -173,7 +170,8 @@ class Iterator:
             # Get the next character or set the status for the end of data
             if self.lineno < self.len:
                 line = self.lines[self.lineno]
-                self.lineno += 1           # advanced to the next one
+                self.lexem = line       # whole line is the lexem
+                self.lineno += 1        # advanced to the next one
             else:
                 # End of data.
                 self.status = 800
@@ -183,23 +181,17 @@ class Iterator:
                 assert self.symbol is None
                 for match_fn, result_fn in self.regex_match_fns:
                     if match_fn(line):
-                        self.symbol, self.lexem, self.text, self.tags = result_fn(line)
+                        self.symbol, self.value, self.tags = result_fn(line)
                         return self.lextoken()
 
                 # Other lines are considered just 'line'.
                 self.symbol = 'line'
-                self.lexem = line
-                self.text = None
-                self.tags = None
 
                 return self.lextoken()
 
             #----------------------------   end of data
             elif self.status == 800:
                 self.symbol = 'endofdata'
-                self.lexem = ''
-                self.text = ''
-                self.tags = None
                 self.status = 1000
                 return self.lextoken()
 
@@ -223,7 +215,9 @@ class Container:
             self.lines = []
         else:
             lines = source.split('\n')    # multiline split to list of lines
-            self.lines = [line + '\n' for line in lines]    # adding newlines back
+            self.lines = [line + '\n' for line in lines[:-1]]    # adding newlines back
+            self.lines.append(lines[-1])
+
 
 
     def __iter__(self):
