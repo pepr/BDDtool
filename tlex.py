@@ -146,7 +146,10 @@ class Iterator:
         '''Forms lexical token from the member variables.'''
 
         # Form the lexical token: (symbol, value, lexem, extra_info)
-        if self.symbol == 'stringlit':
+        if self.symbol in ('stringlit', 'emptyline', 'comment'):
+            # Here the value should always be a string, even if nothing was
+            # collected. The reason is that the value may be further processed
+            # and the None would cause complications.
             value = ''.join(self.valuelst) if self.valuelst else ''
         else:
             value = ''.join(self.valuelst) if self.valuelst else None

@@ -29,7 +29,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         source = '//'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
-        self.assertEqual(lst, [('comment', None, source, None),
+        self.assertEqual(lst, [('comment', '', source, None),
                                ('endofdata', None, None, None)
                               ])
 
@@ -37,7 +37,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         source = '//\n'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
-        self.assertEqual(lst, [('comment', None, source, None),
+        self.assertEqual(lst, [('comment', '', source, None),
                                ('endofdata', None, None, None)
                               ])
 
@@ -74,7 +74,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)   # one error item plus endofdata
         self.assertEqual(lst, [('error', "'*/' expected",
-                                 "('comment', None, '/*', None)", None),
+                                 "('comment', '', '/*', None)", None),
                                ('endofdata', None, None, None)
                               ])
 
@@ -82,7 +82,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         source = '/**/'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
-        self.assertEqual(lst, [('comment', None, source, None),
+        self.assertEqual(lst, [('comment', '', source, None),
                                ('endofdata', None, None, None)
                               ])
 
@@ -90,8 +90,8 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         source = '/**/\n'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 3)
-        self.assertEqual(lst, [('comment', None, '/**/', None),
-                               ('emptyline', None, '\n', None),
+        self.assertEqual(lst, [('comment', '', '/**/', None),
+                               ('emptyline', '', '\n', None),
                                ('endofdata', None, None, None)
                               ])
 
@@ -99,8 +99,8 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         source = '/**/\n '
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 3)
-        self.assertEqual(lst, [('comment', None, '/**/', None),
-                               ('emptyline', None, '\n', None),
+        self.assertEqual(lst, [('comment', '', '/**/', None),
+                               ('emptyline', '', '\n', None),
                                ('endofdata', None, ' ', None)
                               ])
 
@@ -108,8 +108,8 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         source = '/**/ \n'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 3)
-        self.assertEqual(lst, [('comment', None, '/**/', None),
-                               ('emptyline', None, ' \n', None),
+        self.assertEqual(lst, [('comment', '', '/**/', None),
+                               ('emptyline', '', ' \n', None),
                                ('endofdata', None, None, None)
                               ])
 
