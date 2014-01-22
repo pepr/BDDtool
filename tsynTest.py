@@ -19,11 +19,11 @@ class SyntaxCatchTests(unittest.TestCase):
     def test_story(self):
 
         source = '// Story: story identifier'
-        sa = SyntacticAnalyzerForCatch(source)
+        sa = tsyn.SyntacticAnalyzerForCatch(source)
         sa.lex()                # prepare the first lexical token
         lst = list(sa.Start())  # run from the start nonterminal
         self.assertEqual(len(lst), 1)
-        self.assertEqual(lst, [('story', 'story identifier')]
+        self.assertEqual(lst, [('story', 'story identifier')])
 
 
         source = textwrap.dedent('''\
@@ -34,14 +34,15 @@ class SyntaxCatchTests(unittest.TestCase):
             //  so that my life is to be easier.
 
             ''')
-        sa = SyntacticAnalyzerForCatch(source)
+
+        sa = tsyn.SyntacticAnalyzerForCatch(source)
         sa.lex()                # prepare the first lexical token
         lst = list(sa.Start())  # run from the start nonterminal
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [
             ('story', 'story identifier'),
             ('storybody', 'As a user\nI want the feature\nso that my life is to be easier.')
-        ]
+        ])
 
 
     def test_complex_source(self):
@@ -67,7 +68,7 @@ class SyntaxCatchTests(unittest.TestCase):
             }
             ''')
 
-        sa = SyntacticAnalyzerForCatch(source)
+        sa = tsyn.SyntacticAnalyzerForCatch(source)
         sa.lex()            # prepare the first lexical token
         sa.Start()          # run from the start nonterminal
 

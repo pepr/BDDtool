@@ -25,7 +25,6 @@ class SyntacticAnalyzerForCatch:
 
     def lex(self):
         '''Get the next lexical token.'''
-        ##print(self.lextoken)
         try:
             self.lextoken = next(self.it)
             self.sym = self.lextoken[0]
