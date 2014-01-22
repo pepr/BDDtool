@@ -48,20 +48,20 @@ rulesRex = [
 
 #-----------------------------------------------------------------------
 
-def build_str_closures(s, lexid, container, iterator):
+def build_str_closures(s, lexid, iterator):
     '''Builds the pair of closures for recognizing exact strings.'''
 
-    def match_str(container, iterator):
-        return container.source.startswith(s, iterator.pos)
+    def match_str(iterator):
+        return iterator.source.startswith(s, iterator.pos)
 
-    def result_str(container, iterator):
+    def result_str(iterator):
         return lexid, s, iterator.pos + len(s)
 
     return (match_str, result_str)
 
 #-----------------------------------------------------------------------
 
-def build_rex_closures(pattern, lexid, source, pos):
+def build_rex_closures(pattern, lexsym):
     '''Builds the pair of closures for the regex pattern.'''
 
     # Unlike the above build_str_closures(), it works directly with a string
@@ -78,45 +78,37 @@ def build_rex_closures(pattern, lexid, source, pos):
     def result_rex(source, pos):
         m = match_rex(source, pos)      # see the match_rex() above
         text = m.group('text')          # the matched text
-        textstart, textend = m.span('text')
-        endpos = m.endpos
-        return lexid, text, textstart, textend, endpos
+        return lexsym, text
 
     return (match_rex, result_rex)
 
 #-----------------------------------------------------------------------
 
-def buildExactStrMatchFunctions(container, iterator):
+def buildExactStrMatchFunctions(iterator):
     '''Builds the list of (match_fn, result_fn) closures for exact strings.'''
 
-    # As a container can be iterated by several iterators, both the container
-    # and the iterator must be passed (not captured inside the closures).
-    # The rules are defined by the global one; hence, captured inside/
     functions = []
 
     for s, lexid in rulesStr:
-        functions.append(build_str_closures(s, lexid, container, iterator))
+        functions.append(build_str_closures(s, lexid, iterator))
 
     return functions
 
 #-----------------------------------------------------------------------
 
-def buildRegexMatchFunctions(container, iterator):
+def buildRegexMatchFunctions():
     '''Builds the list of (match_fn, result_fn) closures for regular expressions.'''
 
-    # As a container can be iterated by several iterators, both the container
-    # and the iterator must be passed (not captured inside the closures).
-    # The rules are defined by the global one; hence, captured inside.
     functions = []
 
     for pat, lexid in rulesRex:
         # Variant for a single line.
         pattern = r'\s*' + pat + r':\s*(?P<text>.+?)\s*$'
-        functions.append(build_rex_closures(pattern, lexid, container, iterator))
+        functions.append(build_rex_closures(pattern, lexid))
 
         # Variant for a multi line.
         pattern = r'\s*' + pat + r':\s*(?P<text>.+?)\s*\n'
-        functions.append(build_rex_closures(pattern, lexid, container, iterator))
+        functions.append(build_rex_closures(pattern, lexid))
 
     return functions
 
@@ -134,12 +126,12 @@ class Iterator:
 
         self.status = 0         # of the finite automaton
         self.symbol = None
-        self.lst = []
-        self.prelst = []
-        self.post = None        # for src reconstruction -- like '*/'
+        self.valuelst = []
+        self.lexemlst = []
+        self.extra_info = None
 
-        self.exact_str_match_fns = buildExactStrMatchFunctions(container, self)
-        self.regex_match_fns = buildRegexMatchFunctions(container, self)
+        self.exact_str_match_fns = buildExactStrMatchFunctions(self)
+        self.regex_match_fns = buildRegexMatchFunctions()
 
 
     def __iter__(self):
@@ -153,9 +145,15 @@ class Iterator:
     def lextoken(self):
         '''Forms lexical token from the member variables.'''
 
-        # Form the lexical token.
-        token = (self.symbol, ''.join(self.lst),
-                ''.join(self.prelst), self.post)
+        # Form the lexical token: (symbol, value, lexem, extra_info)
+        if self.symbol == 'stringlit':
+            value = ''.join(self.valuelst) if self.valuelst else ''
+        else:
+            value = ''.join(self.valuelst) if self.valuelst else None
+
+        token = (self.symbol, value,
+                 ''.join(self.lexemlst) if self.lexemlst else None,
+                 self.extra_info)
 
         # Warn if symbol was not recognized.
         if self.symbol is None:
@@ -163,9 +161,9 @@ class Iterator:
 
         # Reset the variables.
         self.symbol = None
-        self.lst = []
-        self.prelst = []
-        self.post = None
+        self.valuelst = []
+        self.lexemlst = []
+        self.extra_info = None
 
         # Return the result.
         return token
@@ -175,69 +173,35 @@ class Iterator:
         '''Forms error lexical token.'''
 
         # Form the lexical token.
-        current = (self.symbol, ''.join(self.lst),
-                   ''.join(self.prelst), self.post)
-        token = ('error', '{!r} expected'.format(s),
-                repr(current), None)
-
-        # Reset the variables.
-        self.symbol = None
-        self.lst = []
-        self.prelst = []
-        self.post = None
+        current = self.lextoken()
+        error_token = ('error', '{!r} expected'.format(s),
+                       repr(current), None)
 
         # Return the result.
-        return token
+        return error_token
 
 
     def comment_or_feature(self):
         '''Checks and possibly converts the token from comment to feature/story.'''
 
-##        print('comment_or_feature')
         assert self.symbol == 'comment'
-##        print('sym =', self.symbol)
-##        print('lst =', self.lst)
-        content = ''.join(self.lst)
-##        print('content = {!r}'.format(content))
+        value = ''.join(self.valuelst)
 
         for match_fn, result_fn in self.regex_match_fns:
-##            print('loop')
             pos = 0
-            if match_fn(content, pos):
-                symbol, text, textstart, textend, endpos = result_fn(content, pos)
+            if match_fn(value, pos):
+                symbol, new_value = result_fn(value, pos)
                 assert symbol == 'story' or symbol == 'feature'
                 assert self.symbol == 'comment'
 
-##               print('mmm:', (symbol, text, textstart, textend, endpos))
-##               print('prelst:', self.prelst)
-##               print('lst:', self.lst)
-##               print('post:', self.post)
-##               print('-----')
-
-                # Change the symbol identifier.
+                # Change the symbol identifier and replace the value.
                 self.symbol = symbol
-
-                # Move the characters after the text to the post. This must
-                # be done earlier than the following to get the correct positions.
-                if textend < len(self.lst):
-                    post = ''.join(self.lst[textend:])
-                    if self.post is None:
-                        self.post = post
-                    else:
-                        self.post = post + self.post
-                    self.lst[textend:] = []
-
-                # Move the character before text from the lst to the prelst.
-                self.prelst.extend(self.lst[0:textstart])
-                self.lst[0:textstart] = []
-
-##                print('prelst:', self.prelst)
-##                print('lst:', self.lst)
-##                print('post:', repr(self.post))
+                self.valuelst = [ new_value ]
 
                 # Return the token.
                 return self.lextoken()
 
+        # Nothing special recognized. Returned as 'comment' token.
         return self.lextoken()
 
 
@@ -250,7 +214,7 @@ class Iterator:
             # Get the next character or set the status for the end of data
             if self.pos < self.srclen:
                 c = self.source[self.pos]
-                self.lst.append(c)
+                self.lexemlst.append(c)
                 self.pos += 1           # advanced to the next one
             else:
                 # End of data, but the previous element may not be
@@ -283,22 +247,19 @@ class Iterator:
                     return self.lextoken()
                 elif c == '"':          # string literal started
                     self.symbol = 'stringlit'
-                    self.prelst = self.lst
-                    self.lst = []
                     self.status = 5
                 else:
                     # Loop through the closure pairs to find the lex token.
                     # When the match is found, return early.
                     self.pos -= 1       # back from the advanced position
-                    del self.lst[-1]    # remove the last char from the list
+                    del self.lexemlst[-1]       # will be part of the next match
 
                     for match_fn, result_fn in self.exact_str_match_fns:
-                        if match_fn(self.container, self):
-                            symbol, lexem, newpos = result_fn(self.container, self)
+                        if match_fn(self):
+                            symbol, lexem, newpos = result_fn(self)
                             self.pos = newpos
                             self.symbol = symbol
-                            self.prelst = self.lst
-                            self.lst = [ lexem ]
+                            self.lexemlst.append(lexem)
                             return self.lextoken()
 
                     # No element found. Something is new, not implemented.
@@ -309,14 +270,10 @@ class Iterator:
                 if c == '/':
                     # The C++ // comment recognized.
                     self.symbol = 'comment'
-                    self.prelst = self.lst
-                    self.lst = []
                     self.status = 2     # collect content of // comment
                 elif c == '*':
                     # The C /* comment started.
                     self.symbol = 'comment'
-                    self.prelst = self.lst
-                    self.lst = []
                     self.status = 3     # collect content of the  /* comment */
                 else:
                     self.notImplemented(c)
@@ -331,14 +288,16 @@ class Iterator:
                     self.status = 0
                     return token
 
-                # All other characters are consumed as the comment content.
+                # All other characters are consumed as the comment value.
+                self.valuelst.append(c)
 
             #----------------------------   collecting comment till */
             elif self.status == 3:
                 if c == '*':
                     self.status = 4     # possibly end of C comment
-
-                # All other characters are consumed as the comment content.
+                else:
+                    # Add other characters to the comment value.
+                    self.valuelst.append(c)
 
             #----------------------------   comment */ closed
             elif self.status == 4:
@@ -346,13 +305,12 @@ class Iterator:
                     # Here the self.post will be filled with the '*/'.
                     # This is important for the text reconstruction.
                     self.status = 0
-                    assert self.post == None
-                    self.lst[-2:] = []  # delete, not part of the content
-                    self.post = '*/'
                     return self.comment_or_feature()
                 elif c == '*':
-                    pass                # extra star, stay in this state
+                    self.valuelst.append('*') # previous extra star to the value
                 else:
+                    self.valuelst.append('*') # previous extra star to the value
+                    self.valuelst.append(c)
                     self.status = 3     # collecting other chars
 
             #----------------------------   collecting string literal chars
@@ -360,36 +318,25 @@ class Iterator:
                 if c == '"':
                     # String literal finished.
                     self.status = 0
-                    self.lst[-1:] = []  # delete, not part of the content
-                    self.post = '"'
                     return self.lextoken()
                 elif c == '\\':         # backlash starts an escape sequence
                     self.status = 6
 
-                # Any other char collected as a part of the literal.
+                # If not '"' then collected as a part of the literal value.
+                self.valuelst.append(c)
 
             #----------------------------   the char after the escape
             elif self.status == 6:
-                # Any char after esc was collected to self.lst. Now
-                # back to collecting other characters of the string literal
+                # Any char after esc. Now back to collecting other characters
+                # of the string literal.
+                self.valuelst.append(c)
                 self.status = 5
 
             #----------------------------   end of data
             elif self.status == 800:
                 self.symbol = 'endofdata'
-                self.prelst = self.lst
-                self.lst = []
                 self.status = 1000
                 return self.lextoken()
-
-###                 # If nothing was collected, just stop iteration.
-###                 if self.symbol is None and not self.lst and not self.prelst:
-###                     raise StopIteration
-###
-###                 # Return the last collected lexical token.
-###                 if self.symbol is None:
-###                     self.symbol = 'skip'
-###                 return self.lextoken()
 
             #----------------------------   unknown status
             else:
