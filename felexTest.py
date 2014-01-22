@@ -366,5 +366,70 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
                               ])
 
 
+    def test_section(self):
+        '''recognizing various SECTION descriptions'''
+
+        # Section with no text
+        source = 'Section:'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('section', '', source, None),
+                               ('endofdata', None, None, None)
+                              ])
+
+        source = 'Sec:'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('section', '', source, None),
+                               ('endofdata', None, None, None)
+                              ])
+
+        # Section with text
+        source = 'Section: text'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('section', 'text', source, None),
+                               ('endofdata', None, None, None)
+                              ])
+
+        source = 'Sec: text'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('section', 'text', source, None),
+                               ('endofdata', None, None, None)
+                              ])
+
+        # Section with text and extra spaces
+        source = '      Section:              text and extra      '
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('section', 'text and extra', source, None),
+                               ('endofdata', None, None, None)
+                              ])
+
+        source = '      Sec:              text and extra      '
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('section', 'text and extra', source, None),
+                               ('endofdata', None, None, None)
+                              ])
+
+        # Section with text and tags -- they are not recognized. They
+        # are just a part of the text.
+        source = 'Section: text [tag1][tag2]'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('section', 'text [tag1][tag2]', source, None),
+                               ('endofdata', None, None, None)
+                              ])
+
+        source = 'Sec: text [tag1][tag2]'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('section', 'text [tag1][tag2]', source, None),
+                               ('endofdata', None, None, None)
+                              ])
+
+
 if __name__ == '__main__':
     unittest.main()
