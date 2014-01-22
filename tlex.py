@@ -33,7 +33,7 @@ rulesStr = [
 # If recognized, the 'comment' is changed to 'story' or 'feature'.
 # The matched label may have more forms (think about more human languages
 # in the comment). The subpaterns for label are only described here.
-# The related full patterns are constructed in the build_rex_closures()
+# The related full patterns are constructed in the buildRegexMatchFunctions()
 # below.
 rulesRex = [
     # Labels that identify portions via free text (inside comments
