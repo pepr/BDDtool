@@ -26,10 +26,12 @@ To be tested
 
 Variant prefixes of element descriptions
 ========================================
-- volnější forma uvození klíčových vět ve .feature (bez dvojtečky)
-- volnější forma rozpoznává, že je volnější a upravuje interpunkci
-  na začátku a na konci extrahovaných textů
-- volnější i přísná forma jsou rovnocenné (po řádcích)
+- more free form of sentences in .feature (no colon)
+- per human-language based code for fixing the extracted info from
+  the free form (basically punctuation at the beginning and at the end
+  of the extracted parts -- thiking about Czech here, possibly no problems
+  in English)
+- the strict and the free form are equal in the semantic sense
 
 
 Internationalization
