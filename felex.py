@@ -61,12 +61,16 @@ def build_rex_closures(pattern, lexsym):
 
     def result_rex(line):
         m = match_rex(line)             # see the match_rex() above
-        text = m.group('text')          # the matched text
+
+        text = ''
+        if 'text' in m.groupdict():
+            text = m.group('text')      # the matched text
 
         tags = None
         if lexsym in ('scenario', 'test_case'):
             tags = m.group('tags')
 
+        ##print( (lexsym, text, tags) )
         return lexsym, text, tags
 
     return match_rex, result_rex
@@ -83,12 +87,12 @@ def buildRegexMatchFunctions():
 
     for pat, lexsym in rulesRex:
         if lexsym == 'emptyline':
-            pattern = r'^(?P<lexem>\s*)$'
+            pattern = r'^\s*$'
         elif lexsym in ('scenario', 'test_case'):
-            pattern = r'^\s*(?P<lexem>' + pat + \
-                      r')\s*(?P<text>.*?)\s*(?P<tags>(\[\w+\])*)\s*$'
+            pattern = r'^\s*' + pat + \
+                      r'\s*(?P<text>.*?)\s*(?P<tags>(\[\w+\])*)\s*$'
         else:
-            pattern = r'^\s*(?P<lexem>' + pat + r')\s*(?P<text>.*?)\s*$'
+            pattern = r'^\s*' + pat + r'\s*(?P<text>.*?)\s*$'
 
         functions.append(build_rex_closures(pattern, lexsym))
 
@@ -188,6 +192,7 @@ class Iterator:
 
                 # Other lines are considered just 'line'.
                 self.symbol = 'line'
+                self.value = line.rstrip()
 
                 return self.lextoken()
 

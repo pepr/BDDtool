@@ -32,11 +32,6 @@ class SyntacticAnalyzerForCatch:
             pass
 
 
-    def unexpected(self):
-        print('Unexpected symbol: {!r}, {!r}'.format(self.sym, self.lextoken))
-        sys.exit()
-
-
     def clear_output(self):
         self.info_lst = []
 
@@ -60,7 +55,9 @@ class SyntacticAnalyzerForCatch:
             self.lex()
         else:
             print('Expected symbol(s):', expected_symbols)
-            self.unexpected()
+            print('Unexpected symbol: {!r}, {!r}'.format(self.sym,
+                                                         self.lextoken))
+            sys.exit()
 
 
     def Start(self):
@@ -79,7 +76,7 @@ class SyntacticAnalyzerForCatch:
             self.lex()
             self.Comments()
         elif self.sym == 'feature':
-            print('Story:', self.lextoken[1])
+            print('Feature:', self.lextoken[1])
             self.Comments()
         elif self.sym == 'comment':
             print(self.lextoken[1])
@@ -109,7 +106,7 @@ class SyntacticAnalyzerForCatch:
         elif self.sym == 'endofdata':
             return
         else:
-            self.unexpected()
+            self.expect('scenario', 'test_case')
 
 
     def Test_case(self, variant):

@@ -1,9 +1,15 @@
-- tsyn.py -- Catch test syntactic analyzer
-- fesyn.py -- .feature syntactic parser
+- fesyn.py -- .feature syntactic parser:
+  - print only; generating syntax tree later
+  - the syntax tree should probably reflect the nesting of sections
+
+- fesynTest.py
+  - test empty scenario definition (no GIVEN)
+  - test empty test-case definition (no SECTION)
 
 - generator of catch sources based on fesyn
 - How to capture the story body from the following comments?
 
+- tsyn.py -- Catch test syntactic analyzer
 - write tsynTest.py
 - tlex: adding tests for syntactically wrong sources
 - felex: adding tests for syntactically wrong sources
