@@ -4,6 +4,9 @@ import os
 import textwrap
 import unittest
 
+import sys
+sys.path.append('..')
+
 import felex
 
 class LexAnalyzerForFeatureTests(unittest.TestCase):

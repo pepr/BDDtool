@@ -1,9 +1,14 @@
 #!python3
 
-import BDDgen
 import os
 import textwrap
 import unittest
+
+import sys
+sys.path.append('..')
+
+??? older code to be fixed for newer parsers
+import BDDgen
 
 class FeatureFilePullParserTests(unittest.TestCase):
 
