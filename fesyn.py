@@ -4,7 +4,6 @@
 
 import felex
 import re
-import sys
 import textwrap
 
 
@@ -36,10 +35,10 @@ class SyntacticAnalyzerForFeature:
         if self.sym in expected_symbols:
             self.lex()
         else:
-            print('Expected symbol(s):', expected_symbols)
-            print('Unexpected symbol: {!r}, {!r}'.format(self.sym,
-                                                         self.lextoken))
-            sys.exit()
+            msg = 'Expected symbol(s): {}\n'.format(expected_symbols)
+            msg += 'Unexpected symbol: {!r}, {!r}\n'.format(self.sym,
+                                                            self.lextoken)
+            raise RuntimeError(msg)
 
 
     def Start(self):
