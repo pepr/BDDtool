@@ -3,8 +3,11 @@
   - the syntax tree should probably reflect the nesting of sections
 
 - fesynTest.py
-  - test empty scenario definition (no GIVEN)
-  - test empty test-case definition (no SECTION)
+  - feature title only
+  - story title only
+  - story title plus description
+  - empty scenario definition only (no GIVEN, no story title)
+  - empty test-case definition (no SECTION, no feature title)
 
 - generator of catch sources based on fesyn
 - How to capture the story body from the following comments?
