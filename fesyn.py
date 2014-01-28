@@ -25,6 +25,7 @@ class SyntacticAnalyzerForFeature:
         '''Get the next lexical token.'''
         try:
             self.lextoken = next(self.it)
+            print(self.lextoken)
             self.sym, self.text, self.lexem, self.tags = self.lextoken
         except StopIteration:
             pass
