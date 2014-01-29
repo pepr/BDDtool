@@ -20,6 +20,11 @@ class SyntacticAnalyzerForFeature:
 
         self.it = iter(felex.Container(self.source))
         self.lex()              # getting the first token ready
+        self.syntax_tree = []   # syntax tree as the list of tuples with lists...
+
+
+    def tree(self):
+        return self.syntax_tree
 
 
     def lex(self):
@@ -47,7 +52,7 @@ class SyntacticAnalyzerForFeature:
         '''Implements the start nonterminal.'''
 
         self.Feature_or_story()
-        self.Test_or_scenario_serie()
+        self.Test_case_serie()
         self.expect('endofdata')
 
 
@@ -55,41 +60,53 @@ class SyntacticAnalyzerForFeature:
         '''Nonterminal for processing the story/feature definition.'''
 
         if self.sym == 'story':
-            print('Story:', self.text)
+            self.syntax_tree.append( (self.sym, self.value) )
             self.lex()
-            self.Description()
+            descr_lst = self.Description([])
+            if descr_lst:
+                self.syntax_tree.append( ('storybody', '\n'.join(descr_lst)) )
+
         elif self.sym == 'feature':
-            print('Feature:', self.text)
-            self.Description()
+            self.syntax_tree.append( (self.sym, self.value) )
+            self.lex()
+            descr_lst = self.Description([])
+            if descr_lst:
+                self.syntax_tree.append( ('featurebody', '\n'.join(descr_lst)) )
+
+        elif self.sym == 'endofdata':
+            pass                # that's OK, the source can be empty
         else:
-            self.expect('story', 'feature')
+            self.expect('story', 'feature', 'endofdata')
 
 
-    def Description(self):
+    def Description(self, descr_lst):
         '''Nonterminal for description lines of the story/feature.'''
 
         if self.sym in ('emptyline', 'line'):
-            print(self.text)
+            descr_lst.append(self.text)
             self.lex()
-            self.Description()
+            return self.Description(descr_lst)
+        else:
+            return descr_lst
 
 
-    def Test_or_scenario_serie(self):
+    def Test_case_serie(self):
         '''Nonterminal for a serie of test-case or scenario definitions.'''
 
         if self.sym == 'test_case':
-            self.Test_case()
-            self.Test_or_scenario_serie()
+            t = self.Test_case()
+            self.syntax_tree.append(t)
+            self.Test_case_serie()
         elif self.sym == 'scenario':
-            self.Scenario()
-            self.Test_or_scenario_serie()
+            t = self.Scenario()
+            self.syntax_tree.append(t)
+            self.Test_case_serie()
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the test cases.
             self.lex()
-            self.Test_or_scenario_serie()
+            self.Test_case_serie()
         elif self.sym == 'endofdata':
-            # No test-case nor scenario in the feature definition.
-            return
+            pass        # that's OK, no test_source or scenario is acceptable
         else:
             self.expect('test_case', 'scenario')
 
@@ -97,7 +114,7 @@ class SyntacticAnalyzerForFeature:
     def Test_case(self):
         '''Nonterminal for one TEST_CASE.'''
 
-        print('Test:', self.text)
+        item = [ self.sym ]      # specific symbol: 'test_case'
         self.lex()
         if self.sym == 'section':
             self.Section_serie()
@@ -112,7 +129,7 @@ class SyntacticAnalyzerForFeature:
     def Scenario(self):
         '''Nonterminal for one Scenario.'''
 
-        print('Scenario:', self.text)
+        item = [ self.sym ]      # specific symbol: 'scenario'
         self.lex()
         if self.sym == 'given':
             self.Given_serie()

@@ -20,7 +20,6 @@ class SyntacticAnalyzerForCatch:
 
         self.it = iter(tlex.Container(self.source))
         self.syntax_tree = []   # syntax tree as the list of tuples with lists...
-
         self.lex()              # prepare the very first token
 
 
