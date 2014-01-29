@@ -14,39 +14,27 @@ class SyntacticAnalyzerForCatch:
 
         self.lextoken = None
         self.sym = None
+        self.value = None
+        self.lexem = None
+        self.lexextra_info = None
 
         self.it = iter(tlex.Container(self.source))
-        self.info_lst = []      # auxiliary list for extracted info
-        self.comment_lines = [] # list for lines extracted from comment blocks
-        self.syntax_root = []   # root node of the syntax tree
-        self.bodylst = []       # lines of the story/feature description
-        self.testcaselst = []   # test case subtrees
+        self.syntax_tree = []   # syntax tree as the list of tuples with lists...
+
+        self.lex()              # prepare the very first token
+
+
+    def tree(self):
+        return self.syntax_tree
 
 
     def lex(self):
         '''Get the next lexical token.'''
         try:
             self.lextoken = next(self.it)
-            self.sym = self.lextoken[0]
+            self.sym, self.value, self.lexem, self.lexextra_info = self.lextoken
         except StopIteration:
             pass
-
-
-    def clear_output(self):
-        self.info_lst = []
-
-
-    def output_is_empty(self):
-        return len(self.info_lst) == 0
-
-
-    def out(self, s):
-        self.info_lst.append(s)
-
-
-    def output_as_string(self, joinseparator=''):
-        return joinseparator.join(self.info_lst)
-
 
 
     def expect(self, *expected_symbols):
@@ -72,51 +60,65 @@ class SyntacticAnalyzerForCatch:
         '''Nonterminal for processing the story/feature inside comment tokens.'''
 
         if self.sym == 'story':
-            print('Story:', self.lextoken[1])
+            self.syntax_tree.append( (self.sym, self.value) )
             self.lex()
-            self.Comments()
+            comment_lst = self.Comments([])
+            if comment_lst:
+                self.syntax_tree.append( ('storybody', '\n'.join(comment_lst)) )
+
         elif self.sym == 'feature':
-            print('Feature:', self.lextoken[1])
-            self.Comments()
+            self.lex()
+            comment_lst = self.Comments([])
+            if comment_lst:
+                self.syntax_tree.append( ('featurebody', '\n'.join(comment_lst)) )
+
         elif self.sym == 'comment':
-            print(self.lextoken[1])
-            self.Comments()
+            self.lex()
+            self.Comments([])   # ignore the other comments
+
+        elif self.sym == 'endofdata':
+            pass                # that's OK, the source can be empty
         else:
-            self.expect('story', 'feature', 'comment')
+            self.expect('story', 'feature', 'comment', 'endofdata')
 
 
-    def Comments(self):
-        '''Nonterminal for skipping the block of comments.'''
+    def Comments(self, comment_lst):
+        '''Nonterminal for collecting the content of comments.'''
 
         if self.sym == 'comment':
-            print(self.lextoken[1])
+            comment_lst.append(self.value)
             self.lex()
-            self.Comments()
+            return self.Comments(comment_lst)
+        else:
+            return comment_lst
 
 
     def Test_case_serie(self):
         '''Nonterminal for a serie of test cases or scenarios.'''
 
         if self.sym in ('scenario', 'test_case'):
-            self.Test_case(self.sym)
+            t = self.Test_case()
+            self.syntax_tree.append(t)
+            self.Test_case_serie()
+
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the test cases.
             self.lex()
             self.Test_case_serie()
         elif self.sym == 'endofdata':
-            return
+            pass        # that's OK, no test_source or scenario is acceptable
         else:
-            self.expect('scenario', 'test_case')
+            self.expect('scenario', 'test_case', 'emptyline', 'endofdata')
 
 
-    def Test_case(self, variant):
+    def Test_case(self):
         '''Nonterminal for one TEST_CASE or one SCENARIO.'''
 
-        self.out('\n{}: '.format(variant))
+        item = [ self.sym ]      # specific symbol: 'test_case' or 'scenario'
         self.lex()
         self.expect('lpar')
         if self.sym == 'stringlit':
-            self.out(self.lextoken[1])
+            item.append(self.value)
             self.lex()
         else:
             self.expect('stringlit')
@@ -125,44 +127,43 @@ class SyntacticAnalyzerForCatch:
         if self.sym == 'comma':
             self.lex()
             if self.sym == 'stringlit':
-                self.out('  ' + self.lextoken[1])
+                raise NotImplementedError('syntax tree for tags not implemented')
                 self.lex()
             else:
                 expect('stringlit')
         self.expect('rpar')
         self.expect('lbrace')
 
-        # Output the previously collected result. It is because
-        # the following body contains sections, and they in turn
-        # other sections. All of them must be reported in the order.
-        print(self.output_as_string())
-        self.clear_output()
-
-        self.Code_body()
+        # Collect the subree of the test_case body.
+        subtree = self.Code_body([])
         self.expect('rbrace')
-        self.Test_case_serie()
+
+        # Return the collected symbol, identifier, and body the test_case into the syntaxt tree.
+        item.append(subtree)
+        return tuple(item)
 
 
-    def Code_body(self):
+    def Code_body(self, subtree):
         '''Nonterminal for any other code between the {}.'''
 
         if self.sym == 'rbrace':
-            return              # empty rule
+            return subtree      # empty rule
         elif self.sym in ('section', 'given', 'when', 'then'):
-            self.Section(self.sym)
+            secitem = self.Section()
+            subtree.append(secitem)
 
         self.lex()
-        self.Code_body()
+        return self.Code_body(subtree)
 
 
-    def Section(self, variant):
+    def Section(self):
         '''Nonterminal for SECTION, GIVEN, WHEN, ...'''
 
-        self.out('  {}: '.format(variant))
+        item = [ self.sym ]      # specific symbol
         self.lex()
         self.expect('lpar')
         if self.sym == 'stringlit':
-            self.out(self.lextoken[1])
+            item.append(self.value)
             self.lex()
         else:
             self.expect('stringlit')
@@ -170,13 +171,14 @@ class SyntacticAnalyzerForCatch:
         self.expect('rpar')
         self.expect('lbrace')
 
-        # Output the previously collected result. It is because
-        # the following body contains sections...
-        print(self.output_as_string())
-        self.clear_output()
-
-        self.Code_body()
+        # Collect the subree of the test_case body.
+        subtree = self.Code_body([])
         self.expect('rbrace')
+
+        # Output the previously collected symbol, identifier, and body
+        # of the section into the syntaxt tree.
+        item.append(subtree)
+        return tuple(item)
 
 
 #-----------------------------------------------------------------------
@@ -210,21 +212,8 @@ if __name__ == '__main__':
                 }
             }
         }
-        SCENARIO( "name for scenario", "[optional tags]" ) {
-            GIVEN( "some initial state" ) {
-                // set up initial state
-
-                WHEN( "an operation is performed" ) {
-                    // perform operation
-
-                    THEN( "we arrive at some expected state" ) {
-                        // assert expected state
-                    }
-                }
-            }
-        }
         ''')
 
     sa = SyntacticAnalyzerForCatch(source)
-    sa.lex()            # prepare the first lexical token
     sa.Start()          # run from the start nonterminal
+    print(sa.tree())

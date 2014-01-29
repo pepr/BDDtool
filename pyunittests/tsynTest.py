@@ -17,16 +17,20 @@ class SyntaxCatchTests(unittest.TestCase):
         '''empty Catch test source'''
 
         source = ''
+        sa = tsyn.SyntacticAnalyzerForCatch(source)
+        sa.Start()              # build the syntaxt tree from the start nonterminal
+        tree = sa.tree()        # get the syntax tree
+        self.assertEqual(len(tree), 0)
 
 
     def test_story(self):
 
         source = '// Story: story identifier'
         sa = tsyn.SyntacticAnalyzerForCatch(source)
-        sa.lex()                # prepare the first lexical token
-        lst = list(sa.Start())  # run from the start nonterminal
-        self.assertEqual(len(lst), 1)
-        self.assertEqual(lst, [('story', 'story identifier')])
+        sa.Start()              # build the syntaxt tree from the start nonterminal
+        tree = sa.tree()        # get the syntax tree
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [('story', 'story identifier')])
 
 
         source = textwrap.dedent('''\
@@ -39,16 +43,47 @@ class SyntaxCatchTests(unittest.TestCase):
             ''')
 
         sa = tsyn.SyntacticAnalyzerForCatch(source)
-        sa.lex()                # prepare the first lexical token
-        lst = list(sa.Start())  # run from the start nonterminal
-        self.assertEqual(len(lst), 2)
-        self.assertEqual(lst, [
+        sa.Start()              # build the syntaxt tree from the start nonterminal
+        tree = sa.tree()        # get the syntax tree
+        self.assertEqual(len(tree), 2)
+        self.assertEqual(tree, [
             ('story', 'story identifier'),
-            ('storybody', 'As a user\nI want the feature\nso that my life is to be easier.')
+            ('storybody',
+             '\n  As a user\n  I want the feature\n  so that my life is to be easier.')
         ])
 
 
     def test_complex_source(self):
+        source = textwrap.dedent('''\
+            // Story: story identifier
+            //
+            //  As a user
+            //  I want the feature
+            //  so that my life is to be easier.
+
+            SCENARIO( "scenario identifier" ) {
+                GIVEN( "given identifier" ) {
+                }
+            }
+            ''')
+
+        sa = tsyn.SyntacticAnalyzerForCatch(source)
+        sa.Start()              # build the syntaxt tree from the start nonterminal
+        tree = sa.tree()        # get the syntax tree
+        print(tree)
+        self.assertEqual(len(tree), 3)
+
+        self.assertEqual(tree, [
+            ('story', 'story identifier'),
+            ('storybody',
+             '\n  As a user\n  I want the feature\n  so that my life is to be easier.'),
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                ])
+            ])
+        ])
+
+
         source = textwrap.dedent('''\
             // Story: story identifier
             //
@@ -71,9 +106,6 @@ class SyntaxCatchTests(unittest.TestCase):
             }
             ''')
 
-        sa = tsyn.SyntacticAnalyzerForCatch(source)
-        sa.lex()            # prepare the first lexical token
-        sa.Start()          # run from the start nonterminal
 
 
 if __name__ == '__main__':
