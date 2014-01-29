@@ -19,6 +19,7 @@ class SyntacticAnalyzerForFeature:
         self.tags  = None       # extra_info
 
         self.it = iter(felex.Container(self.source))
+        self.lex()              # getting the first token ready
 
 
     def lex(self):

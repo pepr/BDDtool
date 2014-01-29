@@ -18,7 +18,6 @@ class SyntaxFeatureTests(unittest.TestCase):
 
         source = ''
         sa = fesyn.SyntacticAnalyzerForFeature(source)
-        sa.lex()                # prepare the first lexical token
         self.assertRaises(RuntimeError, sa.Start)
 
 
@@ -27,7 +26,6 @@ class SyntaxFeatureTests(unittest.TestCase):
 
         source = 'Feature: feature title'
         sa = fesyn.SyntacticAnalyzerForFeature(source)
-        sa.lex()                # prepare the first lexical token
         lst = list(sa.Start())
         print(lst)
         self.assertEqual(len(lst), 1)
@@ -35,7 +33,6 @@ class SyntaxFeatureTests(unittest.TestCase):
 
         source = 'Story: story title'
         sa = fesyn.SyntacticAnalyzerForFeature(source)
-        sa.lex()                # prepare the first lexical token
         lst = list(sa.Start())
         print(lst)
         self.assertEqual(len(lst), 1)
