@@ -18,8 +18,7 @@ class SyntaxCatchTests(unittest.TestCase):
 
         source = ''
         sa = tsyn.SyntacticAnalyzerForCatch(source)
-        sa.Start()              # build the syntaxt tree from the start nonterminal
-        tree = sa.tree()        # get the syntax tree
+        tree = sa.Start()       # build the syntaxt tree from the start nonterminal
         self.assertEqual(len(tree), 0)
 
 
@@ -27,8 +26,7 @@ class SyntaxCatchTests(unittest.TestCase):
 
         source = '// Story: story identifier'
         sa = tsyn.SyntacticAnalyzerForCatch(source)
-        sa.Start()              # build the syntaxt tree from the start nonterminal
-        tree = sa.tree()        # get the syntax tree
+        tree = sa.Start()       # build the syntaxt tree from the start nonterminal
         self.assertEqual(len(tree), 1)
         self.assertEqual(tree, [('story', 'story identifier')])
 
@@ -43,12 +41,11 @@ class SyntaxCatchTests(unittest.TestCase):
             ''')
 
         sa = tsyn.SyntacticAnalyzerForCatch(source)
-        sa.Start()              # build the syntaxt tree from the start nonterminal
-        tree = sa.tree()        # get the syntax tree
+        tree = sa.Start()       # build the syntaxt tree from the start nonterminal
         self.assertEqual(len(tree), 2)
         self.assertEqual(tree, [
             ('story', 'story identifier'),
-            ('storybody',
+            ('description',
              '\n  As a user\n  I want the feature\n  so that my life is to be easier.')
         ])
 
@@ -66,16 +63,13 @@ class SyntaxCatchTests(unittest.TestCase):
                 }
             }
             ''')
-
         sa = tsyn.SyntacticAnalyzerForCatch(source)
-        sa.Start()              # build the syntaxt tree from the start nonterminal
-        tree = sa.tree()        # get the syntax tree
-        print(tree)
+        tree = sa.Start()       # build the syntaxt tree from the start nonterminal
         self.assertEqual(len(tree), 3)
 
         self.assertEqual(tree, [
             ('story', 'story identifier'),
-            ('storybody',
+            ('description',
              '\n  As a user\n  I want the feature\n  so that my life is to be easier.'),
             ('scenario', 'scenario identifier', [
                 ('given', 'given identifier', [
@@ -105,6 +99,23 @@ class SyntaxCatchTests(unittest.TestCase):
                 }
             }
             ''')
+        sa = tsyn.SyntacticAnalyzerForCatch(source)
+        tree = sa.Start()       # build the syntaxt tree from the start nonterminal
+        self.assertEqual(len(tree), 3)
+
+        self.assertEqual(tree, [
+            ('story', 'story identifier'),
+            ('description',
+             '\n  As a user\n  I want the feature\n  so that my life is to be easier.'),
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('when', 'when identifier', [
+                        ('then', 'then identifier', [
+                        ])
+                    ])
+                ])
+            ])
+        ])
 
 
 

@@ -1,6 +1,8 @@
 - fesyn.py -- .feature syntactic parser:
-  - print only; generating syntax tree later
+  - generating syntax tree
   - the syntax tree should probably reflect the nesting of sections
+  - pretty printing the syntax tree (probably a generator)
+  - generator of catch sources based on fesyn
 
 - fesynTest.py
   - feature title only
@@ -8,9 +10,6 @@
   - story title plus description
   - empty scenario definition only (no GIVEN, no story title)
   - empty test-case definition (no SECTION, no feature title)
-
-- generator of catch sources based on fesyn
-- How to capture the story body from the following comments?
 
 - tsyn.py -- Catch test syntactic analyzer
 - write tsynTest.py
@@ -21,7 +20,7 @@
   from tests as .featurenew
 - How to include include i18n portions for the tokens?
 
-- synchronizace feature seznamu se seznamem extrahovaným z jazyka
+- compare syntax trees from the feature description and from the Catch source
 
 - build also Python 2.7 version with the same functionality
 - possibly a C++ implementation of the BDDtool

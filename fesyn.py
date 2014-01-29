@@ -23,15 +23,11 @@ class SyntacticAnalyzerForFeature:
         self.syntax_tree = []   # syntax tree as the list of tuples with lists...
 
 
-    def tree(self):
-        return self.syntax_tree
-
-
     def lex(self):
         '''Get the next lexical token.'''
         try:
             self.lextoken = next(self.it)
-            print(self.lextoken)
+            ##print(self.lextoken)
             self.sym, self.text, self.lexem, self.tags = self.lextoken
         except StopIteration:
             pass
@@ -55,23 +51,18 @@ class SyntacticAnalyzerForFeature:
         self.Test_case_serie()
         self.expect('endofdata')
 
+        return self.syntax_tree
+
 
     def Feature_or_story(self):
         '''Nonterminal for processing the story/feature definition.'''
 
-        if self.sym == 'story':
-            self.syntax_tree.append( (self.sym, self.value) )
+        if self.sym in ('story', 'feature'):
+            self.syntax_tree.append( (self.sym, self.text) )
             self.lex()
             descr_lst = self.Description([])
             if descr_lst:
-                self.syntax_tree.append( ('storybody', '\n'.join(descr_lst)) )
-
-        elif self.sym == 'feature':
-            self.syntax_tree.append( (self.sym, self.value) )
-            self.lex()
-            descr_lst = self.Description([])
-            if descr_lst:
-                self.syntax_tree.append( ('featurebody', '\n'.join(descr_lst)) )
+                self.syntax_tree.append( ('description', '\n'.join(descr_lst)) )
 
         elif self.sym == 'endofdata':
             pass                # that's OK, the source can be empty

@@ -23,10 +23,6 @@ class SyntacticAnalyzerForCatch:
         self.lex()              # prepare the very first token
 
 
-    def tree(self):
-        return self.syntax_tree
-
-
     def lex(self):
         '''Get the next lexical token.'''
         try:
@@ -54,6 +50,8 @@ class SyntacticAnalyzerForCatch:
         self.Test_case_serie()
         self.expect('endofdata')
 
+        return self.syntax_tree
+
 
     def Feature_or_story(self):
         '''Nonterminal for processing the story/feature inside comment tokens.'''
@@ -63,13 +61,13 @@ class SyntacticAnalyzerForCatch:
             self.lex()
             comment_lst = self.Comments([])
             if comment_lst:
-                self.syntax_tree.append( ('storybody', '\n'.join(comment_lst)) )
+                self.syntax_tree.append( ('description', '\n'.join(comment_lst)) )
 
         elif self.sym == 'feature':
             self.lex()
             comment_lst = self.Comments([])
             if comment_lst:
-                self.syntax_tree.append( ('featurebody', '\n'.join(comment_lst)) )
+                self.syntax_tree.append( ('description', '\n'.join(comment_lst)) )
 
         elif self.sym == 'comment':
             self.lex()
