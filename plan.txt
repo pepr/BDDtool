@@ -1,15 +1,10 @@
 - fesyn.py -- .feature syntactic parser:
-  - generating syntax tree
   - the syntax tree should probably reflect the nesting of sections
   - pretty printing the syntax tree (probably a generator)
   - generator of catch sources based on fesyn
 
 - fesynTest.py
-  - feature title only
-  - story title only
-  - story title plus description
-  - empty scenario definition only (no GIVEN, no story title)
-  - empty test-case definition (no SECTION, no feature title)
+  - more tests
 
 - tsyn.py -- Catch test syntactic analyzer
 - write tsynTest.py

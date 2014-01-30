@@ -64,10 +64,10 @@ class SyntacticAnalyzerForFeature:
             if descr_lst:
                 self.syntax_tree.append( ('description', '\n'.join(descr_lst)) )
 
-        elif self.sym == 'endofdata':
-            pass                # that's OK, the source can be empty
+        elif self.sym in ('endofdata', 'scenario', 'test_case'):
+            pass # empty source, or no story definition, nor feature def
         else:
-            self.expect('story', 'feature', 'endofdata')
+            self.expect('story', 'feature', 'endofdata', 'scenario', 'test_case')
 
 
     def Description(self, descr_lst):
@@ -88,14 +88,17 @@ class SyntacticAnalyzerForFeature:
             t = self.Test_case()
             self.syntax_tree.append(t)
             self.Test_case_serie()
+
         elif self.sym == 'scenario':
             t = self.Scenario()
             self.syntax_tree.append(t)
             self.Test_case_serie()
+
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the test cases.
             self.lex()
             self.Test_case_serie()
+
         elif self.sym == 'endofdata':
             pass        # that's OK, no test_source or scenario is acceptable
         else:
@@ -105,113 +108,126 @@ class SyntacticAnalyzerForFeature:
     def Test_case(self):
         '''Nonterminal for one TEST_CASE.'''
 
-        item = [ self.sym ]      # specific symbol: 'test_case'
+        item = [ self.sym, self.text ]          # specific symbol: 'test_case'
         self.lex()
         if self.sym == 'section':
-            self.Section_serie()
+            sec_lst = self.Section_serie([])
+            item.append(sec_lst)
+            return tuple(item)
+
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the SECTION.
             self.lex()
-            self.Section_serie()
+            sec_lst = self.Section_serie([])
+            item.append(sec_lst)
+            return tuple(item)
+
+        elif self.sym == 'endofdata':
+            # Empty body of the test_case (that is no section).
+            item.append([])
+            return tuple(item)
         else:
-            self.expect('section')
+            self.expect('section', 'emptyline', 'endofdata')
 
 
     def Scenario(self):
         '''Nonterminal for one Scenario.'''
 
-        item = [ self.sym ]      # specific symbol: 'scenario'
+        item = [ self.sym, self.text ]          # specific symbol: 'scenario'
         self.lex()
         if self.sym == 'given':
-            self.Given_serie()
+            given_lst = self.Given_serie([])
+            item.append(given_lst)
+            return tuple(item)
+
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the GIVEN.
             self.lex()
-            self.Given_serie()
+            given_lst = self.Given_serie([])
+            item.append(given_lst)
+            return tuple(item)
+
         elif self.sym == 'endofdata':
-            return
+            # Empty body of the scenario (that is no given...).
+            item.append([])
+            return tuple(item)
         else:
-            self.expect('given')
+            self.expect('given', 'emptyline', 'endofdata')
 
 
-    def Given_serie(self):
+    def Given_serie(self, given_lst):
         '''Nonterminal for a serie of GIVEN definitions.'''
 
         if self.sym == 'given':
-            self.Given()
-            self.Given_serie()
+            t = self.Given()
+            given_lst.append(t)
+            return self.Given_serie(given_lst)
+
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the GIVEN.
             self.lex()
-            self.Given_serie()
+            return self.Given_serie(given_lst)
+
         elif self.sym == 'endofdata':
             # No more GIVENs.
-            return
+            return given_lst
         else:
-            self.expect('given')
+            self.expect('given', 'emptyline', 'endofdata')
 
 
     def Given(self):
         '''Nonterminal for one GIVEN definition.'''
 
-        print('   Given:', self.text)
+        item = [ self.sym, self.text ]          # 'given', 'identifier'
         self.lex()
         if self.sym == 'when':
-            self.When_serie()
+            when_lst = self.When_serie([])
+            item.append(when_lst)
+            return tuple(item)
+
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the WHEN.
             self.lex()
-            self.When_serie()
+            when_lst = self.When_serie([])
+            item.append(when_lst)
+            return tuple(item)
+
+        elif self.sym == 'endofdata':
+            # No more WHENs.
+            return when_lst
         else:
-            self.expect('when')
+            self.expect('when', 'emptyline', 'endofdata')
 
 
-    def When_serie(self):
+    def When_serie(self, when_lst):
         '''Nonterminal for a serie of WHEN definitions.'''
 
         if self.sym == 'when':
-            self.When()
-            self.When_serie()
+            t = self.When()
+            when_lst.append(t)
+            return self.When_serie(when_lst)
+
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the WHEN.
             self.lex()
-            self.When_serie()
+            return self.When_serie(when_lst)
+
         elif self.sym == 'endofdata':
             # No more WHENs.
-            return
+            return when_lst
         else:
-            self.expect('when')
+            self.expect('when', 'emptyline', 'endofdata')
 
 
     def When(self):
         '''Nonterminal for one WHEN definition.'''
 
-        print('    When:', self.text)
+        item = [ self.sym, self.text ]          # 'when', 'identifier'
         self.lex()
         if self.sym == 'then':
-            self.Then_serie()
-        elif self.sym == 'emptyline':
-            # Ignore the empty line and wait for the THEN.
-            self.lex()
-            self.Then_serie()
-        else:
-            self.expect('then')
-
-
-
-    def Then_serie(self):
-        '''Nonterminal for a serie of THEN definitions.'''
-
-        if self.sym == 'then':
-            self.Then()
-            self.Then_serie()
-        elif self.sym == 'emptyline':
-            # Ignore the empty line and wait for the THEN.
-            self.lex()
-            self.Then_serie()
-        elif self.sym == 'endofdata':
-            # No more THENs.
-            return
+            t = self.Then()
+            item.append( [ t ])                 # as a body of 'when'
+            return tuple(item)
         else:
             self.expect('then')
 
@@ -219,8 +235,10 @@ class SyntacticAnalyzerForFeature:
     def Then(self):
         '''Nonterminal for one THEN definition.'''
 
-        print('    Then:', self.text)
-        self.expect('then')
+        item = [ self.sym, self.text ]          # 'then', 'identifier'
+        self.lex()
+        item.append([]) # no more nesting
+        return tuple(item)
 
 
 
@@ -242,4 +260,5 @@ if __name__ == '__main__':
 
     sa = SyntacticAnalyzerForFeature(source)
     sa.lex()            # prepare the first lexical token
-    sa.Start()          # run from the start nonterminal
+    tree = sa.Start()   # run from the start nonterminal
+    print(tree)
