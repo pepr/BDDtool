@@ -4,32 +4,48 @@
 import fesyn
 import textwrap
 
-def catchSkeleton(syntax_tree):
-
+def skeleton(syntax_tree, il):
+    indent = ' ' * 4 * il
+    out = []
     for item in syntax_tree:
         sym = item[0]
         if sym == 'story':
-            yield '// Story: ' + item[1] + '\n'
-        
+            out.append('// Story: ' + item[1])
+
         elif sym == 'description':
             lst = item[1].split('\n')
-            out_lst = ['// ' + line for line in lst]
-            yield '\n'.join(out_lst) + '\n'
-        
+            out.extend('// ' + line for line in lst)
+
         elif sym == 'scenario':
-            assert len(item) == 3
-            scenarioSkeleton(item[1], item[2])  # identifier, body item list
-        else:    
-            raise ErrorNotImplemented('Symbol: ' + sym)
+            out.append(indent + 'SCENARIO( "' + item[1] + '" ) {')
+            out.extend(skeleton(item[2], il+1))
+            out.append(indent + '}')
 
+        elif sym == 'given':
+            out.append(indent + 'GIVEN( "' + item[1] + '" ) {')
+            out.append(indent + '    // set up initial state')
+            out.append('')
+            out.extend(skeleton(item[2], il+1))
+            out.append(indent + '}')
 
-def scenarioSkeleton(identifier, body_lst):
-    yield 'SCENARIO( "' + identifier + '" ) {\n'
-    for item in bodylst:
-        sym = item[0]
-        raise ErrorNotImplemented('Symbol: ' + sym)
-        
-          
+        elif sym == 'when':
+            out.append(indent + 'WHEN( "' + item[1] + '" ) {')
+            out.append(indent + '    // perform operation')
+            out.append('')
+            out.extend(skeleton(item[2], il+1))
+            out.append(indent + '}')
+
+        elif sym == 'then':
+            out.append(indent + 'THEN( "' + item[1] + '" ) {')
+            out.append(indent + '    // assert expected state')
+            out.append('')
+            out.extend(skeleton(item[2], il+1))
+            out.append(indent + '}')
+
+        else:
+            raise NotImplementedError('Symbol: ' + sym)
+    return out
+
 
 if __name__ == '__main__':
     source = textwrap.dedent('''\
@@ -47,5 +63,5 @@ if __name__ == '__main__':
     sa = fesyn.SyntacticAnalyzerForFeature(source)
     tree = sa.Start()
 
-    for line in catchSkeleton(tree):
-        print(line, end='')
+    lst = skeleton(tree, 0)
+    print('\n'.join(lst))
