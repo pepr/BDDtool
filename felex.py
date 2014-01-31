@@ -213,18 +213,22 @@ class Iterator:
 class Container:
     '''Iterable container for lexical parsing of the *.feature source.
 
-    The source is passed as a multiline string, processed by lines.
+    The source is passed or as a multiline string, or as an open file,
+    processed by lines.
     '''
 
     def __init__(self, source):
-        # Warning: This is a spike solution
-        if source == '':
+        if hasattr(source, 'readlines'):
+            # It is a file object opened for reading lines in text mode.
+            self.lines = source.readlines()
+        elif source == '':
+            # It is an empty string.
             self.lines = []
         else:
+            # It is a multiline string.
             lines = source.split('\n')    # multiline split to list of lines
             self.lines = [line + '\n' for line in lines[:-1]]    # adding newlines back
             self.lines.append(lines[-1])
-
 
 
     def __iter__(self):

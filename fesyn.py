@@ -44,6 +44,14 @@ class SyntacticAnalyzerForFeature:
             raise RuntimeError(msg)
 
 
+    def addToBodyOf(self, item, lst):
+        '''Adds list of items lst to the item body list.'''
+        if item[2] is None:
+            item[2] = lst
+        else:
+            item[2].extend(lst)
+
+
     def Start(self):
         '''Implements the start nonterminal.'''
 
@@ -105,26 +113,26 @@ class SyntacticAnalyzerForFeature:
             self.expect('test_case', 'scenario')
 
 
-    def Test_case(self):
+    def Test_case(self, item=None):
         '''Nonterminal for one TEST_CASE.'''
 
-        item = [ self.sym, self.text ]          # specific symbol: 'test_case'
+        if item is None:
+            item = [ self.sym, self.text, None ]
         self.lex()
         if self.sym == 'section':
-            sec_lst = self.Section_serie([])
-            item.append(sec_lst)
+            self.addToBodyOf(item, sec_lst)
             return tuple(item)
 
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the SECTION.
             self.lex()
             sec_lst = self.Section_serie([])
-            item.append(sec_lst)
+            self.addToBodyOf(item, sec_lst)
             return tuple(item)
 
         elif self.sym == 'endofdata':
             # Empty body of the test_case (that is no section).
-            item.append([])
+            self.addToBodyOf(item, [])
             return tuple(item)
         else:
             self.expect('section', 'emptyline', 'endofdata')
@@ -133,23 +141,23 @@ class SyntacticAnalyzerForFeature:
     def Scenario(self):
         '''Nonterminal for one Scenario.'''
 
-        item = [ self.sym, self.text ]          # specific symbol: 'scenario'
+        item = [ self.sym, self.text, None ]       # specific symbol: 'scenario'
         self.lex()
         if self.sym == 'given':
             given_lst = self.Given_serie([])
-            item.append(given_lst)
+            self.addToBodyOf(item, given_lst)
             return tuple(item)
 
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the GIVEN.
             self.lex()
             given_lst = self.Given_serie([])
-            item.append(given_lst)
+            self.addToBodyOf(item, given_lst)
             return tuple(item)
 
         elif self.sym == 'endofdata':
             # Empty body of the scenario (that is no given...).
-            item.append([])
+            self.addToBodyOf(item, [])
             return tuple(item)
         else:
             self.expect('given', 'emptyline', 'endofdata')
@@ -168,35 +176,52 @@ class SyntacticAnalyzerForFeature:
             self.lex()
             return self.Given_serie(given_lst)
 
+        elif self.sym == 'scenario':
+            # No more GIVENs -- another scenario to be processed.
+            return given_lst
+
         elif self.sym == 'endofdata':
             # No more GIVENs.
             return given_lst
         else:
-            self.expect('given', 'emptyline', 'endofdata')
+            self.expect('given', 'emptyline', 'scenario', 'endofdata')
 
 
-    def Given(self):
+    def Given(self, item=None, restriction=None):
         '''Nonterminal for one GIVEN definition.'''
 
-        item = [ self.sym, self.text ]          # 'given', 'identifier'
+        if restriction and self.sym != restriction:
+            self.expect(restriction)
+
+        sym = self.sym
+        if self.sym == 'and':           # transforming the 'and'
+            sym = 'and_given'
+
+        if item is None:
+            item = [ sym, self.text, None ]     # 'given'/'and_given', 'identifier', body list
         self.lex()
         if self.sym == 'when':
             when_lst = self.When_serie([])
-            item.append(when_lst)
+            self.addToBodyOf(item, when_lst)
+            return tuple(item)
+
+        elif self.sym == 'and':
+            t = self.Given(restriction='and')
+            self.addToBodyOf(item, [ t ])
             return tuple(item)
 
         elif self.sym == 'emptyline':
             # Ignore the empty line and wait for the WHEN.
             self.lex()
             when_lst = self.When_serie([])
-            item.append(when_lst)
+            self.addToBodyOf(item, when_lst)
             return tuple(item)
 
         elif self.sym == 'endofdata':
             # No more WHENs.
             return when_lst
         else:
-            self.expect('when', 'emptyline', 'endofdata')
+            self.expect('when', 'and', 'emptyline', 'endofdata')
 
 
     def When_serie(self, when_lst):
@@ -212,33 +237,80 @@ class SyntacticAnalyzerForFeature:
             self.lex()
             return self.When_serie(when_lst)
 
+        elif self.sym == 'scenario':
+            # No more WHENs -- another scenario to be processed.
+            return when_lst
+
         elif self.sym == 'endofdata':
             # No more WHENs.
             return when_lst
         else:
-            self.expect('when', 'emptyline', 'endofdata')
+            self.expect('when', 'emptyline', 'scenario', 'endofdata')
 
 
-    def When(self):
+    def When(self, item=None, restriction=None):
         '''Nonterminal for one WHEN definition.'''
 
-        item = [ self.sym, self.text ]          # 'when', 'identifier'
+        if restriction and self.sym != restriction:
+            self.expect('and')
+
+        sym = self.sym
+        if self.sym == 'and':           # transforming the 'and'
+            sym = 'and_when'
+
+        if item is None:
+            item = [ sym, self.text, None ]       # 'when'/'and_when', 'identifier', body list
         self.lex()
         if self.sym == 'then':
             t = self.Then()
-            item.append( [ t ])                 # as a body of 'when'
+            item.append( [ t ])         # as a body of 'when'
             return tuple(item)
+
+        elif self.sym == 'and':
+            t = self.When(restriction='and')
+            self.addToBodyOf(item, [ t ])        # 'and_when' as body of 'when'
+            return tuple(item)
+
+        elif self.sym == 'emptyline':
+            # Ignore the empty line and wait for the WHEN.
+            self.lex()
+            when_lst = self.When_serie([])
+            self.addToBodyOf(item, when_lst)
+            return tuple(item)
+
         else:
-            self.expect('then')
+            self.expect('then', 'and')
 
 
-    def Then(self):
+    def Then(self, item=None, restriction=None):
         '''Nonterminal for one THEN definition.'''
 
-        item = [ self.sym, self.text ]          # 'then', 'identifier'
+        if restriction and self.sym != restriction:
+            self.expect('and')
+
+        sym = self.sym
+        if self.sym == 'and':           # transforming the 'and'
+            sym = 'and_then'
+
+        if item is None:
+            item = [ sym, self.text, None ]       # 'then'/'and_then', 'identifier', body list
         self.lex()
-        item.append([]) # no more nesting
-        return tuple(item)
+
+        if self.sym == 'and':
+            t = self.Then(restriction='and')
+            self.addToBodyOf(item, [ t ])
+            return tuple(item)
+
+        elif self.sym == 'emptyline':
+            self.lex()
+            return self.Then(item, restriction='and')
+
+        elif self.sym == 'scenario':
+            self.addToBodyOf(item, [])  # no more nesting
+            return tuple(item)
+
+        else:
+            self.expect('then', 'and', 'scenario')
 
 
 

@@ -434,5 +434,77 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
                               ])
 
 
+    def test_Czech_complex_story(self):
+        '''Czech complex story'''
+
+        source = textwrap.dedent('''\
+            Požadavek: vytvoření plánu z výsledku analýzy
+
+            Jako běžný uživatel
+            chci vytvořit plán z výsledku analýzy,
+            protože ruční vytváření plánu je pracné.
+
+            Rozbor: Plán má podobu datové kostky.
+
+
+            Scénář: schopnost zjistit existující kostku plánu pro danou analýzu
+              Dáno: vlastnosti (typ, atributy) analýzy
+              Když: vyhodnotíme atributy analýzy
+                 a: kostka plánu existuje
+               Pak: jsme schopni vrátit atributy existující kostky plánu
+
+
+            Scénář: schopnost zjistit neexistenci kostky plánu
+              Dáno: vlastnosti (typ, atributy) analýzy
+              Když: vyhodnotíme atributy analýzy
+                 a: kostka plánu neexistuje
+               Pak: jsme schopni vrátit atributy budoucí kostky plánu
+        ''')
+        lst = list(felex.Container(source))
+        print(lst)
+        self.assertEqual(len(lst), 23)
+        self.assertEqual(lst, [
+            ('story', 'vytvoření plánu z výsledku analýzy',
+                      'Požadavek: vytvoření plánu z výsledku analýzy\n', None),
+            ('emptyline', '', '\n', None),
+            ('line', 'Jako běžný uživatel', 'Jako běžný uživatel\n', None),
+            ('line', 'chci vytvořit plán z výsledku analýzy,',
+                     'chci vytvořit plán z výsledku analýzy,\n', None),
+            ('line', 'protože ruční vytváření plánu je pracné.',
+                     'protože ruční vytváření plánu je pracné.\n', None),
+            ('emptyline', '', '\n', None),
+            ('line', 'Rozbor: Plán má podobu datové kostky.',
+                     'Rozbor: Plán má podobu datové kostky.\n',
+                     None),
+            ('emptyline', '', '\n', None),
+            ('emptyline', '', '\n', None),
+            ('scenario', 'schopnost zjistit existující kostku plánu pro danou analýzu',
+                         'Scénář: schopnost zjistit existující kostku plánu pro danou analýzu\n',
+                         None),
+            ('given', 'vlastnosti (typ, atributy) analýzy',
+                      '  Dáno: vlastnosti (typ, atributy) analýzy\n', None),
+            ('when', 'vyhodnotíme atributy analýzy',
+                     '  Když: vyhodnotíme atributy analýzy\n', None),
+            ('and', 'kostka plánu existuje',
+                    '     a: kostka plánu existuje\n', None),
+            ('then', 'jsme schopni vrátit atributy existující kostky plánu',
+                     '   Pak: jsme schopni vrátit atributy existující kostky plánu\n', None),
+            ('emptyline', '', '\n', None),
+            ('emptyline', '', '\n', None),
+            ('scenario', 'schopnost zjistit neexistenci kostky plánu',
+                         'Scénář: schopnost zjistit neexistenci kostky plánu\n', None),
+            ('given', 'vlastnosti (typ, atributy) analýzy',
+                      '  Dáno: vlastnosti (typ, atributy) analýzy\n', None),
+            ('when', 'vyhodnotíme atributy analýzy',
+                     '  Když: vyhodnotíme atributy analýzy\n', None),
+            ('and', 'kostka plánu neexistuje',
+                    '     a: kostka plánu neexistuje\n', None),
+            ('then', 'jsme schopni vrátit atributy budoucí kostky plánu',
+                     '   Pak: jsme schopni vrátit atributy budoucí kostky plánu\n', None),
+            ('emptyline', '', '', None),
+            ('endofdata', None, None, None)
+        ])
+
+
 if __name__ == '__main__':
     unittest.main()

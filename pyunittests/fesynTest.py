@@ -164,6 +164,46 @@ class SyntaxFeatureTests(unittest.TestCase):
                 ])
             ])
         ])
+
+
+    def test_two_scenarios(self):
+        '''Scenario, given, when, then and another one of the same structure'''
+
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier
+               Given: given identifier
+                When: when identifier
+                Then: then identifier
+
+            Scenario: scenario identifier
+               Given: given identifier
+                When: when identifier
+                Then: then identifier
+
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 2)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('when', 'when identifier', [
+                        ('then', 'then identifier', [
+                        ])
+                    ])
+                ])
+            ]),
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('when', 'when identifier', [
+                        ('then', 'then identifier', [
+                        ])
+                    ])
+                ])
+            ]),
+        ])
+
+
     def test_case_only(self):
         '''test case only'''
 
@@ -209,6 +249,114 @@ class SyntaxFeatureTests(unittest.TestCase):
             ])
         ])
 
+
+    def test_scenario_given_and_given(self):
+        '''Scenario, given, and_given'''
+
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier
+               Given: given identifier
+                 and: given 2 identifier
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('and_given', 'given 2 identifier', [
+                    ])
+                ])
+            ])
+        ])
+
+
+    def test_scenario_andX(self):
+        '''Scenario with and's everywhere'''
+
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier
+               Given: given identifier
+                 and: given 2 identifier
+                When: when identifier
+                 and: when 2 identifier
+                Then: then identifier
+                 and: then 2 identifier
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('and_given', 'given 2 identifier', [
+                        ('when', 'when identifier', [
+                            ('and_when', 'when 2 identifier', [
+                                ('then', 'then identifier', [
+                                    ('and_then', 'then 2 identifier', [
+                                    ])
+                                ])
+                            ])
+                        ])
+                    ])
+                ])
+            ])
+        ])
+
+
+#    def test_Czech_complex_story(self):
+#        '''Czech complex story'''
+#
+#        source = textwrap.dedent('''\
+#            Požadavek: vytvoření plánu z výsledku analýzy
+#
+#            Jako běžný uživatel
+#            chci vytvořit plán z výsledku analýzy,
+#            protože ruční vytváření plánu je pracné.
+#
+#            Rozbor: Plán má podobu datové kostky.
+#
+#
+#            Scénář: schopnost zjistit existující kostku plánu pro danou analýzu
+#              Dáno: vlastnosti (typ, atributy) analýzy
+#              Když: vyhodnotíme atributy analýzy
+#                 a: kostka plánu existuje
+#               Pak: jsme schopni vrátit atributy existující kostky plánu
+#
+#
+#            Scénář: schopnost zjistit neexistenci kostky plánu
+#              Dáno: vlastnosti (typ, atributy) analýzy
+#              Když: vyhodnotíme atributy analýzy
+#                 a: kostka plánu neexistuje
+#               Pak: jsme schopni vrátit atributy budoucí kostky plánu
+#        ''')
+#        sa = fesyn.SyntacticAnalyzerForFeature(source)
+#        tree = sa.Start()
+#        self.assertEqual(len(tree), 4)
+#        self.assertEqual(tree, [
+#            ('story', 'vytvoření plánu z výsledku analýzy'),
+#            ('description', '\nJako běžný uživatel\nchci vytvořit plán z výsledku analýzy,\nprotože ruční vytváření plánu je pracné.\n\nRozbor: Plán má podobu datové kostky.\n\n'),
+#            ('scenario', 'schopnost zjistit existující kostku plánu pro danou analýzu', [
+#                ('given', 'vlastnosti (typ, atributy) analýzy', [
+#                    ('when', 'vyhodnotíme atributy analýzy', [
+#                        ('and_when', 'kostka plánu existuje', [
+#                            ('then', 'jsme schopni vrátit atributy existující kostky plánu', [
+#                            ])
+#                        ])
+#                    ])
+#                ])
+#            ]),
+#            ('scenario', 'schopnost zjistit neexistenci kostky plánu', [
+#                ('given', 'vlastnosti (typ, atributy) analýzy', [
+#                    ('when', 'vyhodnotíme atributy analýzy', [
+#                        ('and_when', 'kostka plánu neexistuje', [
+#                            ('then', 'jsme schopni vrátit atributy budoucí kostky plánu', [
+#                            ])
+#                        ])
+#                    ])
+#                ])\
+#            ])
+#        ])
 
 if __name__ == '__main__':
     unittest.main()
