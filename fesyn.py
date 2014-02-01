@@ -39,9 +39,12 @@ class SyntacticAnalyzerForFeature:
         if self.sym in expected_symbols:
             self.lex()
         else:
+            line_no = self.it.lineno
+            source_name = self.it.source_name
             msg = 'Expected symbol(s): {}\n'.format(expected_symbols)
-            msg += 'Unexpected symbol: {!r}, {!r}\n'.format(
-                                        self.sym, self.lextoken)
+            msg += ('Unexpected content in {!r} at line {}:\n'
+                    '{!r}, {!r}\n').format(
+                        source_name, line_no, self.sym, self.text)
             raise RuntimeError(msg)
 
 

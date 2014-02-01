@@ -461,7 +461,6 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
                Pak: jsme schopni vrátit atributy budoucí kostky plánu
         ''')
         lst = list(felex.Container(source))
-        print(lst)
         self.assertEqual(len(lst), 23)
         self.assertEqual(lst, [
             ('story', 'vytvoření plánu z výsledku analýzy',

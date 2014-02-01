@@ -111,6 +111,7 @@ class Iterator:
 
         self.lines = self.container.lines
         self.len = len(self.lines)
+        self.source_name = self.container.source_name
 
         self.status = 0         # of the finite automaton
         self.symbol = None
@@ -158,7 +159,10 @@ class Iterator:
         # Form the lexical token.
         current = (self.symbol, ''.join(self.lst),
                    ''.join(self.prelst), self.post)
-        token = ('error', '{!r} expected'.format(s),
+        source_name = self.source_name
+        line_no = self.lineno
+        token = ('error', '{!r}, {}: {!r} expected'.format(
+                    source_name, line_no, s),
                 repr(current), None)
 
         # Reset the variables.
@@ -225,14 +229,17 @@ class Container:
         if hasattr(source, 'readlines'):
             # It is a file object opened for reading lines in text mode.
             self.lines = source.readlines()
+            self.source_name = source.name      # filename
         elif source == '':
             # It is an empty string.
             self.lines = []
+            self.source_name = '<str>'
         else:
             # It is a multiline string.
             lines = source.split('\n')    # multiline split to list of lines
             self.lines = [line + '\n' for line in lines[:-1]]    # adding newlines back
             self.lines.append(lines[-1])
+            self.source_name = '<str>'
 
 
     def __iter__(self):
