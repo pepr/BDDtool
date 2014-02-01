@@ -52,7 +52,7 @@ class SyntaxFeatureTests(unittest.TestCase):
         self.assertEqual(len(tree), 2)
         self.assertEqual(tree, [
             ('feature', 'feature title'),
-            ('description', '\nThe feature description is just some text.\n\n')
+            ('description', 'The feature description is just some text.\n\n')
         ])
 
 
@@ -70,7 +70,7 @@ class SyntaxFeatureTests(unittest.TestCase):
         self.assertEqual(tree, [
             ('story', 'story title'),
             ('description',
-            '\nAs a user\nI want the feature\nso that my life is to be easier.\n\n')
+            'As a user\nI want the feature\nso that my life is to be easier.\n\n')
         ])
 
 
@@ -238,7 +238,7 @@ class SyntaxFeatureTests(unittest.TestCase):
         self.assertEqual(tree, [
             ('story', 'story identifier'),
             ('description',
-            '\nAs a user\nI want the feature\nso that my life is to be easier.\n'),
+            'As a user\nI want the feature\nso that my life is to be easier.\n'),
             ('scenario', 'scenario identifier', [
                 ('given', 'given identifier', [
                     ('when', 'when identifier', [
@@ -304,59 +304,59 @@ class SyntaxFeatureTests(unittest.TestCase):
         ])
 
 
-#    def test_Czech_complex_story(self):
-#        '''Czech complex story'''
-#
-#        source = textwrap.dedent('''\
-#            Požadavek: vytvoření plánu z výsledku analýzy
-#
-#            Jako běžný uživatel
-#            chci vytvořit plán z výsledku analýzy,
-#            protože ruční vytváření plánu je pracné.
-#
-#            Rozbor: Plán má podobu datové kostky.
-#
-#
-#            Scénář: schopnost zjistit existující kostku plánu pro danou analýzu
-#              Dáno: vlastnosti (typ, atributy) analýzy
-#              Když: vyhodnotíme atributy analýzy
-#                 a: kostka plánu existuje
-#               Pak: jsme schopni vrátit atributy existující kostky plánu
-#
-#
-#            Scénář: schopnost zjistit neexistenci kostky plánu
-#              Dáno: vlastnosti (typ, atributy) analýzy
-#              Když: vyhodnotíme atributy analýzy
-#                 a: kostka plánu neexistuje
-#               Pak: jsme schopni vrátit atributy budoucí kostky plánu
-#        ''')
-#        sa = fesyn.SyntacticAnalyzerForFeature(source)
-#        tree = sa.Start()
-#        self.assertEqual(len(tree), 4)
-#        self.assertEqual(tree, [
-#            ('story', 'vytvoření plánu z výsledku analýzy'),
-#            ('description', '\nJako běžný uživatel\nchci vytvořit plán z výsledku analýzy,\nprotože ruční vytváření plánu je pracné.\n\nRozbor: Plán má podobu datové kostky.\n\n'),
-#            ('scenario', 'schopnost zjistit existující kostku plánu pro danou analýzu', [
-#                ('given', 'vlastnosti (typ, atributy) analýzy', [
-#                    ('when', 'vyhodnotíme atributy analýzy', [
-#                        ('and_when', 'kostka plánu existuje', [
-#                            ('then', 'jsme schopni vrátit atributy existující kostky plánu', [
-#                            ])
-#                        ])
-#                    ])
-#                ])
-#            ]),
-#            ('scenario', 'schopnost zjistit neexistenci kostky plánu', [
-#                ('given', 'vlastnosti (typ, atributy) analýzy', [
-#                    ('when', 'vyhodnotíme atributy analýzy', [
-#                        ('and_when', 'kostka plánu neexistuje', [
-#                            ('then', 'jsme schopni vrátit atributy budoucí kostky plánu', [
-#                            ])
-#                        ])
-#                    ])
-#                ])\
-#            ])
-#        ])
+    def test_Czech_complex_story(self):
+        '''Czech complex story'''
+
+        source = textwrap.dedent('''\
+            Požadavek: vytvoření plánu z výsledku analýzy
+
+            Jako běžný uživatel
+            chci vytvořit plán z výsledku analýzy,
+            protože ruční vytváření plánu je pracné.
+
+            Rozbor: Plán má podobu datové kostky.
+
+
+            Scénář: schopnost zjistit existující kostku plánu pro danou analýzu
+              Dáno: vlastnosti (typ, atributy) analýzy
+              Když: vyhodnotíme atributy analýzy
+                 a: kostka plánu existuje
+               Pak: jsme schopni vrátit atributy existující kostky plánu
+
+
+            Scénář: schopnost zjistit neexistenci kostky plánu
+              Dáno: vlastnosti (typ, atributy) analýzy
+              Když: vyhodnotíme atributy analýzy
+                 a: kostka plánu neexistuje
+               Pak: jsme schopni vrátit atributy budoucí kostky plánu
+        ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 4)
+        self.assertEqual(tree, [
+            ('story', 'vytvoření plánu z výsledku analýzy'),
+            ('description', 'Jako běžný uživatel\nchci vytvořit plán z výsledku analýzy,\nprotože ruční vytváření plánu je pracné.\n\nRozbor: Plán má podobu datové kostky.\n\n'),
+            ('scenario', 'schopnost zjistit existující kostku plánu pro danou analýzu', [
+                ('given', 'vlastnosti (typ, atributy) analýzy', [
+                    ('when', 'vyhodnotíme atributy analýzy', [
+                        ('and_when', 'kostka plánu existuje', [
+                            ('then', 'jsme schopni vrátit atributy existující kostky plánu', [
+                            ])
+                        ])
+                    ])
+                ])
+            ]),
+            ('scenario', 'schopnost zjistit neexistenci kostky plánu', [
+                ('given', 'vlastnosti (typ, atributy) analýzy', [
+                    ('when', 'vyhodnotíme atributy analýzy', [
+                        ('and_when', 'kostka plánu neexistuje', [
+                            ('then', 'jsme schopni vrátit atributy budoucí kostky plánu', [
+                            ])
+                        ])
+                    ])
+                ])\
+            ])
+        ])
 
 if __name__ == '__main__':
     unittest.main()

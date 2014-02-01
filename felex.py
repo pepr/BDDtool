@@ -1,6 +1,6 @@
 #!python3
 # -*- coding: utf-8 -*-
-'''Lexical analysis for the xxx.feature source files.'''
+"""Lexical analysis for the xxx.feature source files."""
 
 import re
 
@@ -51,7 +51,8 @@ rulesRex = [
 #-----------------------------------------------------------------------
 
 def build_rex_closures(pattern, lexsym):
-    '''Builds the pair of closures for the regex pattern.'''
+    """Builds the pair of closures for the regex pattern.
+    """
 
     def match_rex(line):
         # Actually returns a match object that can be interpreted
@@ -78,8 +79,8 @@ def build_rex_closures(pattern, lexsym):
 #-----------------------------------------------------------------------
 
 def buildRegexMatchFunctions():
-    '''Builds the list of (match_fn, result_fn) closures for regular expressions.'''
-
+    """Builds the list of (match_fn, result_fn) closures for regular expressions.
+    """
     # As a container can be iterated by several iterators, both the container
     # and the iterator must be passed (not captured inside the closures).
     # The rules are defined by the global one; hence, captured inside.
@@ -101,7 +102,8 @@ def buildRegexMatchFunctions():
 #-----------------------------------------------------------------------
 
 class Iterator:
-    '''Iterates over the Container and returns lexical elements.'''
+    """Iterates over the Container and returns lexical elements.
+    """
 
     def __init__(self, container, startlineno):
         self.container = container
@@ -128,7 +130,8 @@ class Iterator:
 
 
     def lextoken(self):
-        '''Forms lexical token from the member variables.'''
+        """Forms lexical token from the member variables.
+        """
 
         # Form the lexical token.
         tags = self.tags if self.tags else None
@@ -149,7 +152,8 @@ class Iterator:
 
 
     def expected(self, s):
-        '''Forms error lexical token.'''
+        """Forms error lexical token.
+        """
 
         # Form the lexical token.
         current = (self.symbol, ''.join(self.lst),
@@ -168,8 +172,8 @@ class Iterator:
 
 
     def __next__(self):
-        '''Returns lexical tokens (symbol, lexem, text, tags).'''
-
+        """Returns lexical tokens (symbol, lexem, text, tags).
+        """
         # Loop until the end of data.
         while self.status != 1000:
 
@@ -211,11 +215,11 @@ class Iterator:
 #-----------------------------------------------------------------------
 
 class Container:
-    '''Iterable container for lexical parsing of the *.feature source.
+    """Iterable container for lexical parsing of the *.feature source.
 
     The source is passed or as a multiline string, or as an open file,
     processed by lines.
-    '''
+    """
 
     def __init__(self, source):
         if hasattr(source, 'readlines'):
@@ -239,17 +243,18 @@ class Container:
 
 if __name__ == '__main__':
     import textwrap
-    source = textwrap.dedent('''\
-        Story: BDD oriented complex example
+    source = textwrap.dedent("""\
+        Story: story identifier
 
-            As a normal user
-            I want to capture this case that shows the way of prescribing my acceptance
-            so that I am able to express my requirements without programming.
+          As a user
+          I want the feature
+          so that my life is to be easier.
 
-        Scenario: vectors can be sized and resized
-             Given: A vector with some items
-              When: more capacity is reserved
-              Then: the capacity changes but not the size''')
+        Scenario: scenario identifier
+           Given: given identifier
+            When: when identifier
+            Then: then identifier
+        """)
 
     for e in Container(source):
         print(e)

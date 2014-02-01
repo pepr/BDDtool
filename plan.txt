@@ -4,6 +4,7 @@
   - generator of catch sources based on fesyn
 
 - fesynTest.py
+  - sequences of empty lines on various places (to be skipped)
   - more tests
 
 - tsyn.py -- Catch test syntactic analyzer
