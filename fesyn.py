@@ -53,13 +53,17 @@ class SyntacticAnalyzerForFeature:
             raise RuntimeError(msg)
 
 
-    def add_to_body_of(self, item, lst):
-        """Adds list of items lst to the item body list.
+    def add_to_body_of(self, item, arg):
+        """Adds the arg to the body list of the item tuple.
+
+        The body list is the third argument of the item.
+        The arg can be or list or element.
         """
-        if item[2] is None:
-            item[2] = lst
+        assert item[2] is not None
+        if isinstance(arg, list):
+            item[2].extend(arg)
         else:
-            item[2].extend(lst)
+            item[2].append(arg)
 
 
     def Start(self):
@@ -131,7 +135,7 @@ class SyntacticAnalyzerForFeature:
         """Nonterminal for one TEST_CASE.
         """
         if item is None:
-            item = [self.sym, self.text, None]
+            item = [self.sym, self.text, []]
         self.lex()
         self.Empty_lines()
         if self.sym == 'section':
@@ -140,7 +144,6 @@ class SyntacticAnalyzerForFeature:
             return tuple(item)
         elif self.sym == '$':
             # Empty body of the test_case (that is no section).
-            self.add_to_body_of(item, [])
             return tuple(item)
         else:
             self.expect('section', 'emptyline', '$')
@@ -149,7 +152,7 @@ class SyntacticAnalyzerForFeature:
     def Scenario(self):
         """Nonterminal for one Scenario.
         """
-        item = [self.sym, self.text, None]      # specific symbol: 'scenario'
+        item = [self.sym, self.text, []]        # specific symbol: 'scenario'
         self.lex()
         self.Empty_lines()
         if self.sym == 'given':
@@ -160,14 +163,12 @@ class SyntacticAnalyzerForFeature:
             # The previous scenario had no definition. It exists and have
             # the identifier (i.e. someone was thinking about it during
             # analysis, but the scenario was not specified yet).
-            self.add_to_body_of(item, [])
             return tuple(item)
         elif self.sym == '$':
             # Empty body of the scenario (that is no given...).
-            self.add_to_body_of(item, [])
             return tuple(item)
         else:
-            self.expect('given', 'emptyline', '$')
+            self.expect('given', 'scenario', 'emptyline', '$')
 
 
     def Given_serie(self, given_lst):
@@ -197,7 +198,7 @@ class SyntacticAnalyzerForFeature:
         if self.sym == 'and':           # transforming the 'and'
             sym = 'and_given'
         if item is None:
-            item = [sym, self.text, None]     # 'given'/'and_given', 'identifier', body list
+            item = [sym, self.text, []] # 'given'/'and_given', 'identifier', body list
         self.lex()
         self.Empty_lines()
         if self.sym == 'when':
@@ -206,11 +207,10 @@ class SyntacticAnalyzerForFeature:
             return tuple(item)
         elif self.sym == 'and':
             t = self.Given(restriction='and')
-            self.add_to_body_of(item, [t])
+            self.add_to_body_of(item, t)
             return tuple(item)
         elif self.sym == '$':
             # No more WHENs.
-            self.add_to_body_of(item, [])
             return tuple(item)
         else:
             self.expect('when', 'and', 'emptyline', '$')
@@ -243,16 +243,16 @@ class SyntacticAnalyzerForFeature:
         if self.sym == 'and':           # transforming the 'and'
             sym = 'and_when'
         if item is None:
-            item = [sym, self.text, None]       # 'when'/'and_when', 'identifier', body list
+            item = [sym, self.text, []] # 'when'/'and_when', 'identifier', body list
         self.lex()
         self.Empty_lines()
         if self.sym == 'then':
             t = self.Then()
-            self.add_to_body_of(item, [t])        # as a body of 'when'
+            self.add_to_body_of(item, t)        # as a body of 'when'
             return tuple(item)
         elif self.sym == 'and':
             t = self.When(restriction='and')
-            self.add_to_body_of(item, [t])        # 'and_when' as body of 'when'
+            self.add_to_body_of(item, t)        # 'and_when' as body of 'when'
             return tuple(item)
         else:
             self.expect('then', 'and')
@@ -268,18 +268,18 @@ class SyntacticAnalyzerForFeature:
             sym = 'and_then'
 
         if item is None:
-            item = [sym, self.text, None]       # 'then'/'and_then', 'identifier', body list
+            item = [sym, self.text, []] # 'then'/'and_then', 'identifier', body list
         self.lex()
         self.Empty_lines()
         if self.sym == 'and':
             t = self.Then(restriction='and')
-            self.add_to_body_of(item, [ t ])
+            self.add_to_body_of(item, t)
+            return tuple(item)
+        elif self.sym == 'when':        # another when found
             return tuple(item)
         elif self.sym == 'scenario':
-            self.add_to_body_of(item, [])  # no more nesting
             return tuple(item)
         elif self.sym == '$':
-            self.add_to_body_of(item, [])  # no more nesting
             return tuple(item)
         else:
             self.expect('then', 'and', 'scenario')

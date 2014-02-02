@@ -91,7 +91,6 @@ class SyntaxFeatureTests(unittest.TestCase):
             ''')
         sa = fesyn.SyntacticAnalyzerForFeature(source)
         tree = sa.Start()
-        print(tree)
         self.assertEqual(len(tree), 2)
         self.assertEqual(tree, [
             ('scenario', 'scenario identifier 1', []),
@@ -278,6 +277,62 @@ class SyntaxFeatureTests(unittest.TestCase):
             ('scenario', 'scenario identifier', [
                 ('given', 'given identifier', [
                     ('and_given', 'given 2 identifier', [
+                    ])
+                ])
+            ])
+        ])
+
+
+    def test_scenario_given_more_whens(self):
+        """Scenario, given, and more when's
+        """
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier
+               Given: given identifier
+                When: when identifier
+                Then: then identifier
+                When: when identifier 2
+                Then: then identifier 2
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('when', 'when identifier', [
+                        ('then', 'then identifier', [
+                        ])
+                    ]),
+                    ('when', 'when identifier 2', [
+                        ('then', 'then identifier 2', [
+                        ])
+                    ])
+                ])
+            ])
+        ])
+
+
+    def test_scenario_more_then_error(self):
+        """Scenario a sequence of more then's must fail
+        """
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier
+               Given: given identifier
+                When: when identifier
+                Then: then identifier
+                Then: then identifier 2
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        print(tree)
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('when', 'when identifier', [
+                        ('then', 'then identifier', [
+                        ])
                     ])
                 ])
             ])
