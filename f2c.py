@@ -109,4 +109,9 @@ def feature_to_catch_skeleton(fname_in, fname_out):
 
 
 if __name__ == '__main__':
-    feature_to_catch_skeleton('planZAnalyzy.feature', 'planZAnalyzy.catch')
+    for fname_in in glob.glob('features/*.feature'):
+        path, bname = os.path.split(fname_in)
+        path2, fea = os.path.split(path)
+        name, ext = os.path.splitext(bname)
+        fname_out = os.path.join(path2, 'catch', name + '.catch')
+        feature_to_catch_skeleton(fname_in, 'planZAnalyzy.catch')
