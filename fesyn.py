@@ -25,6 +25,8 @@ class SyntacticAnalyzerForFeature:
         self.it = iter(felex.Container(self.source))
         self.lex()              # getting the first token ready
         self.syntax_tree = []   # syntax tree as the list of tuples with lists...
+        self.scenario_body = None
+        self.given_body = None
 
 
     def lex(self):
@@ -53,24 +55,24 @@ class SyntacticAnalyzerForFeature:
             raise RuntimeError(msg)
 
 
-    def add_to_body_of(self, item, arg):
-        """Adds the arg to the body list of the item tuple.
-
-        The body list is the third argument of the item.
-        The arg can be or list or element.
-        """
-        assert item[2] is not None
-        if isinstance(arg, list):
-            item[2].extend(arg)
-        else:
-            item[2].append(arg)
+#    def add_to_body_of(self, item, arg):
+#        """Adds the arg to the body list of the item tuple.
+#
+#        The body list is the third argument of the item.
+#        The arg can be or list or element.
+#        """
+#        assert item[2] is not None
+#        if isinstance(arg, list):
+#            item[2].extend(arg)
+#        else:
+#            item[2].append(arg)
 
 
     def Start(self):
         """Implements the start nonterminal.
         """
         self.Feature_or_story()
-        self.Test_case_serie()
+        self.Test_case_or_scenario()
         self.expect('$')
         return self.syntax_tree
 
@@ -88,10 +90,11 @@ class SyntacticAnalyzerForFeature:
         """
         self.Empty_lines()
         if self.sym in ('story', 'feature'):
-            self.syntax_tree.append( (self.sym, self.text) )
+            self.syntax_tree.append((self.sym, self.text))
             self.lex()
             self.Empty_lines()
-            descr_lst = self.Description([])
+            descr_lst = []
+            self.Description(descr_lst)
             if descr_lst:
                 self.syntax_tree.append( ('description', descr_lst) )
         elif self.sym in ('$', 'scenario', 'test_case'):
@@ -109,181 +112,227 @@ class SyntacticAnalyzerForFeature:
             # of this description.
             descr_lst.append(self.text)
             self.lex()
-            return self.Description(descr_lst)
-        else:
-            return descr_lst
+            self.Description(descr_lst)
 
 
-    def Test_case_serie(self):
+    def Test_cases_or_scenarios(self):
         """Nonterminal for a serie of test-case or scenario definitions.
         """
         self.Empty_lines()
         if self.sym == 'test_case':
-            t = self.Test_case()
-            self.syntax_tree.append(t)
-            self.Test_case_serie()
+            self.Test_case()
+            self.Test_cases_or_scenarios()
         elif self.sym == 'scenario':
-            t = self.Scenario()
-            self.syntax_tree.append(t)
-            self.Test_case_serie()
+            self.Scenario()
+            self.Test_cases_or_scenarios()
         elif self.sym == '$':
-            pass        # that's OK, no test_source or scenario is acceptable
+            pass        # no test_case or scenario is acceptable
         else:
-            self.expect('test_case', 'scenario', '$', 'emptyline')
+            self.expect('test_case', 'scenario', '$')
 
 
     def Test_case(self, item=None):
         """Nonterminal for one TEST_CASE.
         """
-        if item is None:
-            item = [self.sym, self.text, []]
+        bodylst = []
+        item = [self.sym, self.text, bodylst]     # 'test_case', 'id', body
+        self.syntax_tree.append(tuple(item))
+
         self.lex()
         self.Empty_lines()
         if self.sym == 'section':
-            sec_lst = self.Section_serie([])
-            self.add_to_body_of(item, sec_lst)
-            return tuple(item)
+            self.Section(bodylst)
         elif self.sym == '$':
-            # Empty body of the test_case (that is no section).
-            return tuple(item)
+            pass        # no section -- logically missing but acceptable
         else:
-            self.expect('section', 'emptyline', '$')
+            self.expect('section', '$')
 
 
     def Scenario(self):
         """Nonterminal for one Scenario.
         """
-        item = [self.sym, self.text, []]        # specific symbol: 'scenario'
+        assert self.sym == 'scenario'
+        assert self.scenario_body is None
+
+        self.scenario_body = []
+        item = [self.sym, self.text, self.scenario_body]
+        self.syntax_tree.append(tuple(item))
+
         self.lex()
         self.Empty_lines()
         if self.sym == 'given':
-            given_lst = self.Given_serie([])
-            self.add_to_body_of(item, given_lst)
-            return tuple(item)
+            self.Given(self.scenario_body) # nested to the body of the scenario
         elif self.sym == 'scenario':
             # The previous scenario had no definition. It exists and have
             # the identifier (i.e. someone was thinking about it during
             # analysis, but the scenario was not specified yet).
-            return tuple(item)
+            self.scenario_body = None
+            self.Scenario()
         elif self.sym == '$':
-            # Empty body of the scenario (that is no given...).
-            return tuple(item)
+            pass        # no given, but acceptable
         else:
-            self.expect('given', 'scenario', 'emptyline', '$')
+            self.expect('given', 'scenario', '$')
 
 
-    def Given_serie(self, given_lst):
-        """Nonterminal for a serie of GIVEN definitions.
-        """
-        if self.sym == 'given':
-            t = self.Given()
-            given_lst.append(t)
-            self.Empty_lines()
-            return self.Given_serie(given_lst)
-        elif self.sym == 'scenario':
-            # No more GIVENs -- another scenario to be processed.
-            return given_lst
-        elif self.sym == '$':
-            # No more GIVENs.
-            return given_lst
-        else:
-            self.expect('given', 'emptyline', 'scenario', '$')
+#    def Given_serie(self, given_lst):
+#        """Nonterminal for a serie of GIVEN definitions.
+#        """
+#        if self.sym == 'given':
+#            t = self.Given()
+#            given_lst.append(t)
+#            self.Empty_lines()
+#            return self.Given_serie(given_lst)
+#        elif self.sym == 'scenario':
+#            # No more GIVENs -- another scenario to be processed.
+#            return given_lst
+#        elif self.sym == '$':
+#            # No more GIVENs.
+#            return given_lst
+#        else:
+#            self.expect('given', 'emptyline', 'scenario', '$')
 
 
-    def Given(self, item=None, restriction=None):
+    def Given(self):
         """Nonterminal for one GIVEN definition.
+
+        The restriction can be 'and' that is converted to and_given
+        and nested recursively -- unlike the explicit 'given' serie
+        that adds to the upperlist.
         """
-        if restriction and self.sym != restriction:
-            self.expect(restriction)
-        sym = self.sym
-        if self.sym == 'and':           # transforming the 'and'
-            sym = 'and_given'
-        if item is None:
-            item = [sym, self.text, []] # 'given'/'and_given', 'identifier', body list
+        assert self.sym == 'given'
+        self.given_body = []             # body of the given item
+        item = [sym, self.text, self.given_body] # 'given', 'id', body
+        upperlst.append(tuple(item))     # ready to be appended
+
         self.lex()
         self.Empty_lines()
         if self.sym == 'when':
-            when_lst = self.When_serie([])
-            self.add_to_body_of(item, when_lst)
-            return tuple(item)
+            self.given_body
+            self.When(self.given_body)  # nested to the given
         elif self.sym == 'and':
-            t = self.Given(restriction='and')
-            self.add_to_body_of(item, t)
-            return tuple(item)
+            self.And_given(self.given_body) # nested to the given
+        elif self.sym == 'given':
+            self.Given()                # nested to the scenario body
         elif self.sym == '$':
-            # No more WHENs.
-            return tuple(item)
+            pass # no WHENs -- missing logically, but acceptable
         else:
-            self.expect('when', 'and', 'emptyline', '$')
+            self.expect('when', 'and', 'given', '$')
 
 
-    def When_serie(self, when_lst, restriction=None):
-        """Nonterminal for a serie of WHEN definitions.
+    def And_given(self, upperlst):
+        """Nonterminal for one AND_GIVEN definition.
+
         """
+        assert self.sym == 'and_given'
+        bodylst = []                            # body of the given item
+        item = [self.sym, self.text, bodylst]   # 'and_given', 'id', body
+        upperlst.append(tuple(item))            # ready to be appended
+
+        self.lex()
+        self.Empty_lines()
         if self.sym == 'when':
-            t = self.When(restriction=restriction)
-            when_lst.append(t)
-            self.Empty_lines()
-            return self.When_serie(when_lst)
-        elif self.sym == 'scenario':
-            # No more WHENs -- another scenario to be processed.
-            return when_lst
+            self.When(bodylst)          # nested to the given
+        elif self.sym == 'and':
+            self.And_given(bodylst)     # nested to the given
+        elif self.sym == 'given':
+            self.Given(self.scenario_body) # nested to the scenario body
         elif self.sym == '$':
-            # No more WHENs.
-            return when_lst
+            pass # no WHENs -- missing logically, but acceptable
         else:
-            self.expect('when', 'emptyline', 'scenario', '$')
+            self.expect('when', 'and', 'given', '$')
 
 
-    def When(self, item=None, restriction=None):
+#    def When_serie(self, when_lst, restriction=None):
+#        """Nonterminal for a serie of WHEN definitions.
+#        """
+#        if self.sym == 'when':
+#            t = self.When(restriction=restriction)
+#            when_lst.append(t)
+#            self.Empty_lines()
+#            return self.When_serie(when_lst)
+#        elif self.sym == 'scenario':
+#            # No more WHENs -- another scenario to be processed.
+#            return when_lst
+#        elif self.sym == '$':
+#            # No more WHENs.
+#            return when_lst
+#        else:
+#            self.expect('when', 'emptyline', 'scenario', '$')
+
+
+    def When(self, upperlst):
         """Nonterminal for one WHEN definition.
         """
-        if restriction and self.sym != restriction:
-            self.expect('and')
-        sym = self.sym
-        if self.sym == 'and':           # transforming the 'and'
-            sym = 'and_when'
-        if item is None:
-            item = [sym, self.text, []] # 'when'/'and_when', 'identifier', body list
+        assert self.sym == 'when'
+
+        bodylst = []                    # of the when item
+        item = [self.sym, self.text, bodylst] # 'when', 'id', body
+        upperlst.append(tuple(item))    # when appended to the upperlst
+
         self.lex()
         self.Empty_lines()
         if self.sym == 'then':
-            t = self.Then()
-            self.add_to_body_of(item, t)        # as a body of 'when'
-            return tuple(item)
+            self.Then(bodylst)          # always nested to WHEN
         elif self.sym == 'and':
-            t = self.When(restriction='and')
-            self.add_to_body_of(item, t)        # 'and_when' as body of 'when'
-            return tuple(item)
+            self.sym = 'and_when'       # symbol transformation
+            self.And_when(bodylst)      # nested to WHEN
+        elif self.sym == 'when':
+            self.When(upperlst)         # appended to the upperlst
+        elif self.sym == '$':
+            pass        # no THEN -- missing logically, but acceptable
         else:
-            self.expect('then', 'and')
+            self.expect('then', 'and', 'when', '$')
 
 
-    def Then(self, item=None, restriction=None):
+    def And_when(self, upperlst):
+        """Nonterminal for one AND_WHEN definition.
+        """
+        assert self.sym == 'and_when'
+
+        bodylst = []                     # of the when item
+        item = [sym, self.text, bodylst] # 'when'/'and_when', 'id', body
+        upperlst.append(tuple(item))     # when appended to the upperlst
+
+        self.lex()
+        self.Empty_lines()
+        if self.sym == 'then':
+            self.Then(bodylst)          # always nested to WHEN
+        elif self.sym == 'and':
+            self.When(bodylst, 'and')   # nested to WHEN
+        elif self.sym == 'when':
+            self.When(upperlst)         # appended to the upperlst
+        elif self.sym == '$':
+            pass        # no THEN -- missing logically, but acceptable
+        else:
+            self.expect('then', 'and', 'when', '$')
+
+
+    def Then(self, upperlst, restriction=None):
         """Nonterminal for one THEN definition.
+
+        The restriction can be 'and' that is converted to and_then
+        and nested recursively. The the explicit 'then' serie at the
+        same level probably does not make sense.
         """
         if restriction and self.sym != restriction:
             self.expect('and')
         sym = self.sym
         if self.sym == 'and':           # transforming the 'and'
             sym = 'and_then'
+        assert sym in ('then', 'and_then')
 
-        if item is None:
-            item = [sym, self.text, []] # 'then'/'and_then', 'identifier', body list
+        bodylst = []
+        item = [sym, self.text, bodylst] # 'then'/'and_then', 'id', body
+        upperlst.append(tuple(item))     # appended to the upper then-item
+
         self.lex()
         self.Empty_lines()
         if self.sym == 'and':
-            t = self.Then(restriction='and')
-            self.add_to_body_of(item, t)
-            return tuple(item)
-        elif self.sym == 'when':        # another when found
-            return tuple(item)
-        elif self.sym == 'scenario':
-            return tuple(item)
-        elif self.sym == '$':
-            return tuple(item)
+            self.Then(bodylst, 'and')   # nested to the previous then-item
+        elif self.sym in ('when', 'scenario', '$'):
+            pass
         else:
-            self.expect('then', 'and', 'scenario')
+            self.expect('and', 'when', 'scenario', '$')
 
 
 

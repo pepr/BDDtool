@@ -304,6 +304,7 @@ class SyntaxFeatureTests(unittest.TestCase):
                Given: given identifier
                 When: when identifier
                 Then: then identifier
+                 and: and_then identifier
                 When: when identifier 2
                 Then: then identifier 2
             ''')
@@ -315,6 +316,8 @@ class SyntaxFeatureTests(unittest.TestCase):
                 ('given', 'given identifier', [
                     ('when', 'when identifier', [
                         ('then', 'then identifier', [
+                            ('and_then', 'and_then identifier', [
+                            ])
                         ])
                     ]),
                     ('when', 'when identifier 2', [
