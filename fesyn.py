@@ -78,8 +78,9 @@ class SyntacticAnalyzerForFeature:
     def Empty_lines(self):
         """Nonterminal for the sequence of zero or more 'emptyline' tokens.
         """
-        while self.sym == 'emptyline':
+        if self.sym == 'emptyline':
             self.lex()
+            self.Empty_lines()
 
 
     def Feature_or_story(self):
@@ -92,7 +93,7 @@ class SyntacticAnalyzerForFeature:
             self.Empty_lines()
             descr_lst = self.Description([])
             if descr_lst:
-                self.syntax_tree.append( ('description', '\n'.join(descr_lst)) )
+                self.syntax_tree.append( ('description', descr_lst) )
         elif self.sym in ('$', 'scenario', 'test_case'):
             pass # empty source, or no story definition, nor feature def
         else:

@@ -51,7 +51,11 @@ class SyntaxFeatureTests(unittest.TestCase):
         self.assertEqual(len(tree), 2)
         self.assertEqual(tree, [
             ('feature', 'feature title'),
-            ('description', 'The feature description is just some text.\n\n')
+            ('description', [
+                'The feature description is just some text.',
+                '',
+                ''
+            ])
         ])
 
 
@@ -68,8 +72,13 @@ class SyntaxFeatureTests(unittest.TestCase):
         self.assertEqual(len(tree), 2)
         self.assertEqual(tree, [
             ('story', 'story title'),
-            ('description',
-            'As a user\nI want the feature\nso that my life is to be easier.\n\n')
+            ('description', [
+                 'As a user',
+                 'I want the feature',
+                 'so that my life is to be easier.',
+                 '',
+                 ''
+             ])
         ])
 
 
@@ -249,8 +258,12 @@ class SyntaxFeatureTests(unittest.TestCase):
         self.assertEqual(len(tree), 3)
         self.assertEqual(tree, [
             ('story', 'story identifier'),
-            ('description',
-            'As a user\nI want the feature\nso that my life is to be easier.\n'),
+            ('description', [
+                 'As a user',
+                 'I want the feature',
+                 'so that my life is to be easier.',
+                 ''
+            ]),
             ('scenario', 'scenario identifier', [
                 ('given', 'given identifier', [
                     ('when', 'when identifier', [
@@ -403,7 +416,15 @@ class SyntaxFeatureTests(unittest.TestCase):
         self.assertEqual(len(tree), 4)
         self.assertEqual(tree, [
             ('story', 'vytvoření plánu z výsledku analýzy'),
-            ('description', 'Jako běžný uživatel\nchci vytvořit plán z výsledku analýzy,\nprotože ruční vytváření plánu je pracné.\n\nRozbor: Plán má podobu datové kostky.\n\n'),
+            ('description', [
+                'Jako běžný uživatel',
+                'chci vytvořit plán z výsledku analýzy,',
+                'protože ruční vytváření plánu je pracné.',
+                '',
+                'Rozbor: Plán má podobu datové kostky.',
+                '',
+                ''
+            ]),
             ('scenario', 'schopnost zjistit existující kostku plánu pro danou analýzu', [
                 ('given', 'vlastnosti (typ, atributy) analýzy', [
                     ('when', 'vyhodnotíme atributy analýzy', [
