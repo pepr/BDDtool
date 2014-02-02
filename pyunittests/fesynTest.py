@@ -84,6 +84,20 @@ class SyntaxFeatureTests(unittest.TestCase):
             ('scenario', 'scenario identifier', [])
         ])
 
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier 1
+
+            Scenario: scenario identifier 2
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        print(tree)
+        self.assertEqual(len(tree), 2)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier 1', []),
+            ('scenario', 'scenario identifier 2', [])
+        ])
+
 
     def test_scenario_given(self):
         """Scenario, given, but no when and then

@@ -156,6 +156,12 @@ class SyntacticAnalyzerForFeature:
             given_lst = self.Given_serie([])
             self.add_to_body_of(item, given_lst)
             return tuple(item)
+        elif self.sym == 'scenario':
+            # The previous scenario had no definition. It exists and have
+            # the identifier (i.e. someone was thinking about it during
+            # analysis, but the scenario was not specified yet).
+            self.add_to_body_of(item, [])
+            return tuple(item)
         elif self.sym == '$':
             # Empty body of the scenario (that is no given...).
             self.add_to_body_of(item, [])
