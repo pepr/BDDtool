@@ -1,5 +1,4 @@
 #!python3
-# -*- coding: utf-8 -*-
 import os
 import textwrap
 import unittest
@@ -10,11 +9,11 @@ sys.path.append('..')
 import fesyn
 
 class SyntaxFeatureTests(unittest.TestCase):
-    '''Testing syntax analysis for the .feature test sources.'''
-
+    """Testing syntax analysis for the .feature test sources.
+    """
 
     def test_empty(self):
-        '''empty .feature test source'''
+        """empty .feature test source"""
 
         source = ''
         sa = fesyn.SyntacticAnalyzerForFeature(source)
@@ -23,8 +22,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_title_only(self):
-        '''The feature or story title only, no section or scenario def.'''
-
+        """The feature or story title only, no section or scenario def.
+        """
         source = 'Feature: feature title'
         sa = fesyn.SyntacticAnalyzerForFeature(source)
         tree = sa.Start()
@@ -39,8 +38,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_story_with_description(self):
-        '''The feature or story with a title and a description.'''
-
+        """The feature or story with a title and a description.
+        """
         source = textwrap.dedent('''\
             Feature: feature title
 
@@ -75,8 +74,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_scenario_only(self):
-        '''Scenario only'''
-
+        """Scenario only
+        """
         source = 'Scenario: scenario identifier'
         sa = fesyn.SyntacticAnalyzerForFeature(source)
         tree = sa.Start()
@@ -87,8 +86,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_scenario_given(self):
-        '''Scenario, given, but no when and then'''
-
+        """Scenario, given, but no when and then
+        """
         source = textwrap.dedent('''\
             Scenario: scenario identifier
                Given: given identifier
@@ -105,8 +104,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
 #    def test_scenario_given_list(self):
-#        '''Scenario, given, but no when and then'''
-#
+#        """Scenario, given, but no when and then
+#        """
 #        source = textwrap.dedent('''\
 #            Scenario: scenario identifier
 #               Given: given identifier
@@ -124,8 +123,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
 #    def test_scenario_given_when(self):
-#        '''Scenario, given, when, but no then'''
-#
+#        """Scenario, given, when, but no then
+#        """
 #        source = textwrap.dedent('''\
 #            Scenario: scenario identifier
 #               Given: given identifier
@@ -144,8 +143,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_scenario_given_when_then(self):
-        '''Scenario, given, when, then'''
-
+        """Scenario, given, when, then
+        """
         source = textwrap.dedent('''\
             Scenario: scenario identifier
                Given: given identifier
@@ -167,8 +166,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_two_scenarios(self):
-        '''Scenario, given, when, then and another one of the same structure'''
-
+        """Scenario, given, when, then and another one of the same structure
+        """
         source = textwrap.dedent('''\
             Scenario: scenario identifier
                Given: given identifier
@@ -205,8 +204,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_case_only(self):
-        '''test case only'''
-
+        """test case only
+        """
         source = textwrap.dedent('Test: test identifier')
         sa = fesyn.SyntacticAnalyzerForFeature(source)
         tree = sa.Start()
@@ -217,8 +216,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_story_scenario_given_when_then_strict_format(self):
-        '''Scenario, given, when, then -- strict format.'''
-
+        """Scenario, given, when, then -- strict format.
+        """
         source = textwrap.dedent('''\
             Story: story identifier
 
@@ -251,8 +250,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_scenario_given_and_given(self):
-        '''Scenario, given, and_given'''
-
+        """Scenario, given, and_given
+        """
         source = textwrap.dedent('''\
             Scenario: scenario identifier
                Given: given identifier
@@ -272,8 +271,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_scenario_andX(self):
-        '''Scenario with and's everywhere'''
-
+        """Scenario with and's everywhere
+        """
         source = textwrap.dedent('''\
             Scenario: scenario identifier
                Given: given identifier
@@ -305,8 +304,8 @@ class SyntaxFeatureTests(unittest.TestCase):
 
 
     def test_Czech_complex_story(self):
-        '''Czech complex story'''
-
+        """Czech complex story
+        """
         source = textwrap.dedent('''\
             Požadavek: vytvoření plánu z výsledku analýzy
 

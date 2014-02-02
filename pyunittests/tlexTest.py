@@ -1,5 +1,4 @@
 #!python3
-# -*- coding: utf-8 -*-
 import os
 import textwrap
 import unittest
@@ -10,21 +9,22 @@ sys.path.append('..')
 import tlex
 
 class LexAnalyzerForCatchTests(unittest.TestCase):
-    '''Testing lex analyzer for the Catch test sources.'''
+    """Testing lex analyzer for the Catch test sources.
+    """
 
     def test_empty_source(self):
-        '''empty source for lexical analysis'''
-
+        """empty source for lexical analysis
+        """
         source = ''   # empty string as a source
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 1)
                                  # symbol, value, lexem, extra_info
-        self.assertEqual(lst[0], ('endofdata', None, None, None))
+        self.assertEqual(lst[0], ('$', None, None, None))
 
 
     def test_comment(self):
-        '''comments'''
-
+        """comments
+        """
         #---------------------------------------------------------------
         # C++ comments, i.e. starting with //
         #
@@ -33,7 +33,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('comment', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Empty comment till the end of line (newline included).
@@ -41,7 +41,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('comment', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Non-empty comment without newline.
@@ -49,7 +49,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('comment', ' a comment', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Non-empty comment with newline.
@@ -57,7 +57,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('comment', ' a comment ', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Two comments with spaces (two lines).
@@ -66,7 +66,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         self.assertEqual(len(lst), 3)
         self.assertEqual(lst, [('comment', ' a comment 1 ', ' // a comment 1 \n', None),
                                ('comment', ' a comment 2 ', ' // a comment 2 \n', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         #---------------------------------------------------------------
@@ -78,7 +78,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         self.assertEqual(len(lst), 2)   # one error item plus endofdata
         self.assertEqual(lst, [('error', "'*/' expected",
                                  "('comment', '', '/*', None)", None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # The shortest comment (empty) till the end of data.
@@ -86,7 +86,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('comment', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Empty comment till the end of line (newline).
@@ -95,7 +95,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         self.assertEqual(len(lst), 3)
         self.assertEqual(lst, [('comment', '', '/**/', None),
                                ('emptyline', '', '\n', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Empty comment till the end of line -- newline and space.
@@ -104,7 +104,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         self.assertEqual(len(lst), 3)
         self.assertEqual(lst, [('comment', '', '/**/', None),
                                ('emptyline', '', '\n', None),
-                               ('endofdata', None, ' ', None)
+                               ('$', None, ' ', None)
                               ])
 
         # Empty comment till the end of line -- space and newline.
@@ -113,7 +113,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         self.assertEqual(len(lst), 3)
         self.assertEqual(lst, [('comment', '', '/**/', None),
                                ('emptyline', '', ' \n', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Non-empty comment with spaces.
@@ -121,7 +121,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('comment', ' a comment ', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # A comment with spaces -- three lines.
@@ -130,7 +130,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('comment', ' a comment 1 \n    a comment 2 \n ',
                                 source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # A comment with extra stars.
@@ -138,7 +138,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('comment', '** a comment **', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # A comment with stars inside (separated from open/close sequences.
@@ -146,70 +146,69 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('comment', ' * * a comment * * ', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
     def test_keywords(self):
-        '''Catch identifiers considered keywords.'''
-
+        """Catch identifiers considered keywords.
+        """
         # Keywords as exact strings with the exact case.
         lst = list(tlex.Container('SCENARIO'))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('scenario', None, 'SCENARIO',None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         lst = list(tlex.Container('GIVEN'))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('given', None, 'GIVEN', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         lst = list(tlex.Container('WHEN'))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('when', None, 'WHEN', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         lst = list(tlex.Container('THEN'))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('then', None, 'THEN', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         lst = list(tlex.Container('TEST_CASE'))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('test_case', None, 'TEST_CASE',None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         lst = list(tlex.Container('SECTION'))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('section', None, 'SECTION', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Keyword with spaces around.
         lst = list(tlex.Container(' SCENARIO '))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('scenario', None, ' SCENARIO', None),
-                               ('endofdata', None, ' ', None)
+                               ('$', None, ' ', None)
                               ])
 
 
     def test_string_literals(self):
-        '''recognizing string literals
+        """recognizing string literals
 
         String literals are considered test/section identifiers for Catch.
-        '''
-
+        """
         # Empty string literal.
         source = '""'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('stringlit', '', '""', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Simple string literal.
@@ -217,14 +216,14 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('stringlit', 'simple', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '"words and spaces"'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('stringlit', 'words and spaces', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Escaped double quote.
@@ -232,7 +231,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('stringlit', r'\"', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Escaped tab.
@@ -240,7 +239,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('stringlit', r'\t', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Escaped newline.
@@ -248,7 +247,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('stringlit', r'\n', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Not closed literal.
@@ -257,13 +256,13 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('error', '\'"\' expected',
                   "('stringlit', 'not closed', '\"not closed', None)", None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
     def test_terminals(self):
-        '''recognizing one-char terminal symbols'''
-
+        """recognizing one-char terminal symbols
+        """
         source = '('
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
@@ -302,8 +301,8 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
 
 
     def test_simple_testcase_and_sections(self):
-        '''recognizing simple sections with empty body (lexical)'''
-
+        """recognizing simple sections with empty body (lexical)
+        """
         source = 'TEST_CASE("identifier"){}'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 7)
@@ -313,7 +312,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('rpar', None, ')', None),
                                ('lbrace', None, '{', None),
                                ('rbrace', None, '}', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = 'SCENARIO("identifier"){}'
@@ -325,7 +324,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('rpar', None, ')', None),
                                ('lbrace', None, '{', None),
                                ('rbrace', None, '}', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = 'SECTION("identifier"){}'
@@ -337,7 +336,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('rpar', None, ')', None),
                                ('lbrace', None, '{', None),
                                ('rbrace', None, '}', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = 'GIVEN("identifier"){}'
@@ -349,7 +348,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('rpar', None, ')', None),
                                ('lbrace', None, '{', None),
                                ('rbrace', None, '}', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = 'WHEN("identifier"){}'
@@ -361,7 +360,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('rpar', None, ')', None),
                                ('lbrace', None, '{', None),
                                ('rbrace', None, '}', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = 'THEN("identifier"){}'
@@ -373,7 +372,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('rpar', None, ')', None),
                                ('lbrace', None, '{', None),
                                ('rbrace', None, '}', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = 'AND_THEN("identifier"){}'
@@ -385,7 +384,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('rpar', None, ')', None),
                                ('lbrace', None, '{', None),
                                ('rbrace', None, '}', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = 'AND_WHEN("identifier"){}'
@@ -397,40 +396,40 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                                ('rpar', None, ')', None),
                                ('lbrace', None, '{', None),
                                ('rbrace', None, '}', None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
     def test_story_or_feature(self):
-        '''story or feature recognition inside the comment'''
-
+        """story or feature recognition inside the comment
+        """
         # Story
         source = '// Story: story identifier'   # without newline
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'story identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '// Story: story identifier '  # with trailing space
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'story identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '// Story: story identifier\n' # with newline
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'story identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '// Story: story identifier \n' # with trailing space and newline
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'story identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Feature
@@ -438,21 +437,21 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('feature', 'feature identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '// Feature: feature identifier\n' # with newline
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('feature', 'feature identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '// Feature: feature identifier \n' # with trailing space and newline
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('feature', 'feature identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # UsEr StOrY
@@ -460,14 +459,14 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'story identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '// UsEr StOrY: story identifier\n'    # with newline
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'story identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Czech equivalents.
@@ -475,14 +474,14 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'identifikace požadavku', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '// rys: identifikace rysu'            # without newline
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('feature', 'identifikace rysu', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
@@ -491,7 +490,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'story identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
@@ -500,14 +499,14 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'story identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '/*\n Feature: feature identifier \n  comment2 \n comment3 \n*/'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('feature', 'feature identifier', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 

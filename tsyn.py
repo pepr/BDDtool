@@ -1,6 +1,9 @@
 #!python3
-# -*- coding: utf-8 -*-
-'''Syntactic analysis for the Catch test sources.'''
+"""Syntactic analysis for the Catch test sources.
+
+The methods of the SyntacticAnalyzerForCatch class that start with
+a capital letter do implement recursive parsing of the related nonterminal.
+"""
 
 import re
 import sys
@@ -24,7 +27,8 @@ class SyntacticAnalyzerForCatch:
 
 
     def lex(self):
-        '''Get the next lexical token.'''
+        """Get the next lexical token.
+        """
         try:
             self.lextoken = next(self.it)
             self.sym, self.value, self.lexem, self.lexextra_info = self.lextoken
@@ -33,7 +37,8 @@ class SyntacticAnalyzerForCatch:
 
 
     def expect(self, *expected_symbols):
-        '''Checks the symbol and gets the next one or reports error.'''
+        """Checks the symbol and gets the next one or reports error.
+        """
         if self.sym in expected_symbols:
             self.lex()
         else:
@@ -44,18 +49,18 @@ class SyntacticAnalyzerForCatch:
 
 
     def Start(self):
-        '''Implements the start nonterminal.'''
-
+        """Implements the start nonterminal.
+        """
         self.Feature_or_story()
         self.Test_case_serie()
-        self.expect('endofdata')
+        self.expect('$')
 
         return self.syntax_tree
 
 
     def Feature_or_story(self):
-        '''Nonterminal for processing the story/feature inside comment tokens.'''
-
+        """Nonterminal for processing the story/feature inside comment tokens.
+        """
         if self.sym == 'story':
             self.syntax_tree.append( (self.sym, self.value) )
             self.lex()
@@ -73,15 +78,15 @@ class SyntacticAnalyzerForCatch:
             self.lex()
             self.Comments([])   # ignore the other comments
 
-        elif self.sym == 'endofdata':
+        elif self.sym == '$':
             pass                # that's OK, the source can be empty
         else:
-            self.expect('story', 'feature', 'comment', 'endofdata')
+            self.expect('story', 'feature', 'comment', '$')
 
 
     def Comments(self, comment_lst):
-        '''Nonterminal for collecting the content of comments.'''
-
+        """Nonterminal for collecting the content of comments.
+        """
         if self.sym == 'comment':
             comment_lst.append(self.value)
             self.lex()
@@ -91,8 +96,8 @@ class SyntacticAnalyzerForCatch:
 
 
     def Test_case_serie(self):
-        '''Nonterminal for a serie of test cases or scenarios.'''
-
+        """Nonterminal for a serie of test cases or scenarios.
+        """
         if self.sym in ('scenario', 'test_case'):
             t = self.Test_case()
             self.syntax_tree.append(t)
@@ -102,15 +107,15 @@ class SyntacticAnalyzerForCatch:
             # Ignore the empty line and wait for the test cases.
             self.lex()
             self.Test_case_serie()
-        elif self.sym == 'endofdata':
+        elif self.sym == '$':
             pass        # that's OK, no test_source or scenario is acceptable
         else:
-            self.expect('scenario', 'test_case', 'emptyline', 'endofdata')
+            self.expect('scenario', 'test_case', 'emptyline', '$')
 
 
     def Test_case(self):
-        '''Nonterminal for one TEST_CASE or one SCENARIO.'''
-
+        """Nonterminal for one TEST_CASE or one SCENARIO.
+        """
         item = [ self.sym ]      # specific symbol: 'test_case' or 'scenario'
         self.lex()
         self.expect('lpar')
@@ -141,8 +146,8 @@ class SyntacticAnalyzerForCatch:
 
 
     def Code_body(self, subtree):
-        '''Nonterminal for any other code between the {}.'''
-
+        """Nonterminal for any other code between the {}.
+        """
         if self.sym == 'rbrace':
             return subtree      # empty rule
         elif self.sym in ('section', 'given', 'when', 'then'):
@@ -154,8 +159,8 @@ class SyntacticAnalyzerForCatch:
 
 
     def Section(self):
-        '''Nonterminal for SECTION, GIVEN, WHEN, ...'''
-
+        """Nonterminal for SECTION, GIVEN, WHEN, ...
+        """
         item = [ self.sym ]      # specific symbol
         self.lex()
         self.expect('lpar')

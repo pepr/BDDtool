@@ -1,6 +1,6 @@
 #!python3
-# -*- coding: utf-8 -*-
-'''Lexical analysis for the Catch test sources.'''
+"""Lexical analysis for the Catch test sources.
+"""
 
 import re
 
@@ -49,8 +49,8 @@ rulesRex = [
 #-----------------------------------------------------------------------
 
 def build_str_closures(s, lexid, iterator):
-    '''Builds the pair of closures for recognizing exact strings.'''
-
+    """Builds the pair of closures for recognizing exact strings.
+    """
     def match_str(iterator):
         return iterator.source.startswith(s, iterator.pos)
 
@@ -62,8 +62,8 @@ def build_str_closures(s, lexid, iterator):
 #-----------------------------------------------------------------------
 
 def build_rex_closures(pattern, lexsym):
-    '''Builds the pair of closures for the regex pattern.'''
-
+    """Builds the pair of closures for the regex pattern.
+    """
     # Unlike the above build_str_closures(), it works directly with a string
     # variable and positions -- i.e. can be used independently on Container/Iterator
     # of the lexical analyzer. The result function also returns a tuple
@@ -85,8 +85,8 @@ def build_rex_closures(pattern, lexsym):
 #-----------------------------------------------------------------------
 
 def buildExactStrMatchFunctions(iterator):
-    '''Builds the list of (match_fn, result_fn) closures for exact strings.'''
-
+    """Builds the list of (match_fn, result_fn) closures for exact strings.
+    """
     functions = []
 
     for s, lexid in rulesStr:
@@ -97,8 +97,8 @@ def buildExactStrMatchFunctions(iterator):
 #-----------------------------------------------------------------------
 
 def buildRegexMatchFunctions():
-    '''Builds the list of (match_fn, result_fn) closures for regular expressions.'''
-
+    """Builds the list of (match_fn, result_fn) closures for regular expressions.
+    """
     functions = []
 
     for pat, lexid in rulesRex:
@@ -115,8 +115,8 @@ def buildRegexMatchFunctions():
 #-----------------------------------------------------------------------
 
 class Iterator:
-    '''Iterates over the Container and returns lexical elements.'''
-
+    """Iterates over the Container and returns lexical elements.
+    """
     def __init__(self, container, startpos):
         self.container = container
         self.pos = startpos
@@ -143,8 +143,8 @@ class Iterator:
 
 
     def lextoken(self):
-        '''Forms lexical token from the member variables.'''
-
+        """Forms lexical token from the member variables.
+        """
         # Form the lexical token: (symbol, value, lexem, extra_info)
         if self.symbol in ('stringlit', 'emptyline', 'comment'):
             # Here the value should always be a string, even if nothing was
@@ -173,8 +173,8 @@ class Iterator:
 
 
     def expected(self, s):
-        '''Forms error lexical token.'''
-
+        """Forms error lexical token.
+        """
         # Form the lexical token.
         current = self.lextoken()
         error_token = ('error', '{!r} expected'.format(s),
@@ -185,8 +185,8 @@ class Iterator:
 
 
     def comment_or_feature(self):
-        '''Checks and possibly converts the token from comment to feature/story.'''
-
+        """Checks and possibly converts the token from comment to feature/story.
+        """
         assert self.symbol == 'comment'
         value = ''.join(self.valuelst)
 
@@ -209,8 +209,8 @@ class Iterator:
 
 
     def __next__(self):
-        '''Returns lexical tokens (symbol, lexem, pre, post).'''
-
+        """Returns lexical tokens (symbol, lexem, pre, post).
+        """
         # Loop until the end of data.
         while self.status != 1000:
 
@@ -337,7 +337,7 @@ class Iterator:
 
             #----------------------------   end of data
             elif self.status == 800:
-                self.symbol = 'endofdata'
+                self.symbol = '$'
                 self.status = 1000
                 return self.lextoken()
 
@@ -350,10 +350,10 @@ class Iterator:
 #-----------------------------------------------------------------------
 
 class Container:
-    '''Iterable container for lexical parsing of the Catch-test source.
+    """Iterable container for lexical parsing of the Catch-test source.
 
     The source is passed as a multiline string.
-    '''
+    """
 
     def __init__(self, source):
         self.source = source    # the multiline string

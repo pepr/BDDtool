@@ -1,5 +1,10 @@
 #!python3
-"""Syntactic analysis for the *.feature files."""
+"""Syntactic analysis for the *.feature files.
+
+Notice that some of the method of the SyntacticAnalyzerForFeature class
+start with capital letters. This is not ignorance of the usual style.
+The methods implement recursive parsing of the related nonterminals.
+"""
 
 import felex
 import re
@@ -57,37 +62,37 @@ class SyntacticAnalyzerForFeature:
             item[2].extend(lst)
 
 
-    def skip_empty_lines(self):
-        """Skips the sequence of zero or more 'emptyline' tokens.
-        """
-        while self.sym == 'emptyline':
-            self.lex()
-
-
     def Start(self):
         """Implements the start nonterminal.
         """
         self.Feature_or_story()
         self.Test_case_serie()
-        self.expect('endofdata')
+        self.expect('$')
         return self.syntax_tree
+
+
+    def Empty_lines(self):
+        """Nonterminal for the sequence of zero or more 'emptyline' tokens.
+        """
+        while self.sym == 'emptyline':
+            self.lex()
 
 
     def Feature_or_story(self):
         """Nonterminal for processing the story/feature definition.
         """
-        self.skip_empty_lines()
+        self.Empty_lines()
         if self.sym in ('story', 'feature'):
             self.syntax_tree.append( (self.sym, self.text) )
             self.lex()
-            self.skip_empty_lines()
+            self.Empty_lines()
             descr_lst = self.Description([])
             if descr_lst:
                 self.syntax_tree.append( ('description', '\n'.join(descr_lst)) )
-        elif self.sym in ('endofdata', 'scenario', 'test_case'):
+        elif self.sym in ('$', 'scenario', 'test_case'):
             pass # empty source, or no story definition, nor feature def
         else:
-            self.expect('story', 'feature', 'endofdata', 'scenario', 'test_case')
+            self.expect('story', 'feature', '$', 'scenario', 'test_case')
 
 
     def Description(self, descr_lst):
@@ -107,7 +112,7 @@ class SyntacticAnalyzerForFeature:
     def Test_case_serie(self):
         """Nonterminal for a serie of test-case or scenario definitions.
         """
-        self.skip_empty_lines()
+        self.Empty_lines()
         if self.sym == 'test_case':
             t = self.Test_case()
             self.syntax_tree.append(t)
@@ -116,10 +121,10 @@ class SyntacticAnalyzerForFeature:
             t = self.Scenario()
             self.syntax_tree.append(t)
             self.Test_case_serie()
-        elif self.sym == 'endofdata':
+        elif self.sym == '$':
             pass        # that's OK, no test_source or scenario is acceptable
         else:
-            self.expect('test_case', 'scenario', 'endofdata', 'emptyline')
+            self.expect('test_case', 'scenario', '$', 'emptyline')
 
 
     def Test_case(self, item=None):
@@ -128,17 +133,17 @@ class SyntacticAnalyzerForFeature:
         if item is None:
             item = [self.sym, self.text, None]
         self.lex()
-        self.skip_empty_lines()
+        self.Empty_lines()
         if self.sym == 'section':
             sec_lst = self.Section_serie([])
             self.add_to_body_of(item, sec_lst)
             return tuple(item)
-        elif self.sym == 'endofdata':
+        elif self.sym == '$':
             # Empty body of the test_case (that is no section).
             self.add_to_body_of(item, [])
             return tuple(item)
         else:
-            self.expect('section', 'emptyline', 'endofdata')
+            self.expect('section', 'emptyline', '$')
 
 
     def Scenario(self):
@@ -146,17 +151,17 @@ class SyntacticAnalyzerForFeature:
         """
         item = [self.sym, self.text, None]      # specific symbol: 'scenario'
         self.lex()
-        self.skip_empty_lines()
+        self.Empty_lines()
         if self.sym == 'given':
             given_lst = self.Given_serie([])
             self.add_to_body_of(item, given_lst)
             return tuple(item)
-        elif self.sym == 'endofdata':
+        elif self.sym == '$':
             # Empty body of the scenario (that is no given...).
             self.add_to_body_of(item, [])
             return tuple(item)
         else:
-            self.expect('given', 'emptyline', 'endofdata')
+            self.expect('given', 'emptyline', '$')
 
 
     def Given_serie(self, given_lst):
@@ -165,16 +170,16 @@ class SyntacticAnalyzerForFeature:
         if self.sym == 'given':
             t = self.Given()
             given_lst.append(t)
-            self.skip_empty_lines()
+            self.Empty_lines()
             return self.Given_serie(given_lst)
         elif self.sym == 'scenario':
             # No more GIVENs -- another scenario to be processed.
             return given_lst
-        elif self.sym == 'endofdata':
+        elif self.sym == '$':
             # No more GIVENs.
             return given_lst
         else:
-            self.expect('given', 'emptyline', 'scenario', 'endofdata')
+            self.expect('given', 'emptyline', 'scenario', '$')
 
 
     def Given(self, item=None, restriction=None):
@@ -188,7 +193,7 @@ class SyntacticAnalyzerForFeature:
         if item is None:
             item = [sym, self.text, None]     # 'given'/'and_given', 'identifier', body list
         self.lex()
-        self.skip_empty_lines()
+        self.Empty_lines()
         if self.sym == 'when':
             when_lst = self.When_serie([])
             self.add_to_body_of(item, when_lst)
@@ -197,12 +202,12 @@ class SyntacticAnalyzerForFeature:
             t = self.Given(restriction='and')
             self.add_to_body_of(item, [t])
             return tuple(item)
-        elif self.sym == 'endofdata':
+        elif self.sym == '$':
             # No more WHENs.
             self.add_to_body_of(item, [])
             return tuple(item)
         else:
-            self.expect('when', 'and', 'emptyline', 'endofdata')
+            self.expect('when', 'and', 'emptyline', '$')
 
 
     def When_serie(self, when_lst, restriction=None):
@@ -211,16 +216,16 @@ class SyntacticAnalyzerForFeature:
         if self.sym == 'when':
             t = self.When(restriction=restriction)
             when_lst.append(t)
-            self.skip_empty_lines()
+            self.Empty_lines()
             return self.When_serie(when_lst)
         elif self.sym == 'scenario':
             # No more WHENs -- another scenario to be processed.
             return when_lst
-        elif self.sym == 'endofdata':
+        elif self.sym == '$':
             # No more WHENs.
             return when_lst
         else:
-            self.expect('when', 'emptyline', 'scenario', 'endofdata')
+            self.expect('when', 'emptyline', 'scenario', '$')
 
 
     def When(self, item=None, restriction=None):
@@ -234,7 +239,7 @@ class SyntacticAnalyzerForFeature:
         if item is None:
             item = [sym, self.text, None]       # 'when'/'and_when', 'identifier', body list
         self.lex()
-        self.skip_empty_lines()
+        self.Empty_lines()
         if self.sym == 'then':
             t = self.Then()
             self.add_to_body_of(item, [t])        # as a body of 'when'
@@ -259,7 +264,7 @@ class SyntacticAnalyzerForFeature:
         if item is None:
             item = [sym, self.text, None]       # 'then'/'and_then', 'identifier', body list
         self.lex()
-        self.skip_empty_lines()
+        self.Empty_lines()
         if self.sym == 'and':
             t = self.Then(restriction='and')
             self.add_to_body_of(item, [ t ])
@@ -267,7 +272,7 @@ class SyntacticAnalyzerForFeature:
         elif self.sym == 'scenario':
             self.add_to_body_of(item, [])  # no more nesting
             return tuple(item)
-        elif self.sym == 'endofdata':
+        elif self.sym == '$':
             self.add_to_body_of(item, [])  # no more nesting
             return tuple(item)
         else:

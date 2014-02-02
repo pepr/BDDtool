@@ -1,6 +1,6 @@
 #!python3
-# -*- coding: utf-8 -*-
-"""Lexical analysis for the xxx.feature source files."""
+"""Lexical analysis for the xxx.feature source files.
+"""
 
 import re
 
@@ -206,7 +206,7 @@ class Iterator:
 
             #----------------------------   end of data
             elif self.status == 800:
-                self.symbol = 'endofdata'
+                self.symbol = '$'
                 self.status = 1000
                 return self.lextoken()
 

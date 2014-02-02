@@ -1,5 +1,5 @@
 #!python3
-'''Feature to Catch skeleton.'''
+"""Feature to Catch skeleton."""
 
 import fesyn
 import glob
@@ -81,8 +81,8 @@ def skeleton(syntax_tree, il):
 
 
 def feature_to_catch_skeleton(fname_in, fname_out):
-    '''Converts the source of the feature structure to the Catch source skeleton.'''
-
+    """Converts the source of the feature structure to the Catch source skeleton.
+    """
     # Open the input file with the feature description and the output file
     # for the Catch source skeleton.
     with open(fname_in, encoding='utf_8') as fin, \

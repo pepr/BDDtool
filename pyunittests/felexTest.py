@@ -1,5 +1,4 @@
 #!python3
-# -*- coding: utf-8 -*-
 import os
 import textwrap
 import unittest
@@ -10,26 +9,27 @@ sys.path.append('..')
 import felex
 
 class LexAnalyzerForFeatureTests(unittest.TestCase):
-    '''Testing lex analyzer for the .feature BDD sources.'''
+    """Testing lex analyzer for the .feature BDD sources.
+    """
 
     def test_empty_source(self):
-        '''empty source for lexical analysis'''
-
+        """empty source for lexical analysis
+        """
         source = ''   # empty string as a source
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 1)
-        self.assertEqual(lst[0], ('endofdata', None, None, None))
+        self.assertEqual(lst[0], ('$', None, None, None))
 
 
     def test_story_or_feature(self):
-        '''story or feature recognition inside the comment'''
-
+        """story or feature recognition inside the comment
+        """
         # Story with no text
         source = 'Story:'
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Story with text
@@ -37,7 +37,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Story with text and extra spaces
@@ -45,7 +45,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # User story as the alternative to Story.
@@ -53,7 +53,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # User story as the alternative to Story.
@@ -61,7 +61,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Feature with no text
@@ -69,7 +69,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('feature', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Feature with text
@@ -77,7 +77,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('feature', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Feature with text and extra spaces
@@ -85,7 +85,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('feature', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Czech story with text and extra spaces
@@ -93,14 +93,14 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '      Uživatelský    požadavek:   text and extra   '
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('story', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Czech feature with text and extra spaces
@@ -108,19 +108,19 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('feature', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
     def test_testcase_and_scenario(self):
-        '''recognizing test_case and scenario lines'''
-
+        """recognizing test_case and scenario lines
+        """
         # Test with no text
         source = 'Test:'
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('test_case', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Test with text
@@ -128,7 +128,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('test_case', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Test with text and extra spaces
@@ -136,7 +136,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('test_case', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Test with text and tags
@@ -144,7 +144,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('test_case', 'text', source, '[tag1][tag2]'),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Scenario with no text
@@ -152,7 +152,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('scenario', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Scenario with text
@@ -160,7 +160,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('scenario', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Scenario with text and extra spaces
@@ -168,7 +168,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('scenario', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Scenario with text and tags
@@ -176,7 +176,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('scenario', 'text', source, '[tag1][tag2]'),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Czech scenario with text and extra spaces
@@ -184,20 +184,20 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('scenario', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
 
     def test_given(self):
-        '''recognizing various GIVEN descriptions'''
-
+        """recognizing various GIVEN descriptions
+        """
         # Given with no text
         source = 'Given:'
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('given', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Given with text
@@ -205,7 +205,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('given', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Given with text and extra spaces
@@ -213,7 +213,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('given', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Given with text and tags -- they are not recognized. They
@@ -222,7 +222,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('given', 'text [tag1][tag2]', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Czech given with text and extra spaces
@@ -230,19 +230,19 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('given', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
     def test_when(self):
-        '''recognizing various WHEN descriptions'''
-
+        """recognizing various WHEN descriptions
+        """
         # When with no text
         source = 'When:'
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('when', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # When with text
@@ -250,7 +250,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('when', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # When with text and extra spaces
@@ -258,7 +258,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('when', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # When with text and tags -- they are not recognized. They
@@ -267,7 +267,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('when', 'text [tag1][tag2]', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Czech when with text and extra spaces
@@ -275,19 +275,19 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('when', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
     def test_then(self):
-        '''recognizing various THEN descriptions'''
-
+        """recognizing various THEN descriptions
+        """
         # Then with no text
         source = 'Then:'
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('then', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Then with text
@@ -295,7 +295,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('then', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Then with text and extra spaces
@@ -303,7 +303,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('then', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Then with text and tags -- they are not recognized. They
@@ -312,7 +312,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('then', 'text [tag1][tag2]', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Czech then with text and extra spaces
@@ -320,19 +320,19 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('then', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
     def test_and(self):
-        '''recognizing various AND descriptions'''
-
+        """recognizing various AND descriptions
+        """
         # And with no text
         source = 'And:'
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('and', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # And with text
@@ -340,7 +340,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('and', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # And with text and extra spaces
@@ -348,7 +348,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('and', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # And with text and tags -- they are not recognized. They
@@ -357,7 +357,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('and', 'text [tag1][tag2]', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Czech and with text and extra spaces
@@ -365,26 +365,26 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('and', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
     def test_section(self):
-        '''recognizing various SECTION descriptions'''
-
+        """recognizing various SECTION descriptions
+        """
         # Section with no text
         source = 'Section:'
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('section', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = 'Sec:'
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('section', '', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Section with text
@@ -392,14 +392,14 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('section', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = 'Sec: text'
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('section', 'text', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Section with text and extra spaces
@@ -407,14 +407,14 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('section', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = '      Sec:              text and extra      '
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('section', 'text and extra', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         # Section with text and tags -- they are not recognized. They
@@ -423,20 +423,20 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('section', 'text [tag1][tag2]', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
         source = 'Sec: text [tag1][tag2]'
         lst = list(felex.Container(source))
         self.assertEqual(len(lst), 2)
         self.assertEqual(lst, [('section', 'text [tag1][tag2]', source, None),
-                               ('endofdata', None, None, None)
+                               ('$', None, None, None)
                               ])
 
 
     def test_Czech_complex_story(self):
-        '''Czech complex story'''
-
+        """Czech complex story
+        """
         source = textwrap.dedent('''\
             Požadavek: vytvoření plánu z výsledku analýzy
 
@@ -501,7 +501,7 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
             ('then', 'jsme schopni vrátit atributy budoucí kostky plánu',
                      '   Pak: jsme schopni vrátit atributy budoucí kostky plánu\n', None),
             ('emptyline', '', '', None),
-            ('endofdata', None, None, None)
+            ('$', None, None, None)
         ])
 
 

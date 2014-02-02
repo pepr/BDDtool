@@ -1,5 +1,4 @@
 #!python3
-# -*- coding: utf-8 -*-
 import os
 import textwrap
 import unittest
@@ -10,11 +9,11 @@ sys.path.append('..')
 import tsyn
 
 class SyntaxCatchTests(unittest.TestCase):
-    '''Testing syntax analysis for the Catch test sources.'''
+    """Testing syntax analysis for the Catch test sources."""
 
 
     def test_empty(self):
-        '''empty Catch test source'''
+        """empty Catch test source"""
 
         source = ''
         sa = tsyn.SyntacticAnalyzerForCatch(source)
