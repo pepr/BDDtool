@@ -1,12 +1,13 @@
-- fesyn.py -- .feature syntactic parser:
-  - generator of catch sources based on fesyn
-  - How to capture nesting of SECTIONs?
-
 - fesynTest.py
+  - Feature
+  - test_case
+  - section
   - sequences of empty lines on various places (to be skipped)
+  - possibly split to more test cases
   - errorneous examples
   - more tests
 
+- How to capture nesting of SECTIONs in the feature file?
 - tsyn.py -- Catch test syntactic analyzer
 - tlex: adding tests for syntactically wrong sources
 - felex: adding tests for syntactically wrong sources

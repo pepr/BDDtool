@@ -15,10 +15,28 @@ def skeleton(syntax_tree, il):
         if sym == 'story':
             out.append('// Story: ' + item[1])
 
+        elif sym == 'feature':
+            out.append('// Feature: ' + item[1])
+
         elif sym == 'description':
             out.append('//')
-            lst = item[1].split('\n')
+            lst = item[1]
             out.extend('// ' + line for line in lst)
+
+        elif sym == 'test_case':
+            out.append('')
+            out.append(indent + 'TEST_CASE("' + item[1] + '") {')
+            out.append('')
+            out.extend(skeleton(item[2], il+1))
+            out.append(indent + '}')
+
+        elif sym == 'section':
+            out.append(indent + 'SECTION("' + item[1] + '") {')
+            out.append(indent + '    // perform the operation and assert the state')
+            out.append(indent + '    REQUIRE(false);')
+            out.append('')
+            out.extend(skeleton(item[2], il+1))
+            out.append(indent + '}')
 
         elif sym == 'scenario':
             out.append('')
@@ -114,4 +132,4 @@ if __name__ == '__main__':
         path2, fea = os.path.split(path)
         name, ext = os.path.splitext(bname)
         fname_out = os.path.join(path2, 'catch', name + '.catch')
-        feature_to_catch_skeleton(fname_in, 'planZAnalyzy.catch')
+        feature_to_catch_skeleton(fname_in, fname_out)
