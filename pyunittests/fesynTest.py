@@ -125,43 +125,23 @@ class SyntaxFeatureTests(unittest.TestCase):
         ])
 
 
-#    def test_scenario_given_list(self):
-#        """Scenario, given, but no when and then
-#        """
-#        source = textwrap.dedent('''\
-#            Scenario: scenario identifier
-#               Given: given identifier
-#               Given: given identifier 2
-#            ''')
-#        sa = fesyn.SyntacticAnalyzerForFeature(source)
-#        tree = sa.Start()
-#        self.assertEqual(len(tree), 1)
-#        self.assertEqual(tree, [
-#            ('scenario', 'scenario identifier', [
-#                ('given', 'given identifier', []),
-#                ('given', 'given identifier 2', []),
-#            ])
-#        ])
-
-
-#    def test_scenario_given_when(self):
-#        """Scenario, given, when, but no then
-#        """
-#        source = textwrap.dedent('''\
-#            Scenario: scenario identifier
-#               Given: given identifier
-#                When: when identifier''')
-#        sa = fesyn.SyntacticAnalyzerForFeature(source)
-#        tree = sa.Start()
-#        print(tree)
-#        self.assertEqual(len(tree), 1)
-#        self.assertEqual(tree, [
-#            ('scenario', 'scenario identifier', [
-#                ('given', 'given identifier', [
-#                    ('when', 'when identifier', [])
-#                ])
-#            ])
-#        ])
+    def test_scenario_given_when_no_then(self):
+        """Scenario, given, when, but no then
+        """
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier
+               Given: given identifier
+                When: when identifier''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('when', 'when identifier', [])
+                ])
+            ])
+        ])
 
 
     def test_scenario_given_when_then(self):
@@ -254,7 +234,6 @@ class SyntaxFeatureTests(unittest.TestCase):
             ''')
         sa = fesyn.SyntacticAnalyzerForFeature(source)
         tree = sa.Start()
-        ##print(tree)
         self.assertEqual(len(tree), 3)
         self.assertEqual(tree, [
             ('story', 'story identifier'),
@@ -273,6 +252,61 @@ class SyntaxFeatureTests(unittest.TestCase):
                 ])
             ])
         ])
+
+
+    def test_scenario_with_more_givens(self):
+        """Scenario with more given's
+        """
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier
+
+               Given: given identifier
+                When: when identifier
+                Then: then identifier
+
+               Given: given identifier 2
+                When: when identifier 2
+                Then: then identifier 2
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('when', 'when identifier', [
+                        ('then', 'then identifier', [
+                        ])
+                    ])
+                ]),
+                ('given', 'given identifier 2', [
+                    ('when', 'when identifier 2', [
+                        ('then', 'then identifier 2', [
+                        ])
+                    ])
+                ])
+            ])
+        ])
+
+        # More of given's with empty definitions must be accepted.
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier
+
+               Given: given identifier
+
+               Given: given identifier 2
+
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', []),
+                ('given', 'given identifier 2', []),
+            ])
+        ])
+
 
 
     def test_scenario_given_and_given(self):
@@ -340,19 +374,7 @@ class SyntaxFeatureTests(unittest.TestCase):
                 Then: then identifier 2
             ''')
         sa = fesyn.SyntacticAnalyzerForFeature(source)
-        tree = sa.Start()
-        print(tree)
-        self.assertEqual(len(tree), 1)
-        self.assertEqual(tree, [
-            ('scenario', 'scenario identifier', [
-                ('given', 'given identifier', [
-                    ('when', 'when identifier', [
-                        ('then', 'then identifier', [
-                        ])
-                    ])
-                ])
-            ])
-        ])
+        self.assertRaises(RuntimeError, sa.Start)
 
 
     def test_scenario_andX(self):
