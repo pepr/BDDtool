@@ -53,6 +53,7 @@ class SyntacticAnalyzerForFeature:
             raise RuntimeError(msg)
 
 
+    #-------------------------------------------------------------------------
     def Start(self):
         """Implements the start nonterminal.
         """
@@ -70,6 +71,7 @@ class SyntacticAnalyzerForFeature:
             self.Empty_lines()
 
 
+    #-------------------------------------------------------------------------
     def Feature_or_story(self):
         """Nonterminal for processing the story/feature definition.
         """
@@ -112,6 +114,7 @@ class SyntacticAnalyzerForFeature:
             self.Test_case_or_scenario_serie()
 
 
+    #-------------------------------------------------------------------------
     def Test_case(self, item=None):
         """Nonterminal for one TEST_CASE.
         """
@@ -122,9 +125,30 @@ class SyntacticAnalyzerForFeature:
         self.lex()
         self.Empty_lines()
         if self.sym == 'section':
-            self.Section(bodylst)
+            self.Section_serie(bodylst)
 
 
+    def Section_serie(self, upperlst):
+        """Zero or more SECTION items (at the same level).
+        """
+        self.Empty_lines()      # neccessary for the recursion
+        if self.sym == 'section':
+            self.Section(upperlst)
+            self.Empty_lines()
+            self.Section_serie(upperlst)
+
+
+    def Section(self, upperlst):
+        """Nonterminal for one SECTION definition.
+        """
+        assert self.sym == 'section'
+        bodylst = []                     # body of the section item
+        item = [self.sym, self.text, bodylst] # 'section', 'id', body
+        upperlst.append(tuple(item))     # ready to be appended
+        self.lex()
+
+
+    #-------------------------------------------------------------------------
     def Scenario(self):
         """Nonterminal for one Scenario.
         """
@@ -150,10 +174,6 @@ class SyntacticAnalyzerForFeature:
 
     def Given(self, upperlst):
         """Nonterminal for one GIVEN definition.
-
-        The restriction can be 'and' that is converted to and_given
-        and nested recursively -- unlike the explicit 'given' serie
-        that adds to the upperlist.
         """
         assert self.sym == 'given'
         bodylst = []                     # body of the given item
