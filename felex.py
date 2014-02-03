@@ -37,6 +37,12 @@ rulesRex = [
     (r'Test:',                  'test_case'),
     (r'Sec(tion)?:',            'section'),
 
+    # English free form labels.
+    (r'Given\s+',               'given'),
+    (r'When\s+',                'when'),
+    (r'Then\s+',                'then'),
+    (r'and\s+',                 'and'),
+
     # Czech equivalents.
     (r'(Uživatelský\s+)?Požadavek:', 'story'),
     (r'Rys:',                   'feature'),
