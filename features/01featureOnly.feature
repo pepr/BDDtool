@@ -1,0 +1,1 @@
+Feature: introduces the serie of mostly the technical tests (no BDD)
