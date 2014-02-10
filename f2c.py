@@ -6,96 +6,124 @@ import glob
 import os
 import textwrap
 
+class CatchCodeGenerator:
 
-def skeleton(syntax_tree, il):
-    indent = ' ' * 4 * il
-    out = []
-    for item in syntax_tree:
-        sym = item[0]
-        if sym == 'story':
-            out.append('// Story: ' + item[1])
+    def __init__(self):
+        """Default settings initialization.
+        """
+        self.hint_flag = True
+        self.lpar = '( "'        # space after the opening parenthesis
+        self.rpar = '" )'        # space before the closing parenthesis
 
-        elif sym == 'feature':
-            out.append('// Feature: ' + item[1])
 
-        elif sym == 'description':
-            out.append('//')
-            lst = item[1]
-            out.extend('// ' + line for line in lst)
+    def append_comment(self, lst, text):
+        lst.append('// ' + text)
 
-        elif sym == 'test_case':
-            out.append('')
-            out.append(indent + 'TEST_CASE("' + item[1] + '") {')
-            out.append('')
-            out.extend(skeleton(item[2], il+1))
-            out.append(indent + '}')
 
-        elif sym == 'section':
-            out.append(indent + 'SECTION("' + item[1] + '") {')
-            out.append(indent + '    // perform the operation and assert the state')
-            out.append(indent + '    REQUIRE(false);')
-            out.append('')
-            out.extend(skeleton(item[2], il+1))
-            out.append(indent + '}')
+    def append_description(self, lst, descr_list):
+        lst.append('//')
+        lst.extend('// ' + line for line in descr_list)
 
-        elif sym == 'scenario':
-            out.append('')
-            out.append(indent + 'SCENARIO("' + item[1] + '") {')
-            out.append('')
-            out.extend(skeleton(item[2], il+1))
-            out.append(indent + '}')
 
-        elif sym == 'given':
-            out.append(indent + 'GIVEN("' + item[1] + '") {')
-            out.append(indent + '    // set up initial state')
-            out.append(indent + '    REQUIRE(false);')
-            out.append('')
-            out.extend(skeleton(item[2], il+1))
-            out.append(indent + '}')
+    def append_heading(self, il, lst, keyword, identifier):
+        lst.append(' '*4*il + keyword + self.lpar + identifier + self.rpar + ' {')
 
-        elif sym == 'and_given':
-            out.append(indent + 'GIVEN("' + item[1] + '") {')
-            out.append(indent + '    // set up initial state')
-            out.append(indent + '    REQUIRE(false);')
-            out.append('')
-            out.extend(skeleton(item[2], il+1))
-            out.append(indent + '}')
 
-        elif sym == 'when':
-            out.append(indent + 'WHEN("' + item[1] + '") {')
-            out.append(indent + '    // perform operation')
-            out.append(indent + '    REQUIRE(false);')
-            out.append('')
-            out.extend(skeleton(item[2], il+1))
-            out.append(indent + '}')
+    def append_hint(self, il, lst, text):
+        if self.hint_flag:
+            lst.append(' '*4*il + '// ' + text)
 
-        elif sym == 'and_when':
-            out.append(indent + 'AND_WHEN("' + item[1] + '") {')
-            out.append(indent + '    // perform operation')
-            out.append(indent + '    REQUIRE(false);')
-            out.append('')
-            out.extend(skeleton(item[2], il+1))
-            out.append(indent + '}')
 
-        elif sym == 'then':
-            out.append(indent + 'THEN("' + item[1] + '") {')
-            out.append(indent + '    // assert expected state')
-            out.append(indent + '    REQUIRE(false);')
-            out.append('')
-            out.extend(skeleton(item[2], il+1))
-            out.append(indent + '}')
+    def append_require(self, il, lst):
+        lst.append(' '*4*il + 'REQUIRE(false);')
+        lst.append('')
 
-        elif sym == 'and_then':
-            out.append(indent + 'AND_THEN("' + item[1] + '") {')
-            out.append(indent + '    // assert expected state')
-            out.append(indent + '    REQUIRE(false);')
-            out.append('')
-            out.extend(skeleton(item[2], il+1))
-            out.append(indent + '}')
 
-        else:
-            raise NotImplementedError('Symbol: ' + sym)
-    return out
+    def append_closing(self, il, lst):
+        lst.append(' '*4*il + '}')
+
+
+    def skeleton(self, syntax_tree, il):
+        indent = ' ' * 4 * il
+        out = []
+        for item in syntax_tree:
+            sym = item[0]
+            if sym == 'story':
+                self.append_comment(out, 'Story: ' + item[1])
+
+            elif sym == 'feature':
+                self.append_comment(out, 'Feature: ' + item[1])
+
+            elif sym == 'description':
+                self.append_description(out, item[1])
+
+            elif sym == 'test_case':
+                out.append('')
+                self.append_heading(il, out, 'TEST_CASE', item[1])
+                out.append('')
+                out.extend(self.skeleton(item[2], il+1))
+                self.append_closing(il, out)
+
+            elif sym == 'section':
+                self.append_heading(il, out, 'SECTION', item[1])
+                self.append_hint(il+1, out,
+                                    'perform the operation and assert the state')
+                self.append_require(il+1, out)
+                out.extend(self.skeleton(item[2], il+1))
+                self.append_closing(il, out)
+
+            elif sym == 'scenario':
+                out.append('')
+                self.append_heading(il, out, 'SCENARIO', item[1])
+                out.append('')
+                out.extend(self.skeleton(item[2], il+1))
+                self.append_closing(il, out)
+
+            elif sym == 'given':
+                self.append_heading(il, out, 'GIVEN', item[1])
+                self.append_hint(il+1, out, 'set up initial state')
+                self.append_require(il+1, out)
+                out.extend(self.skeleton(item[2], il+1))
+                self.append_closing(il, out)
+
+            elif sym == 'and_given':
+                self.append_heading(il, out, 'GIVEN', item[1])
+                self.append_hint(il+1, out, 'set up initial state')
+                self.append_require(il+1, out)
+                out.extend(self.skeleton(item[2], il+1))
+                self.append_closing(il, out)
+
+            elif sym == 'when':
+                self.append_heading(il, out, 'WHEN', item[1])
+                self.append_hint(il+1, out, 'perform operation')
+                self.append_require(il+1, out)
+                out.extend(self.skeleton(item[2], il+1))
+                self.append_closing(il, out)
+
+            elif sym == 'and_when':
+                self.append_heading(il, out, 'AND_WHEN', item[1])
+                self.append_hint(il+1, out, 'perform operation')
+                self.append_require(il+1, out)
+                out.extend(self.skeleton(item[2], il+1))
+                self.append_closing(il, out)
+
+            elif sym == 'then':
+                self.append_heading(il, out, 'THEN', item[1])
+                self.append_hint(il+1, out, 'assert expected state')
+                self.append_require(il+1, out)
+                out.extend(self.skeleton(item[2], il+1))
+                self.append_closing(il, out)
+
+            elif sym == 'and_then':
+                self.append_heading(il, out, 'AND_THEN', item[1])
+                self.append_hint(il+1, out, 'assert expected state')
+                self.append_require(il+1, out)
+                out.extend(self.skeleton(item[2], il+1))
+                self.append_closing(il, out)
+
+            else:
+                raise NotImplementedError('Symbol: ' + sym)
+        return out
 
 
 def feature_to_catch_skeleton(fname_in, fname_out):
@@ -112,7 +140,8 @@ def feature_to_catch_skeleton(fname_in, fname_out):
         ##print(tree)
 
         # Generate the lines of the skeleton from the syntaxt tree.
-        lst = skeleton(tree, 0)
+        cg = CatchCodeGenerator()
+        lst = cg.skeleton(tree, 0)
 
         # Some reference to the tool.
         script_name = os.path.realpath(__file__)

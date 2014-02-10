@@ -55,6 +55,7 @@ rulesRex = [
     # Czech free form labels.
     (r'Je dán[ao]?\s+',         'given'),
     (r'Když\s+',                'when'),
+    (r'Pokud\s+',               'when'),
     (r'Pak\s+',                 'then'),
     (r'a\s+',                   'and'),
 
