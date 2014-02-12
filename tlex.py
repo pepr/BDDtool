@@ -356,7 +356,18 @@ class Container:
     """
 
     def __init__(self, source):
-        self.source = source    # the multiline string
+        if hasattr(source, 'read'):
+            # It is a file object opened for reading lines in text mode.
+            self.source = source.read()
+            self.source_name = source.name      # filename
+        elif source == '':
+            # It is an empty string.
+            self.source = ''
+            self.source_name = '<str>'
+        else:
+            # It is a multiline string.
+            self.source = source
+            self.source_name = '<str>'
 
 
     def __iter__(self):
