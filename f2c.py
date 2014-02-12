@@ -26,7 +26,11 @@ class CatchCodeGenerator:
 
     def append_description(self, lst, descr_list):
         lst.append('//')
-        lst.extend('// ' + line for line in descr_list)
+        for line in descr_list:
+            if line:
+                lst.append('// ' + line )
+            else:
+                lst.append('//')
 
 
     def append_heading(self, il, lst, keyword, identifier):
