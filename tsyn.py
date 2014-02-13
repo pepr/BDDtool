@@ -48,40 +48,40 @@ class SyntacticAnalyzerForCatch:
             raise RuntimeError(msg)
 
 
+    #-------------------------------------------------------------------------
     def Start(self):
         """Implements the start nonterminal.
         """
         self.Feature_or_story()
-        self.Test_case_serie()
+        self.Test_case_or_scenario_serie()
         self.expect('$')
-
         return self.syntax_tree
 
 
+    def Other_lines(self):
+        """Nonterminal for the sequence of zero or more 'emptyline' or 'line' tokens.
+        """
+        if self.sym in ('emptyline', 'line'):
+            self.lex()
+            self.Other_lines()
+
+
+    #-------------------------------------------------------------------------
     def Feature_or_story(self):
         """Nonterminal for processing the story/feature inside comment tokens.
         """
-        if self.sym == 'story':
+        self.Other_lines()
+        if self.sym in ('story', 'feature'):
             self.syntax_tree.append( (self.sym, self.value) )
             self.lex()
-            comment_lst = self.Comments([])
+            comment_lst = []
+            self.Comments(comment_lst)
             if comment_lst:
-                self.syntax_tree.append( ('description', '\n'.join(comment_lst)) )
-
-        elif self.sym == 'feature':
-            self.lex()
-            comment_lst = self.Comments([])
-            if comment_lst:
-                self.syntax_tree.append( ('description', '\n'.join(comment_lst)) )
-
-        elif self.sym == 'comment':
-            self.lex()
-            self.Comments([])   # ignore the other comments
-
+                self.syntax_tree.append( ('description', comment_lst) )
         elif self.sym == '$':
             pass                # that's OK, the source can be empty
         else:
-            self.expect('story', 'feature', 'comment', '$')
+            self.expect('story', 'feature', '$')
 
 
     def Comments(self, comment_lst):
@@ -90,33 +90,101 @@ class SyntacticAnalyzerForCatch:
         if self.sym == 'comment':
             comment_lst.append(self.value)
             self.lex()
-            return self.Comments(comment_lst)
-        else:
-            return comment_lst
+            self.Comments(comment_lst)
 
 
-    def Test_case_serie(self):
+    def Test_case_or_scenario_serie(self):
         """Nonterminal for a serie of test cases or scenarios.
         """
-        if self.sym in ('scenario', 'test_case'):
-            t = self.Test_case()
-            self.syntax_tree.append(t)
-            self.Test_case_serie()
-
-        elif self.sym == 'emptyline':
-            # Ignore the empty line and wait for the test cases.
-            self.lex()
-            self.Test_case_serie()
-        elif self.sym == '$':
-            pass        # that's OK, no test_source or scenario is acceptable
-        else:
-            self.expect('scenario', 'test_case', 'emptyline', '$')
+        self.Other_lines()
+        if self.sym == 'test_case':
+            self.Test_case()
+            self.Test_case_or_scenario_serie()
+        elif self.sym == 'scenario':
+            self.Scenario()
+            self.Test_case_or_scenario_serie()
 
 
+    #-------------------------------------------------------------------------
     def Test_case(self):
-        """Nonterminal for one TEST_CASE or one SCENARIO.
+        """Nonterminal for one TEST_CASE.
         """
-        item = [ self.sym ]      # specific symbol: 'test_case' or 'scenario'
+        item = [self.sym]               # 'test_case'
+
+        self.lex()
+        self.expect('lpar')
+        if self.sym == 'stringlit':
+            item.append(self.value)     # test identification
+            self.lex()
+        else:
+            self.expect('stringlit')
+
+        # Optional argument with tags.
+        if self.sym == 'comma':
+            self.lex()
+            if self.sym == 'stringlit':
+                raise NotImplementedError('syntax tree for tags not implemented')
+                self.lex()
+            else:
+                expect('stringlit')
+        self.expect('rpar')
+        self.expect('lbrace')
+
+        # Collect the subree of the test_case body.
+        bodylst = []
+        self.Section_serie(bodylst)
+        self.expect('rbrace')
+
+        # Append the collected test case item to the syntax tree.
+        item.append(bodylst)
+        self.syntax_tree.append(tuple(item))
+
+
+    def Section_serie(self, upperlst):
+        """Nonterminal for any other code between the {}.
+        """
+        self.Other_lines()
+        elif self.sym == 'section':
+            self.Section(upperlst)
+            self.Other_lines()
+            self.Section_serie(upperlst)
+        self.expect('rbrace')
+
+
+    def Section(self, upperlst):
+        """Nonterminal for SECTION
+        """
+        assert self.sym == 'section'
+        item = [self.sym]               # first element with the symbol
+        self.lex()
+        self.expect('lpar')
+        if self.sym == 'stringlit':
+            item.append(self.value)     # second element with the value
+            self.lex()
+        else:
+            self.expect('stringlit')
+
+        self.expect('rpar')
+        self.expect('lbrace')
+
+        bodylst = []
+        item.append(bodylst)            # third element with the subtree
+
+        # Collect the subree of the test_case body.
+        subtree = self.Code_body([])
+        self.expect('rbrace')
+
+        # Output the previously collected symbol, identifier, and body
+        # of the section into the syntaxt tree.
+        item.append(subtree)
+        return tuple(item)
+
+
+    #-------------------------------------------------------------------------
+    def Scenario(self):
+        """Nonterminal for one SCENARIO.
+        """
+        item = [ self.sym ]      # specific symbol: 'scenario'
         self.lex()
         self.expect('lpar')
         if self.sym == 'stringlit':
@@ -140,45 +208,8 @@ class SyntacticAnalyzerForCatch:
         subtree = self.Code_body([])
         self.expect('rbrace')
 
-        # Return the collected symbol, identifier, and body the test_case into the syntaxt tree.
-        item.append(subtree)
-        return tuple(item)
-
-
-    def Code_body(self, subtree):
-        """Nonterminal for any other code between the {}.
-        """
-        if self.sym == 'rbrace':
-            return subtree      # empty rule
-        elif self.sym in ('section', 'given', 'when', 'then'):
-            secitem = self.Section()
-            subtree.append(secitem)
-
-        self.lex()
-        return self.Code_body(subtree)
-
-
-    def Section(self):
-        """Nonterminal for SECTION, GIVEN, WHEN, ...
-        """
-        item = [ self.sym ]      # specific symbol
-        self.lex()
-        self.expect('lpar')
-        if self.sym == 'stringlit':
-            item.append(self.value)
-            self.lex()
-        else:
-            self.expect('stringlit')
-
-        self.expect('rpar')
-        self.expect('lbrace')
-
-        # Collect the subree of the test_case body.
-        subtree = self.Code_body([])
-        self.expect('rbrace')
-
-        # Output the previously collected symbol, identifier, and body
-        # of the section into the syntaxt tree.
+        # Return the collected test case or scenario item -- it includes
+        # its own subtree.
         item.append(subtree)
         return tuple(item)
 

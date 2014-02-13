@@ -84,10 +84,10 @@ class SyntacticAnalyzerForFeature:
             self.Description(descr_lst)
             if descr_lst:
                 self.syntax_tree.append( ('description', descr_lst) )
-        elif self.sym in ('$', 'scenario', 'test_case'):
+        elif self.sym == '$':
             pass # empty source, or no story definition, nor feature def
         else:
-            self.expect('story', 'feature', '$', 'scenario', 'test_case')
+            self.expect('story', 'feature', '$')
 
 
     def Description(self, descr_lst):

@@ -123,6 +123,8 @@ class Iterator:
 
         self.source = self.container.source
         self.srclen = len(self.container.source)
+        self.source_name = self.container.source_name
+        self.lineno = 1
 
         self.status = 0         # of the finite automaton
         self.symbol = None
@@ -177,8 +179,13 @@ class Iterator:
         """
         # Form the lexical token.
         current = self.lextoken()
-        error_token = ('error', '{!r} expected'.format(s),
-                       repr(current), None)
+
+        source_name = self.source_name
+        line_no = self.lineno
+        error_token = ('error', '{!r}, {}: {!r} expected'.format(
+                                 source_name, line_no, s),
+                        repr(current), None)
+
 
         # Return the result.
         return error_token
@@ -219,6 +226,8 @@ class Iterator:
                 c = self.source[self.pos]
                 self.lexemlst.append(c)
                 self.pos += 1           # advanced to the next one
+                if c == '\n':
+                    self.lineno += 1    # line counter for error messages
             else:
                 # End of data, but the previous element may not be
                 # entirely collected/finalized.
@@ -265,8 +274,10 @@ class Iterator:
                             self.lexemlst.append(lexem)
                             return self.lextoken()
 
-                    # No element found. Something is new, not implemented.
-                    self.notImplemented(c)
+                    # No element found. Let's consider it a code line until
+                    # the end of line.
+                    self.symbol = 'line'
+                    self.status = 7
 
             #----------------------------   possible start of a comment
             elif self.status == 1:
@@ -334,6 +345,12 @@ class Iterator:
                 # of the string literal.
                 self.valuelst.append(c)
                 self.status = 5
+
+            #----------------------------   any other line until the end of line
+            elif self.status == 7:
+                if c == '\n':
+                    self.status = 0
+                    return self.lextoken()
 
             #----------------------------   end of data
             elif self.status == 800:
