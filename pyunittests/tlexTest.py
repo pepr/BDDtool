@@ -76,7 +76,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         source = '/*'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)   # one error item plus endofdata
-        self.assertEqual(lst, [('error', "'*/' expected",
+        self.assertEqual(lst, [('error', "'<str>', 1: '*/' expected",
                                  "('comment', '', '/*', None)", None),
                                ('$', None, None, None)
                               ])
@@ -254,7 +254,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         source = r'"not closed'
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
-        self.assertEqual(lst, [('error', '\'"\' expected',
+        self.assertEqual(lst, [('error', '\'<str>\', 1: \'"\' expected',
                   "('stringlit', 'not closed', '\"not closed', None)", None),
                                ('$', None, None, None)
                               ])

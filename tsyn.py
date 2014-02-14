@@ -61,7 +61,7 @@ class SyntacticAnalyzerForCatch:
     def Other_lines(self):
         """Nonterminal for the sequence of zero or more 'emptyline' or 'line' tokens.
         """
-        if self.sym in ('emptyline', 'code'):
+        if self.sym in ('emptyline', 'code', 'comment'):
             self.lex()
             self.Other_lines()
 
@@ -76,11 +76,9 @@ class SyntacticAnalyzerForCatch:
             comment_lst = []
             self.Comments(comment_lst)
             if comment_lst:
+                while comment_lst[0] == '':
+                    del comment_lst[0]
                 self.syntax_tree.append( ('description', comment_lst) )
-        elif self.sym == '$':
-            pass                # that's OK, the source can be empty
-        else:
-            self.expect('story', 'feature', '$')
 
 
     def Comments(self, comment_lst):
@@ -144,7 +142,7 @@ class SyntacticAnalyzerForCatch:
         """Nonterminal for any other code between the {}.
         """
         self.Other_lines()
-        elif self.sym == 'section':
+        if self.sym == 'section':
             self.Section(upperlst)
             self.Other_lines()
             self.Section_serie(upperlst)
@@ -215,6 +213,7 @@ class SyntacticAnalyzerForCatch:
         if self.sym == 'given':
             self.Given_serie(bodylst)
 
+        self.Other_lines()
         self.expect('rbrace')
 
     #-------------------------------------------------------------------------
@@ -235,7 +234,7 @@ class SyntacticAnalyzerForCatch:
         self.lex()
         self.expect('lpar')
         if self.sym == 'stringlit':
-            item.append(self.value)     # second element with the value
+            item.append(self.value)     # second element with the identifier
             self.lex()
         else:
             self.expect('stringlit')
@@ -258,24 +257,186 @@ class SyntacticAnalyzerForCatch:
             self.sym = 'and_given'      # symbol transformation
             self.And_given(bodylst)     # nested to the given
 
+        self.Other_lines()
         self.expect('rbrace')
 
 
-???    def And_given(self, upperlst):
-        """Nonterminal for one AND_GIVEN definition.
+    def And_given(self, upperlst):
+        """Nonterminal for one AND_GIVEN definition -- always nested.
         """
         assert self.sym == 'and_given'
-        bodylst = []                            # body of the given item
-        item = [self.sym, self.text, bodylst]   # 'and_given', 'id', body
-        upperlst.append(tuple(item))            # ready to be appended
-
+        item = [self.sym]               # first element with the symbol
         self.lex()
-        self.Empty_lines()
+        self.expect('lpar')
+        if self.sym == 'stringlit':
+            item.append(self.value)     # second element with the identifier
+            self.lex()
+        else:
+            self.expect('stringlit')
+
+        self.expect('rpar')
+        self.expect('lbrace')
+
+        bodylst = []
+        item.append(bodylst)            # third element with the subtree
+
+        # Append the item to the upperlst. The bodylst will be filled by
+        # the syntax subtree later.
+        upperlst.append(tuple(item))
+
+        # Skip the other lines, and process the nested items.
+        self.Other_lines()
         if self.sym == 'when':
-            self.When(bodylst)          # nested to the given
-        elif self.sym == 'and':
+            self.When_serie(bodylst)    # nested to the and_given
+        elif self.sym == 'given':       # Catch does not know AND_GIVEN
             self.sym = 'and_given'      # symbol transformation
-            self.And_given(bodylst)     # nested to the given
+            self.And_given(bodylst)     # nested to this and_given
+
+        self.Other_lines()
+        self.expect('rbrace')
+
+
+    #-------------------------------------------------------------------------
+    def When_serie(self, upperlst):
+        """Nonterminal for a serie of WHEN definitions.
+        """
+        self.Other_lines()              # neccessary for the recursion
+        if self.sym == 'when':
+            self.When(upperlst)
+            self.When_serie(upperlst)
+
+
+    def When(self, upperlst):
+        """Nonterminal for one WHEN definition.
+        """
+        assert self.sym == 'when'
+        item = [self.sym]               # first element with the symbol
+        self.lex()
+        self.expect('lpar')
+        if self.sym == 'stringlit':
+            item.append(self.value)     # second element with the identifier
+            self.lex()
+        else:
+            self.expect('stringlit')
+
+        self.expect('rpar')
+        self.expect('lbrace')
+
+        bodylst = []
+        item.append(bodylst)            # third element with the subtree
+
+        # Append the item to the upperlst. The bodylst will be filled by
+        # the syntax subtree later.
+        upperlst.append(tuple(item))
+
+        # Skip the other lines, and process the nested items.
+        self.Other_lines()
+        if self.sym == 'then':
+            self.Then(bodylst)          # nested
+        elif self.sym == 'and_when':
+            self.And_when(bodylst)      # nested to this when
+
+        self.Other_lines()
+        self.expect('rbrace')
+
+
+    def And_when(self, upperlst):
+        """Nonterminal for one AND_WHEN definition.
+        """
+        assert self.sym == 'and_when'
+        item = [self.sym]               # first element with the symbol
+        self.lex()
+        self.expect('lpar')
+        if self.sym == 'stringlit':
+            item.append(self.value)     # second element with the identifier
+            self.lex()
+        else:
+            self.expect('stringlit')
+
+        self.expect('rpar')
+        self.expect('lbrace')
+
+        bodylst = []
+        item.append(bodylst)            # third element with the subtree
+
+        # Append the item to the upperlst. The bodylst will be filled by
+        # the syntax subtree later.
+        upperlst.append(tuple(item))
+
+        # Skip the other lines, and process the nested items.
+        self.Other_lines()
+        if self.sym == 'then':
+            self.Then(bodylst)          # nested
+        elif self.sym == 'and_when':
+            self.And_when(bodylst)      # nested to this and_when
+
+        self.Other_lines()
+        self.expect('rbrace')
+
+
+    #-------------------------------------------------------------------------
+    def Then(self, upperlst):
+        """Nonterminal for one THEN definition.
+        """
+        assert self.sym == 'then'
+        item = [self.sym]               # first element with the symbol
+        self.lex()
+        self.expect('lpar')
+        if self.sym == 'stringlit':
+            item.append(self.value)     # second element with the identifier
+            self.lex()
+        else:
+            self.expect('stringlit')
+
+        self.expect('rpar')
+        self.expect('lbrace')
+
+        bodylst = []
+        item.append(bodylst)            # third element with the subtree
+
+        # Append the item to the upperlst. The bodylst will be filled by
+        # the syntax subtree later.
+        upperlst.append(tuple(item))
+
+        # Skip the other lines, and process the nested items.
+        self.Other_lines()
+        if self.sym == 'and_then':
+            self.And_then(bodylst)      # nested to the previous then-item
+
+        self.Other_lines()
+        self.expect('rbrace')
+
+
+    def And_then(self, upperlst):
+        """Nonterminal for one AND_THEN definition.
+        """
+        assert self.sym == 'and_then'
+        item = [self.sym]               # first element with the symbol
+        self.lex()
+        self.expect('lpar')
+        if self.sym == 'stringlit':
+            item.append(self.value)     # second element with the identifier
+            self.lex()
+        else:
+            self.expect('stringlit')
+
+        self.expect('rpar')
+        self.expect('lbrace')
+
+        bodylst = []
+        item.append(bodylst)            # third element with the subtree
+
+        # Append the item to the upperlst. The bodylst will be filled by
+        # the syntax subtree later.
+        upperlst.append(tuple(item))
+
+        # Skip the other lines, and process the nested items.
+        self.Other_lines()
+        if self.sym == 'and_then':
+            self.And_then(bodylst)      # nested to the previous then-item
+
+        self.Other_lines()
+        self.expect('rbrace')
 
 
 #-----------------------------------------------------------------------

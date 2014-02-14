@@ -44,8 +44,11 @@ class SyntaxCatchTests(unittest.TestCase):
         self.assertEqual(len(tree), 2)
         self.assertEqual(tree, [
             ('story', 'story identifier'),
-            ('description',
-             '\n  As a user\n  I want the feature\n  so that my life is to be easier.')
+            ('description', [
+                '  As a user',
+                '  I want the feature',
+                '  so that my life is to be easier.'
+            ])
         ])
 
 
@@ -68,8 +71,11 @@ class SyntaxCatchTests(unittest.TestCase):
 
         self.assertEqual(tree, [
             ('story', 'story identifier'),
-            ('description',
-             '\n  As a user\n  I want the feature\n  so that my life is to be easier.'),
+            ('description', [
+                '  As a user',
+                '  I want the feature',
+                '  so that my life is to be easier.'
+            ]),
             ('scenario', 'scenario identifier', [
                 ('given', 'given identifier', [
                 ])
@@ -104,8 +110,11 @@ class SyntaxCatchTests(unittest.TestCase):
 
         self.assertEqual(tree, [
             ('story', 'story identifier'),
-            ('description',
-             '\n  As a user\n  I want the feature\n  so that my life is to be easier.'),
+            ('description', [
+                 '  As a user',
+                 '  I want the feature',
+                 '  so that my life is to be easier.'
+             ]),
             ('scenario', 'scenario identifier', [
                 ('given', 'given identifier', [
                     ('when', 'when identifier', [
@@ -141,19 +150,22 @@ class SyntaxCatchTests(unittest.TestCase):
                             // assert expected state
                             REQUIRE(false);
                             int a = 3; // whatever code
+                        }
                     }
                 }
             }
             ''')
         sa = tsyn.SyntacticAnalyzerForCatch(source)
         tree = sa.Start()       # build the syntaxt tree from the start nonterminal
-        print(tree)
         self.assertEqual(len(tree), 3)
 
         self.assertEqual(tree, [
             ('story', 'story identifier'),
-            ('description',
-             '\n  As a user\n  I want the feature\n  so that my life is to be easier.'),
+            ('description', [
+                 '  As a user',
+                 '  I want the feature',
+                 '  so that my life is to be easier.'
+            ]),
             ('scenario', 'scenario identifier', [
                 ('given', 'given identifier', [
                     ('when', 'when identifier', [
