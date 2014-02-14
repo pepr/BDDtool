@@ -275,8 +275,8 @@ class Iterator:
                             return self.lextoken()
 
                     # No element found. Let's consider it a code line until
-                    # the end of line.
-                    self.symbol = 'line'
+                    # the end of line (??? or until a comment).
+                    self.symbol = 'code'
                     self.status = 7
 
             #----------------------------   possible start of a comment
@@ -348,6 +348,7 @@ class Iterator:
 
             #----------------------------   any other line until the end of line
             elif self.status == 7:
+                ##??? warning,
                 if c == '\n':
                     self.status = 0
                     return self.lextoken()

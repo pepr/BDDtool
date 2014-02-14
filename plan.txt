@@ -12,8 +12,11 @@
 - tlex: adding tests for syntactically wrong sources
 - felex: adding tests for syntactically wrong sources
 
+- tsyn test: 'code' with /* c comment that continues
+  on more lines */
+
 - c2f.py = catchtest to features -- generating missing .feature documents
-  from tests as .featurenew
+  from tests and capturing the existing as .catch.
 - How to include include i18n portions for the tokens?
 
 - compare syntax trees from the feature description and from the Catch source

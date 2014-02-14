@@ -61,10 +61,9 @@ class SyntacticAnalyzerForCatch:
     def Other_lines(self):
         """Nonterminal for the sequence of zero or more 'emptyline' or 'line' tokens.
         """
-        if self.sym in ('emptyline', 'line'):
+        if self.sym in ('emptyline', 'code'):
             self.lex()
             self.Other_lines()
-
 
     #-------------------------------------------------------------------------
     def Feature_or_story(self):
@@ -109,12 +108,13 @@ class SyntacticAnalyzerForCatch:
     def Test_case(self):
         """Nonterminal for one TEST_CASE.
         """
-        item = [self.sym]               # 'test_case'
+        assert self.sym == 'test_case'
+        item = [self.sym]               # first element of the item = symbol
 
         self.lex()
         self.expect('lpar')
         if self.sym == 'stringlit':
-            item.append(self.value)     # test identification
+            item.append(self.value)     # second element = test identification
             self.lex()
         else:
             self.expect('stringlit')
@@ -136,7 +136,7 @@ class SyntacticAnalyzerForCatch:
         self.expect('rbrace')
 
         # Append the collected test case item to the syntax tree.
-        item.append(bodylst)
+        item.append(bodylst)            # third element of the item = subtree
         self.syntax_tree.append(tuple(item))
 
 
@@ -148,7 +148,6 @@ class SyntacticAnalyzerForCatch:
             self.Section(upperlst)
             self.Other_lines()
             self.Section_serie(upperlst)
-        self.expect('rbrace')
 
 
     def Section(self, upperlst):
@@ -170,25 +169,25 @@ class SyntacticAnalyzerForCatch:
         bodylst = []
         item.append(bodylst)            # third element with the subtree
 
-        # Collect the subree of the test_case body.
-        subtree = self.Code_body([])
+        # Simplified implementation. The sections are not expected to be nested.
+        # Just skip the other lines.
+        self.Other_lines()
         self.expect('rbrace')
 
         # Output the previously collected symbol, identifier, and body
         # of the section into the syntaxt tree.
-        item.append(subtree)
-        return tuple(item)
-
+        upperlst.append(tuple(item))
 
     #-------------------------------------------------------------------------
     def Scenario(self):
         """Nonterminal for one SCENARIO.
         """
-        item = [ self.sym ]      # specific symbol: 'scenario'
+        assert self.sym == 'scenario'
+        item = [self.sym]               # first element with the symbol
         self.lex()
         self.expect('lpar')
         if self.sym == 'stringlit':
-            item.append(self.value)
+            item.append(self.value)     # second element with the value
             self.lex()
         else:
             self.expect('stringlit')
@@ -204,14 +203,79 @@ class SyntacticAnalyzerForCatch:
         self.expect('rpar')
         self.expect('lbrace')
 
-        # Collect the subree of the test_case body.
-        subtree = self.Code_body([])
+        bodylst = []
+        item.append(bodylst)            # third element with the subtree
+
+        # Append the scenario item to the syntax tree. The bodylst will be
+        # filled later.
+        self.syntax_tree.append(tuple(item))
+
+        # Skip the other lines -- 'given' expected.
+        self.Other_lines()
+        if self.sym == 'given':
+            self.Given_serie(bodylst)
+
         self.expect('rbrace')
 
-        # Return the collected test case or scenario item -- it includes
-        # its own subtree.
-        item.append(subtree)
-        return tuple(item)
+    #-------------------------------------------------------------------------
+    def Given_serie(self, upperlst):
+        """Zero or more GIVEN items (at the same level).
+        """
+        self.Other_lines()      # neccessary for the recursion
+        if self.sym == 'given':
+            self.Given(upperlst)
+            self.Given_serie(upperlst)
+
+
+    def Given(self, upperlst):
+        """Nonterminal for one GIVEN definition.
+        """
+        assert self.sym == 'given'
+        item = [self.sym]               # first element with the symbol
+        self.lex()
+        self.expect('lpar')
+        if self.sym == 'stringlit':
+            item.append(self.value)     # second element with the value
+            self.lex()
+        else:
+            self.expect('stringlit')
+
+        self.expect('rpar')
+        self.expect('lbrace')
+
+        bodylst = []
+        item.append(bodylst)            # third element with the subtree
+
+        # Append the item to the upperlst. The bodylst will be filled by
+        # the syntax subtree later.
+        upperlst.append(tuple(item))
+
+        # Skip the other lines, and process the nested items.
+        self.Other_lines()
+        if self.sym == 'when':
+            self.When_serie(bodylst)    # nested to the given
+        elif self.sym == 'given':
+            self.sym = 'and_given'      # symbol transformation
+            self.And_given(bodylst)     # nested to the given
+
+        self.expect('rbrace')
+
+
+???    def And_given(self, upperlst):
+        """Nonterminal for one AND_GIVEN definition.
+        """
+        assert self.sym == 'and_given'
+        bodylst = []                            # body of the given item
+        item = [self.sym, self.text, bodylst]   # 'and_given', 'id', body
+        upperlst.append(tuple(item))            # ready to be appended
+
+        self.lex()
+        self.Empty_lines()
+        if self.sym == 'when':
+            self.When(bodylst)          # nested to the given
+        elif self.sym == 'and':
+            self.sym = 'and_given'      # symbol transformation
+            self.And_given(bodylst)     # nested to the given
 
 
 #-----------------------------------------------------------------------
