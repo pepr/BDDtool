@@ -191,4 +191,14 @@ if __name__ == '__main__':
             fname_out = os.path.join(tests_dir, name + '.skeleton')
 
         # Generate the skeleton.
+        path, name = os.path.split(fname_in)
+        path, subdir = os.path.split(path)
+        src = os.path.join(subdir, name)
+
+        path, name = os.path.split(fname_out)
+        path, subdir = os.path.split(path)
+        dest = os.path.join(subdir, name)
+
+        print(src, '-->', dest)
+
         feature_to_catch_skeleton(fname_in, fname_out)
