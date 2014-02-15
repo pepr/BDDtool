@@ -84,10 +84,6 @@ class SyntacticAnalyzerForFeature:
             self.Description(descr_lst)
             if descr_lst:
                 self.syntax_tree.append( ('description', descr_lst) )
-        elif self.sym in ('$', 'scenario', 'test_case'):
-            pass # empty source, or no story definition, nor feature def
-        else:
-            self.expect('story', 'feature', '$', 'scenario', 'test_case')
 
 
     def Description(self, descr_lst):
@@ -232,8 +228,6 @@ class SyntacticAnalyzerForFeature:
         elif self.sym == 'and':
             self.sym = 'and_when'       # symbol transformation
             self.And_when(bodylst)      # nested to WHEN
-        elif self.sym == 'when':
-            self.When(upperlst)         # appended to the upperlst
 
 
     def And_when(self, upperlst):

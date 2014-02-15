@@ -1,22 +1,8 @@
-- fesynTest.py
-  - Feature
-  - test_case
-  - section
-  - sequences of empty lines on various places (to be skipped)
-  - possibly split to more test cases
-  - errorneous examples
-  - more tests
 
 - How to capture nesting of SECTIONs in the feature file?
-- tsyn.py -- Catch test syntactic analyzer
-- tlex: adding tests for syntactically wrong sources
-- felex: adding tests for syntactically wrong sources
-
-- c2f.py = catchtest to features -- generating missing .feature documents
-  from tests as .featurenew
 - How to include include i18n portions for the tokens?
 
-- compare syntax trees from the feature description and from the Catch source
+- diff: compare syntax trees from the feature description and from the Catch source
 
 - build also Python 2.7 version with the same functionality
 - possibly a C++ implementation of the BDDtool
@@ -24,8 +10,12 @@
 
 To be tested
 ============
-- Recognizing Catch scenarios with various ways of formatting and with
-  nested curly braces (i.e. better parser)
+- Tests for all parts (tlex, tsyn, felex, fesyn):
+  - errorneous examples
+  - more tests
+
+- tsyn test: 'code' with /* c comment that continues
+  on more lines */
 
 
 Variant prefixes of element descriptions
@@ -37,14 +27,11 @@ Variant prefixes of element descriptions
   in English)
 - the strict and the free form are equal in the semantic sense
 
-
 Internationalization
 ====================
-- jazykové varianty klíčových slov na jedno místo pro snadné úpravy
+- human-language variants of keywords in the .feature files
   (Scenario, Scénář, Example, Příklad)
-- různé jazykové elementy lze míchat; default jazyk se rozpoznává
-  podle klíčového slova použitého pro element Feature
-- ability to tell the output human language form via an option
+- ability to tell the output human-language form via an option
 
 
 Possible extension of the BDDtool
