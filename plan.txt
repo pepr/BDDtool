@@ -1,3 +1,7 @@
+- tlex must recognize C++ statements and nested code blocks in {} to skip them
+  correctly. The question is whether the nestet Catch construct can also
+  be surrounded by C++ plain block braces {}.
+
 
 - How to capture nesting of SECTIONs in the feature file?
 - How to include include i18n portions for the tokens?

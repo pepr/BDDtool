@@ -42,9 +42,12 @@ class SyntacticAnalyzerForCatch:
         if self.sym in expected_symbols:
             self.lex()
         else:
+            line_no = self.it.lineno
+            source_name = self.it.source_name
             msg = 'Expected symbol(s): {}\n'.format(expected_symbols)
-            msg += 'Unexpected symbol: {!r}, {!r}\n'.format(self.sym,
-                                                            self.lextoken)
+            msg += ('Unexpected content in {!r} at line {}:\n'
+                    '{!r}, {!r}\n').format(
+                        source_name, line_no, self.sym, self.value)
             raise RuntimeError(msg)
 
 
@@ -62,6 +65,7 @@ class SyntacticAnalyzerForCatch:
         """Nonterminal for the sequence of zero or more 'emptyline' or 'line' tokens.
         """
         if self.sym in ('emptyline', 'code', 'comment'):
+            ##print('Other_lines:', self.lextoken)
             self.lex()
             self.Other_lines()
 

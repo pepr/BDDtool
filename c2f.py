@@ -86,6 +86,10 @@ def catch_to_feature(fname_in, fname_out):
         sa = tsyn.SyntacticAnalyzerForCatch(fin)
         tree = sa.Start()
 
+        ##???
+        with open('syn.bak', 'w', encoding='utf-8') as f:
+            f.write(repr(tree))
+
         # Generate the lines of the skeleton from the syntaxt tree.
         fg = FeatureDescriptionGenerator()
         lst = fg.extract(tree)
@@ -99,8 +103,8 @@ def catch_to_feature(fname_in, fname_out):
         if fname_in.endswith('.catch'):
             lst.append('It was given the .catch extension because the related')
             lst.append('.feature file already exists. You can diff them.')
-        lst.append('Remove this comment section when you')
-        lst.append('want to convert it to the Catch test source.')
+        lst.append(('Remove this comment section when you'
+                    'want to convert it to the Catch test source.'))
         lst.append('See https://github.com/pepr/BDDtool.git')
 
         # Write the result to the output file.
