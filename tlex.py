@@ -11,12 +11,6 @@ import re
 # The first element captures an exact string pattern (not a regular expression),
 # the second element is the lex symbol identifier.
 rulesStr = [
-    ('(',            'lpar'),
-    (')',            'rpar'),
-    ('{',            'lbrace'),
-    ('}',            'rbrace'),
-    (',',            'comma'),
-
     # Catch identifiers.
     ('SCENARIO',     'scenario'),
     ('GIVEN',        'given'),
@@ -141,14 +135,19 @@ class Iterator:
 
 
     def notImplemented(self, msg=''):
-        raise NotImplementedError('status={}: {!r}'.format(self.status, msg))
+        source_name = self.source_name
+        line_no = self.lineno
+        raise NotImplementedError(('status={}: {!r}\n'
+                                   'line no. {}, source {!r}').format(
+                                       self.status, msg,
+                                       line_no, source_name))
 
 
     def lextoken(self):
         """Forms lexical token from the member variables.
         """
         # Form the lexical token: (symbol, value, lexem, extra_info)
-        if self.symbol in ('stringlit', 'emptyline', 'comment'):
+        if self.symbol in ('stringlit', 'newline', 'comment'):
             # Here the value should always be a string, even if nothing was
             # collected. The reason is that the value may be further processed
             # and the None would cause complications.
@@ -215,6 +214,27 @@ class Iterator:
         return self.lextoken()
 
 
+    def add_to_lexem(self, c):
+        """Add the char to the lexem, update the position.
+        """
+        c = self.source[self.pos]
+        self.lexemlst.append(c)
+        self.pos += 1           # advanced to the next one
+        if c == '\n':
+            self.lineno += 1    # line counter for error messages
+
+
+    def back_from_lexem(self):
+        """Back from the lexem, update the position.
+        """
+        c = self.lexemlst[-1]
+        del self.lexemlst[-1]
+        self.pos -= 1           # back to the previous one
+        if c == '\n':
+            self.lineno -= 1    # line counter for error messages
+        return c
+
+
     def __next__(self):
         """Returns lexical tokens (symbol, lexem, pre, post).
         """
@@ -224,10 +244,7 @@ class Iterator:
             # Get the next character or set the status for the end of data
             if self.pos < self.srclen:
                 c = self.source[self.pos]
-                self.lexemlst.append(c)
-                self.pos += 1           # advanced to the next one
-                if c == '\n':
-                    self.lineno += 1    # line counter for error messages
+                self.add_to_lexem(c)
             else:
                 # End of data, but the previous element may not be
                 # entirely collected/finalized.
@@ -244,6 +261,13 @@ class Iterator:
                     error = self.expected('"')
                     self.status = 800
                     return error
+                elif self.status == 8:  # assignment followed by $
+                    self.symbol = 'assignment'
+                    self.status = 800
+                    return self.lextoken()
+                elif self.status == 9:  # a number followed by $
+                    self.status = 800
+                    return self.lextoken()
                 else:
                     self.status = 800
 
@@ -255,16 +279,41 @@ class Iterator:
                 elif c in ' \t':
                     pass                # skip tabs and spaces
                 elif c == '\n':
-                    self.symbol = 'emptyline'
+                    self.symbol = 'newline'
                     return self.lextoken()
                 elif c == '"':          # string literal started
                     self.symbol = 'stringlit'
                     self.status = 5
+                elif c == '(':          # left parenthesis
+                    self.symbol = 'lpar'
+                    return self.lextoken()
+                elif c == ')':          # right parenthesis
+                    self.symbol = 'rpar'
+                    return self.lextoken()
+                elif c == '{':          # left brace
+                    self.symbol = 'lbrace'
+                    return self.lextoken()
+                elif c == '}':          # right brace
+                    self.symbol = 'rbrace'
+                    return self.lextoken()
+                elif c == ',':          # comma
+                    self.symbol = 'comma'
+                    return self.lextoken()
+                elif c == ':':          # colon
+                    self.symbol = 'colon'
+                    return self.lextoken()
+                elif c == ';':          # semicolon
+                    self.symbol = 'semic'
+                    return self.lextoken()
+                elif c == '#':          # hash like in #include
+                    self.symbol = 'hash'
+                    return self.lextoken()
+                elif c == '=':          # assignment or eq operator
+                    self.status = 8
                 else:
                     # Loop through the closure pairs to find the lex token.
                     # When the match is found, return early.
-                    self.pos -= 1       # back from the advanced position
-                    del self.lexemlst[-1]       # will be part of the next match
+                    self.back_from_lexem()
 
                     for match_fn, result_fn in self.exact_str_match_fns:
                         if match_fn(self):
@@ -274,10 +323,17 @@ class Iterator:
                             self.lexemlst.append(lexem)
                             return self.lextoken()
 
-                    # No element found. Let's consider it a code line until
-                    # the end of line (??? or until a comment).
-                    self.symbol = 'code'
-                    self.status = 7
+                    # No symbol found in the table. Possibly an identifier.
+                    if c.isalpha() or c == '_':
+                        self.symbol = 'identifier'
+                        self.valuelst.append(c)
+                        self.status = 7
+                    elif c.isdigit():
+                        self.symbol = 'num'
+                        self.valuelst.append(c)
+                        self.status = 9
+                    else:
+                       self.notImplemented(c)
 
             #----------------------------   possible start of a comment
             elif self.status == 1:
@@ -346,10 +402,33 @@ class Iterator:
                 self.valuelst.append(c)
                 self.status = 5
 
-            #----------------------------   any other line until the end of line
+            #----------------------------   collecting identifier characters
             elif self.status == 7:
-                ##??? warning,
-                if c == '\n':
+                if c.isalnum() or c == '_':
+                    self.valuelst.append(c)
+                else:
+                    self.back_from_lexem()
+                    self.status = 0
+                    return self.lextoken()      # the identifier
+
+            #----------------------------   assignment (=) or eq operator (==)
+            elif self.status == 8:
+                if c == '=':
+                    self.symbol = 'eq'
+                    self.status = 0
+                    return self.lextoken()
+                else:
+                    self.back_from_lexem()
+                    self.status = 0
+                    self.symbol = 'assignment'
+                    return self.lextoken()
+
+            #----------------------------   a number
+            elif self.status == 9:
+                if c.isdigit():
+                    self.valuelst.append(c)
+                else:
+                    self.back_from_lexem()
                     self.status = 0
                     return self.lextoken()
 

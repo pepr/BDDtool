@@ -61,19 +61,19 @@ class SyntacticAnalyzerForCatch:
         return self.syntax_tree
 
 
-    def Other_lines(self):
-        """Nonterminal for the sequence of zero or more 'emptyline' or 'line' tokens.
+    def Ignored_symbols(self):
+        """Nonterminal for the sequence of zero or more 'newline' or 'line' tokens.
         """
-        if self.sym in ('emptyline', 'code', 'comment'):
-            ##print('Other_lines:', self.lextoken)
+        if self.sym in ('comment', 'hash', 'identifier', 'newline',
+                        'stringlit', 'lpar', 'rpar', 'semic', 'assignment'):
             self.lex()
-            self.Other_lines()
+            self.Ignored_symbols()
 
     #-------------------------------------------------------------------------
     def Feature_or_story(self):
         """Nonterminal for processing the story/feature inside comment tokens.
         """
-        self.Other_lines()
+        self.Ignored_symbols()
         if self.sym in ('story', 'feature'):
             self.syntax_tree.append( (self.sym, self.value) )
             self.lex()
@@ -97,7 +97,7 @@ class SyntacticAnalyzerForCatch:
     def Test_case_or_scenario_serie(self):
         """Nonterminal for a serie of test cases or scenarios.
         """
-        self.Other_lines()
+        self.Ignored_symbols()
         if self.sym == 'test_case':
             self.Test_case()
             self.Test_case_or_scenario_serie()
@@ -145,10 +145,10 @@ class SyntacticAnalyzerForCatch:
     def Section_serie(self, upperlst):
         """Nonterminal for any other code between the {}.
         """
-        self.Other_lines()
+        self.Ignored_symbols()
         if self.sym == 'section':
             self.Section(upperlst)
-            self.Other_lines()
+            self.Ignored_symbols()
             self.Section_serie(upperlst)
 
 
@@ -173,7 +173,7 @@ class SyntacticAnalyzerForCatch:
 
         # Simplified implementation. The sections are not expected to be nested.
         # Just skip the other lines.
-        self.Other_lines()
+        self.Ignored_symbols()
         self.expect('rbrace')
 
         # Output the previously collected symbol, identifier, and body
@@ -213,18 +213,18 @@ class SyntacticAnalyzerForCatch:
         self.syntax_tree.append(tuple(item))
 
         # Skip the other lines -- 'given' expected.
-        self.Other_lines()
+        self.Ignored_symbols()
         if self.sym == 'given':
             self.Given_serie(bodylst)
 
-        self.Other_lines()
+        self.Ignored_symbols()
         self.expect('rbrace')
 
     #-------------------------------------------------------------------------
     def Given_serie(self, upperlst):
         """Zero or more GIVEN items (at the same level).
         """
-        self.Other_lines()      # neccessary for the recursion
+        self.Ignored_symbols()      # neccessary for the recursion
         if self.sym == 'given':
             self.Given(upperlst)
             self.Given_serie(upperlst)
@@ -254,14 +254,14 @@ class SyntacticAnalyzerForCatch:
         upperlst.append(tuple(item))
 
         # Skip the other lines, and process the nested items.
-        self.Other_lines()
+        self.Ignored_symbols()
         if self.sym == 'when':
             self.When_serie(bodylst)    # nested to the given
         elif self.sym == 'given':
             self.sym = 'and_given'      # symbol transformation
             self.And_given(bodylst)     # nested to the given
 
-        self.Other_lines()
+        self.Ignored_symbols()
         self.expect('rbrace')
 
 
@@ -289,14 +289,14 @@ class SyntacticAnalyzerForCatch:
         upperlst.append(tuple(item))
 
         # Skip the other lines, and process the nested items.
-        self.Other_lines()
+        self.Ignored_symbols()
         if self.sym == 'when':
             self.When_serie(bodylst)    # nested to the and_given
         elif self.sym == 'given':       # Catch does not know AND_GIVEN
             self.sym = 'and_given'      # symbol transformation
             self.And_given(bodylst)     # nested to this and_given
 
-        self.Other_lines()
+        self.Ignored_symbols()
         self.expect('rbrace')
 
 
@@ -304,7 +304,7 @@ class SyntacticAnalyzerForCatch:
     def When_serie(self, upperlst):
         """Nonterminal for a serie of WHEN definitions.
         """
-        self.Other_lines()              # neccessary for the recursion
+        self.Ignored_symbols()              # neccessary for the recursion
         if self.sym == 'when':
             self.When(upperlst)
             self.When_serie(upperlst)
@@ -334,13 +334,13 @@ class SyntacticAnalyzerForCatch:
         upperlst.append(tuple(item))
 
         # Skip the other lines, and process the nested items.
-        self.Other_lines()
+        self.Ignored_symbols()
         if self.sym == 'then':
             self.Then(bodylst)          # nested
         elif self.sym == 'and_when':
             self.And_when(bodylst)      # nested to this when
 
-        self.Other_lines()
+        self.Ignored_symbols()
         self.expect('rbrace')
 
 
@@ -368,13 +368,13 @@ class SyntacticAnalyzerForCatch:
         upperlst.append(tuple(item))
 
         # Skip the other lines, and process the nested items.
-        self.Other_lines()
+        self.Ignored_symbols()
         if self.sym == 'then':
             self.Then(bodylst)          # nested
         elif self.sym == 'and_when':
             self.And_when(bodylst)      # nested to this and_when
 
-        self.Other_lines()
+        self.Ignored_symbols()
         self.expect('rbrace')
 
 
@@ -403,11 +403,11 @@ class SyntacticAnalyzerForCatch:
         upperlst.append(tuple(item))
 
         # Skip the other lines, and process the nested items.
-        self.Other_lines()
+        self.Ignored_symbols()
         if self.sym == 'and_then':
             self.And_then(bodylst)      # nested to the previous then-item
 
-        self.Other_lines()
+        self.Ignored_symbols()
         self.expect('rbrace')
 
 
@@ -435,11 +435,11 @@ class SyntacticAnalyzerForCatch:
         upperlst.append(tuple(item))
 
         # Skip the other lines, and process the nested items.
-        self.Other_lines()
+        self.Ignored_symbols()
         if self.sym == 'and_then':
             self.And_then(bodylst)      # nested to the previous then-item
 
-        self.Other_lines()
+        self.Ignored_symbols()
         self.expect('rbrace')
 
 

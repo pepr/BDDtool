@@ -94,7 +94,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 3)
         self.assertEqual(lst, [('comment', '', '/**/', None),
-                               ('emptyline', '', '\n', None),
+                               ('newline', '', '\n', None),
                                ('$', None, None, None)
                               ])
 
@@ -103,7 +103,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 3)
         self.assertEqual(lst, [('comment', '', '/**/', None),
-                               ('emptyline', '', '\n', None),
+                               ('newline', '', '\n', None),
                                ('$', None, ' ', None)
                               ])
 
@@ -112,7 +112,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 3)
         self.assertEqual(lst, [('comment', '', '/**/', None),
-                               ('emptyline', '', ' \n', None),
+                               ('newline', '', ' \n', None),
                                ('$', None, None, None)
                               ])
 
@@ -260,7 +260,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
                               ])
 
 
-    def test_terminals(self):
+    def test_terminals1(self):
         """recognizing one-char terminal symbols
         """
         source = '('
@@ -298,6 +298,63 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         self.assertEqual(len(lst), 2)
         item = lst[0]
         self.assertEqual(item, ('comma', None, source, None) )
+
+        source = ':'
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('colon', None, source, None) )
+
+        source = ';'
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('semic', None, source, None) )
+
+        source = '#'
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('hash', None, source, None) )
+
+        source = '='
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('assignment', None, source, None) )
+
+
+    def test_terminals2(self):
+        """recognizing two-char terminal symbols
+        """
+        source = '=='
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('eq', None, source, None) )
+
+
+    def test_numbers(self):
+        """recognizing number literals
+        """
+        source = '1'
+        lst = list(tlex.Container(source))
+        print(lst)
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('num', '1', source, None) )
+
+        source = '12'
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('num', '12', source, None) )
+
+        source = '1234567890'
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('num', '1234567890', source, None) )
 
 
     def test_simple_testcase_and_sections(self):
@@ -508,6 +565,63 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         self.assertEqual(lst, [('feature', 'feature identifier', source, None),
                                ('$', None, None, None)
                               ])
+
+    def test_scenario_with_cpp_body_inside_the_body(self):
+        """Body of the scenario in {} can contain nested {} not from Catch constructs.
+        """
+        source = textwrap.dedent('''\
+            SCENARIO( "scenario identifier" ) {
+                for (int i: container) {
+                    do_some_code();
+                }
+                {}
+                {{}}
+                {{{}}}
+            }''')
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 39)
+
+        self.assertEqual(lst, [
+            ('scenario', None, 'SCENARIO', None),
+            ('lpar', None, '(', None),
+            ('stringlit', 'scenario identifier', ' "scenario identifier"', None),
+            ('rpar', None, ' )', None),
+            ('lbrace', None, ' {', None),
+            ('newline', '', '\n', None),
+            ('identifier', 'for', '    for', None),
+            ('lpar', None, ' (', None),
+            ('identifier', 'int', 'int', None),
+            ('identifier', 'i', ' i', None),
+            ('colon', None, ':', None),
+            ('identifier', 'container', ' container', None),
+            ('rpar', None, ')', None),
+            ('lbrace', None, ' {', None),
+            ('newline', '', '\n', None),
+            ('identifier', 'do_some_code', '        do_some_code', None),
+            ('lpar', None, '(', None),
+            ('rpar', None, ')', None),
+            ('semic', None, ';', None),
+            ('newline', '', '\n', None),
+            ('rbrace', None, '    }', None),
+            ('newline', '', '\n', None),
+            ('lbrace', None, '    {', None),
+            ('rbrace', None, '}', None),
+            ('newline', '', '\n', None),
+            ('lbrace', None, '    {', None),
+            ('lbrace', None, '{', None),
+            ('rbrace', None, '}', None),
+            ('rbrace', None, '}', None),
+            ('newline', '', '\n', None),
+            ('lbrace', None, '    {', None),
+            ('lbrace', None, '{', None),
+            ('lbrace', None, '{', None),
+            ('rbrace', None, '}', None),
+            ('rbrace', None, '}', None),
+            ('rbrace', None, '}', None),
+            ('newline', '', '\n', None),
+            ('rbrace', None, '}', None),
+            ('$', None, None, None)
+        ])
 
 
 if __name__ == '__main__':
