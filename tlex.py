@@ -5,22 +5,18 @@
 import re
 
 # The Catch-defined identifiers are considered keywords for this purpose.
-# The following list of items contain the tuples with the following
-# meaning...
-#
-# The first element captures an exact string pattern (not a regular expression),
-# the second element is the lex symbol identifier.
-rulesStr = [
-    # Catch identifiers.
-    ('SCENARIO',     'scenario'),
-    ('GIVEN',        'given'),
-    ('WHEN',         'when'),
-    ('THEN',         'then'),
-    ('AND_WHEN',     'and_when'),
-    ('AND_THEN',     'and_then'),
-    ('TEST_CASE',    'test_case'),
-    ('SECTION',      'section'),
-]
+# The following dictionary contains transformation of the Catch identifier
+# to the related symbols.
+known_id = {
+    'SCENARIO':         'scenario',
+    'GIVEN':            'given',
+    'WHEN':             'when',
+    'THEN':             'then',
+    'AND_WHEN':         'and_when',
+    'AND_THEN':         'and_then',
+    'TEST_CASE':        'test_case',
+    'SECTION':          'section',
+}
 
 # The BDD text Story/Feature with title that was generated into comments
 # is recognized as a special token when postprocessint a comment token.
@@ -78,18 +74,6 @@ def build_rex_closures(pattern, lexsym):
 
 #-----------------------------------------------------------------------
 
-def buildExactStrMatchFunctions(iterator):
-    """Builds the list of (match_fn, result_fn) closures for exact strings.
-    """
-    functions = []
-
-    for s, lexid in rulesStr:
-        functions.append(build_str_closures(s, lexid, iterator))
-
-    return functions
-
-#-----------------------------------------------------------------------
-
 def buildRegexMatchFunctions():
     """Builds the list of (match_fn, result_fn) closures for regular expressions.
     """
@@ -126,7 +110,6 @@ class Iterator:
         self.lexemlst = []
         self.extra_info = None
 
-        self.exact_str_match_fns = buildExactStrMatchFunctions(self)
         self.regex_match_fns = buildRegexMatchFunctions()
 
 
@@ -235,6 +218,15 @@ class Iterator:
         return c
 
 
+    def identifier_to_known_id(self):
+        assert self.symbol == 'identifier'
+        value = ''.join(self.valuelst)
+        sym = known_id.get(value, None)
+        if sym:
+            self.symbol = sym
+            self.valuelst = None
+
+
     def __next__(self):
         """Returns lexical tokens (symbol, lexem, pre, post).
         """
@@ -261,6 +253,11 @@ class Iterator:
                     error = self.expected('"')
                     self.status = 800
                     return error
+                elif self.status == 7:  # identifier followed by $
+                    self.symbol = 'identifier'
+                    self.identifier_to_known_id()
+                    self.status = 800
+                    return self.lextoken()
                 elif self.status == 8:  # assignment followed by $
                     self.symbol = 'assignment'
                     self.status = 800
@@ -310,30 +307,17 @@ class Iterator:
                     return self.lextoken()
                 elif c == '=':          # assignment or eq operator
                     self.status = 8
+                elif c.isalpha() or c == '_':   # identifier starts
+                    self.symbol = 'identifier'
+                    self.valuelst.append(c)
+                    self.status = 7
+                elif c.isdigit():       # a number
+                    self.symbol = 'num'
+                    self.valuelst.append(c)
+                    self.status = 9
                 else:
-                    # Loop through the closure pairs to find the lex token.
-                    # When the match is found, return early.
-                    self.back_from_lexem()
+                   self.notImplemented(c)
 
-                    for match_fn, result_fn in self.exact_str_match_fns:
-                        if match_fn(self):
-                            symbol, lexem, newpos = result_fn(self)
-                            self.pos = newpos
-                            self.symbol = symbol
-                            self.lexemlst.append(lexem)
-                            return self.lextoken()
-
-                    # No symbol found in the table. Possibly an identifier.
-                    if c.isalpha() or c == '_':
-                        self.symbol = 'identifier'
-                        self.valuelst.append(c)
-                        self.status = 7
-                    elif c.isdigit():
-                        self.symbol = 'num'
-                        self.valuelst.append(c)
-                        self.status = 9
-                    else:
-                       self.notImplemented(c)
 
             #----------------------------   possible start of a comment
             elif self.status == 1:
@@ -407,9 +391,15 @@ class Iterator:
                 if c.isalnum() or c == '_':
                     self.valuelst.append(c)
                 else:
+                    # Identifier just finished. Return this char back.
                     self.back_from_lexem()
                     self.status = 0
-                    return self.lextoken()      # the identifier
+
+                    # The idenfifier can be somehow special. Change the symbol
+                    # if it is so. Return or the original  or the transformed
+                    # token.
+                    self.identifier_to_known_id()
+                    return self.lextoken()
 
             #----------------------------   assignment (=) or eq operator (==)
             elif self.status == 8:

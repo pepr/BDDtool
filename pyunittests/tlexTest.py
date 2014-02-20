@@ -156,7 +156,7 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         # Keywords as exact strings with the exact case.
         lst = list(tlex.Container('SCENARIO'))
         self.assertEqual(len(lst), 2)
-        self.assertEqual(lst, [('scenario', None, 'SCENARIO',None),
+        self.assertEqual(lst, [('scenario', None, 'SCENARIO', None),
                                ('$', None, None, None)
                               ])
 
@@ -339,7 +339,6 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         """
         source = '1'
         lst = list(tlex.Container(source))
-        print(lst)
         self.assertEqual(len(lst), 2)
         item = lst[0]
         self.assertEqual(item, ('num', '1', source, None) )
