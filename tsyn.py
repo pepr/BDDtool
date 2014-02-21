@@ -65,9 +65,20 @@ class SyntacticAnalyzerForCatch:
         """Nonterminal for the sequence of zero or more 'newline' or 'line' tokens.
         """
         if self.sym in ('comment', 'hash', 'identifier', 'newline',
-                        'stringlit', 'lpar', 'rpar', 'semic', 'assignment'):
-            self.lex()
+                        'stringlit', 'lpar', 'rpar', 'semic', 'assignment',
+                        'num', 'colon'):
+            if self.sym == 'lbrace':
+                # { block with ignored symbols }
+                print('ignored 2:', self.sym, repr(self.lexem))
+                self.expect('lbrace')
+                self.Ignored_symbols()
+                self.expect('rbrace')
+                print('ignored 3:', self.sym, repr(self.lexem))
+            else:
+                 print('ignored 1:', self.sym, repr(self.lexem))
+                 self.lex()
             self.Ignored_symbols()
+
 
     #-------------------------------------------------------------------------
     def Feature_or_story(self):
