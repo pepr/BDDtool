@@ -67,16 +67,7 @@ class SyntacticAnalyzerForCatch:
         if self.sym in ('comment', 'hash', 'identifier', 'newline',
                         'stringlit', 'lpar', 'rpar', 'semic', 'assignment',
                         'num', 'colon'):
-            if self.sym == 'lbrace':
-                # { block with ignored symbols }
-                print('ignored 2:', self.sym, repr(self.lexem))
-                self.expect('lbrace')
-                self.Ignored_symbols()
-                self.expect('rbrace')
-                print('ignored 3:', self.sym, repr(self.lexem))
-            else:
-                 print('ignored 1:', self.sym, repr(self.lexem))
-                 self.lex()
+            self.lex()
             self.Ignored_symbols()
 
 
@@ -145,12 +136,21 @@ class SyntacticAnalyzerForCatch:
 
         # Collect the subree of the test_case body.
         bodylst = []
-        self.Section_serie(bodylst)
-        self.expect('rbrace')
-
-        # Append the collected test case item to the syntax tree.
         item.append(bodylst)            # third element of the item = subtree
+
+        # Append the test case item to the syntax tree. The bodylst will be
+        # filled later.
         self.syntax_tree.append(tuple(item))
+
+        # Skip the other lines -- 'section' expected.
+        self.Ignored_symbols()
+        if self.sym == 'section':
+            self.Section_serie(bodylst)
+        elif self.sym == 'lbrace':
+            self.Block_of_code()
+
+        self.Ignored_symbols()
+        self.expect('rbrace')
 
 
     def Section_serie(self, upperlst):
@@ -227,6 +227,9 @@ class SyntacticAnalyzerForCatch:
         self.Ignored_symbols()
         if self.sym == 'given':
             self.Given_serie(bodylst)
+        elif self.sym == 'lbrace':
+            print('block')
+            self.Block_of_code()
 
         self.Ignored_symbols()
         self.expect('rbrace')
@@ -453,6 +456,17 @@ class SyntacticAnalyzerForCatch:
         self.Ignored_symbols()
         self.expect('rbrace')
 
+    #-------------------------------------------------------------------------
+    def Block_of_code(self):
+        """C/C++ block of code in curly braces -- or sequence of block or nested.
+        """
+        if self.sym == 'lbrace':
+            self.expect('lbrace')
+            self.Ignored_symbols()
+            self.Block_of_code()        # nested
+            self.expect('rbrace')
+            self.Ignored_symbols()
+            self.Block_of_code()        # sequence
 
 #-----------------------------------------------------------------------
 

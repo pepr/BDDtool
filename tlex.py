@@ -153,6 +153,7 @@ class Iterator:
         self.extra_info = None
 
         # Return the result.
+        print(token)
         return token
 
 

@@ -182,32 +182,59 @@ class SyntaxCatchTests(unittest.TestCase):
         """
         source = textwrap.dedent('''\
             SCENARIO( "scenario identifier" ) {
-                for (int i: container) {
-                    do_some_code();
-                }
                 {}
-                {{}}
-                {{{}}}
+                { xxx(); { xxx(); { xxx(); } xxx(); } xxx(); }
+                xxx();
             }''')
         sa = tsyn.SyntacticAnalyzerForCatch(source)
         tree = sa.Start()       # build the syntaxt tree from the start nonterminal
-        print(tree)
-        self.assertEqual(len(tree), 3)
+        self.assertEqual(len(tree), 1)
 
         self.assertEqual(tree, [
-            ('story', 'story identifier'),
-            ('description', [
-                 '  As a user',
-                 '  I want the feature',
-                 '  so that my life is to be easier.'
-            ]),
+            ('scenario', 'scenario identifier', [
+            ])
+        ])
+
+
+    def test_scenario_given_with_code1(self):
+        """Body of the scenario with initialization in {} before the given.
+        """
+        source = textwrap.dedent('''\
+            SCENARIO( "scenario identifier" ) {
+                string fname = { "test.data" };
+                GIVEN( "given identifier" ) {
+                    REQUIRE(false);
+               }
+            }''')
+        print(source)
+        sa = tsyn.SyntacticAnalyzerForCatch(source)
+        tree = sa.Start()       # build the syntaxt tree from the start nonterminal
+        print(tree)
+        self.assertEqual(len(tree), 1)
+
+        self.assertEqual(tree, [
             ('scenario', 'scenario identifier', [
                 ('given', 'given identifier', [
-                    ('when', 'when identifier', [
-                        ('then', 'then identifier', [
-                        ])
-                    ])
                 ])
+            ])
+        ])
+
+
+    def test_case_with_cpp_body_inside_the_body(self):
+        """Body of the scenario in {} can contain nested {} not from Catch constructs.
+        """
+        source = textwrap.dedent('''\
+            TEST_CASE( "test case identifier" ) {
+                {}
+                { xxx(); { xxx(); { xxx(); } xxx(); } xxx(); }
+                xxx();
+            }''')
+        sa = tsyn.SyntacticAnalyzerForCatch(source)
+        tree = sa.Start()       # build the syntaxt tree from the start nonterminal
+        self.assertEqual(len(tree), 1)
+
+        self.assertEqual(tree, [
+            ('test_case', 'test case identifier', [
             ])
         ])
 
