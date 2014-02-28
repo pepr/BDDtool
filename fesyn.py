@@ -183,6 +183,9 @@ class SyntacticAnalyzerForFeature:
         elif self.sym == 'and':
             self.sym = 'and_given'      # symbol transformation
             self.And_given(bodylst)     # nested to the given
+        elif self.sym == 'but':         # but s transformed to and_given
+            self.sym = 'and_given'      # symbol transformation
+            self.And_given(bodylst)     # nested to the given
         elif self.sym == 'given':
             self.Given(upperlst)        # nested to the scenario body
 
@@ -200,6 +203,9 @@ class SyntacticAnalyzerForFeature:
         if self.sym == 'when':
             self.When(bodylst)          # nested to the given
         elif self.sym == 'and':
+            self.sym = 'and_given'      # symbol transformation
+            self.And_given(bodylst)     # nested to the given
+        elif self.sym == 'but':         # but s transformed to and_given
             self.sym = 'and_given'      # symbol transformation
             self.And_given(bodylst)     # nested to the given
 
@@ -228,6 +234,9 @@ class SyntacticAnalyzerForFeature:
         elif self.sym == 'and':
             self.sym = 'and_when'       # symbol transformation
             self.And_when(bodylst)      # nested to WHEN
+        elif self.sym == 'but':         # but s transformed to and_when
+            self.sym = 'and_when'       # symbol transformation
+            self.And_when(bodylst)      # nested to the WHEN
 
 
     def And_when(self, upperlst):
@@ -245,6 +254,9 @@ class SyntacticAnalyzerForFeature:
         elif self.sym == 'and':
             self.sym = 'and_when'       # symbol transformation
             self.And_when(bodylst)      # nested to WHEN
+        elif self.sym == 'but':         # but s transformed to and_when
+            self.sym = 'and_when'       # symbol transformation
+            self.And_when(bodylst)      # nested to the WHEN
 
 
     def Then(self, upperlst):

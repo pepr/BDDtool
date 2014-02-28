@@ -369,6 +369,67 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
                               ])
 
 
+    def test_but(self):
+        """recognizing various BUT descriptions
+        """
+        # But with no text
+        source = 'But:'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('but', '', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # But with text
+        source = 'But: text'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('but', 'text', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # But with text and extra spaces
+        source = '      but:              text and extra      '
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('but', 'text and extra', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # But with text and tags -- they are not recognized. They
+        # are just a part of the text.
+        source = 'But: text [tag1][tag2]'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('but', 'text [tag1][tag2]', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # But with text -- free form
+        source = 'but text'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('but', 'text', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # Czech BUT with text and extra spaces
+        source = '      ale:              text and extra      '
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('but', 'text and extra', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # Czech free form But with text
+        source = 'ale text'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('but', 'text', source, None),
+                               ('$', None, None, None)
+                              ])
+
+
     def test_section(self):
         """recognizing various SECTION descriptions
         """

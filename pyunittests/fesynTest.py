@@ -330,6 +330,51 @@ class SyntaxFeatureTests(unittest.TestCase):
         ])
 
 
+    def test_scenario_given_but(self):
+        """Scenario, given, but transformed to and_given
+        """
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier
+               Given: given identifier
+                 but: but identifier
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('and_given', 'but identifier', [
+                    ])
+                ])
+            ])
+        ])
+
+
+    def test_scenario_when_but(self):
+        """Scenario, given, when, but transformed to and_when
+        """
+        source = textwrap.dedent('''\
+            Scenario: scenario identifier
+               Given: given identifier
+                When: when identifier
+                 but: but identifier
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [
+            ('scenario', 'scenario identifier', [
+                ('given', 'given identifier', [
+                    ('when', 'when identifier', [
+                        ('and_when', 'but identifier', [
+                        ])
+                    ])
+                ])
+            ])
+        ])
+
+
     def test_scenario_given_more_whens(self):
         """Scenario, given, and more when's
         """
@@ -471,6 +516,34 @@ class SyntaxFeatureTests(unittest.TestCase):
                 ])\
             ])
         ])
+
+        #---------------------------------------------------------------------
+        source = textwrap.dedent('''\
+          Scénář: rozhodnutí o nutnosti přenosu přílohy
+            Je dána příloha...
+            Když se časy příloh liší,
+            ale kontrolní součet se shoduje,
+            pak se přesun neplánuje
+            a čas se upraví.
+        ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 1)
+        self.assertEqual(tree, [
+            ('scenario', 'rozhodnutí o nutnosti přenosu přílohy', [
+                ('given', 'příloha...', [
+                    ('when', 'se časy příloh liší,', [
+                        ('and_when', 'kontrolní součet se shoduje,', [
+                            ('then', 'se přesun neplánuje', [
+                                ('and_then', 'čas se upraví.', [
+                                ])
+                            ])
+                        ])
+                    ])
+                ])
+            ]),
+        ])
+
 
 if __name__ == '__main__':
     unittest.main()

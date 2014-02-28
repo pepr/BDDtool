@@ -33,6 +33,7 @@ rulesRex = [
     (r'When:',                  'when'),
     (r'Then:',                  'then'),
     (r'And:',                   'and'),
+    (r'But:',                   'but'),
 
     (r'Test:',                  'test_case'),
     (r'Sec(tion)?:',            'section'),
@@ -42,6 +43,7 @@ rulesRex = [
     (r'When\s+',                'when'),
     (r'Then\s+',                'then'),
     (r'and\s+',                 'and'),
+    (r'but\s+',                 'but'),
 
     # Czech equivalents.
     (r'(Uživatelský\s+)?Požadavek:', 'story'),
@@ -51,6 +53,7 @@ rulesRex = [
     (r'Když:',                  'when'),
     (r'Pak:',                   'then'),
     (r'a:',                     'and'),
+    (r'ale:',                   'but'),
 
     # Czech free form labels.
     (r'Je dán[ao]?\s+',         'given'),
@@ -58,6 +61,7 @@ rulesRex = [
     (r'Pokud\s+',               'when'),
     (r'Pak\s+',                 'then'),
     (r'a\s+',                   'and'),
+    (r'ale\s+',                 'but'),
 
 ]
 
