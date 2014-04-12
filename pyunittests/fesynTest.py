@@ -81,6 +81,34 @@ class SyntaxFeatureTests(unittest.TestCase):
              ])
         ])
 
+        source = textwrap.dedent('''\
+            Story: story title
+
+            As a user
+            I want the feature
+            so that my life is to be easier.
+
+            This should be a longer comment. However...
+
+            When the sentence starts like this one, syntactic parser
+            was confused in earlier implementation. This was because
+            the "When" was recognized as the token and it appeared
+            on unexpected place.
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 2)
+        self.assertEqual(tree, [
+            ('story', 'story title'),
+            ('description', [
+                 'As a user',
+                 'I want the feature',
+                 'so that my life is to be easier.',
+                 '',
+                 ''
+             ])
+        ])
+
 
     def test_scenario_only(self):
         """Scenario only
