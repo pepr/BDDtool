@@ -146,14 +146,19 @@ def feature_to_catch_skeleton(fname_in, fname_out):
     with open(fname_in, encoding='utf_8') as fin, \
          open(fname_out, 'w', encoding='utf_8') as fout:
 
+        # Each generated .cpp file with the test must start with Catch include.
+        lst = []
+        lst.append('#include "catch.hpp"')
+        lst.append('')
+
         # Get the syntax tree for the feature description.
         sa = fesyn.SyntacticAnalyzerForFeature(fin)
         tree = sa.Start()
         ##print(tree)
 
-        # Generate the lines of the skeleton from the syntaxt tree.
+        # Generate the lines of the skeleton from the syntax tree.
         cg = CatchCodeGenerator()
-        lst = cg.skeleton(tree)
+        lst.extend(cg.skeleton(tree))
 
         # Some reference to the tool.
         script_name = os.path.realpath(__file__)
@@ -165,7 +170,6 @@ def feature_to_catch_skeleton(fname_in, fname_out):
 
         # Write the result to the output file.
         fout.write('\n'.join(lst))
-
 
 
 if __name__ == '__main__':
@@ -184,9 +188,9 @@ if __name__ == '__main__':
         path, bname = os.path.split(fname_in)
         name, ext = os.path.splitext(bname)
 
-        # If the header file for the skeleton does not exist, it will be
-        # generated as the .h file. Otherwise, the .skeleton extension is used.
-        fname_out = os.path.join(tests_dir, name + '.h')
+        # If the cpp  file for the skeleton does not exist, it will be
+        # generated as the .cpp file. Otherwise, the .skeleton extension is used.
+        fname_out = os.path.join(tests_dir, name + '.cpp')
         if os.path.isfile(fname_out):
             fname_out = os.path.join(tests_dir, name + '.skeleton')
 
@@ -202,3 +206,16 @@ if __name__ == '__main__':
         print(src, '-->', dest)
 
         feature_to_catch_skeleton(fname_in, fname_out)
+
+    # If the TestMain.cpp does not exist, generate it.
+    fname_test_main = os.path.join(tests_dir, 'TestMain.cpp')
+    if not os.path.isfile(fname_test_main):
+        print('-----------------------------------------------------------')
+        with open(fname_test_main, 'w', encoding='utf-8') as f:
+            f.write('#define CATCH_CONFIG_MAIN\n')
+            f.write('#include "catch.hpp"')
+
+        path, name = os.path.split(fname_test_main)
+        path, subdir = os.path.split(path)
+        dest = os.path.join(subdir, name)
+        print('Generated:', dest)
