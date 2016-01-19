@@ -1,3 +1,5 @@
 __pycache__/
 pytests/
 log/
+tests/
+plan.html

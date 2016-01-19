@@ -1,4 +1,9 @@
-fesyn.py - If the text before the first Scenario: contains free text that
+BDD Tool -- Behaviour Driven Development
+========================================
+Plan
+
+
+`fesyn.py` - If the text before the first Scenario: contains free text that
 is converted for example to "when", the syntactic parser shows error.
 The fix must recognize we are before the first TEST_CASE or SCENARIO
 description.
@@ -18,7 +23,8 @@ description.
 
 
 To be tested
-============
+------------
+
 - Tests for all parts (tlex, tsyn, felex, fesyn):
   - errorneous examples
   - more tests
@@ -28,7 +34,7 @@ To be tested
 
 
 Variant prefixes of element descriptions
-========================================
+----------------------------------------
 - more free form of sentences in .feature (no colon)
 - per human-language based code for fixing the extracted info from
   the free form (basically punctuation at the beginning and at the end
@@ -37,14 +43,47 @@ Variant prefixes of element descriptions
 - the strict and the free form are equal in the semantic sense
 
 Internationalization
-====================
+--------------------
+
 - human-language variants of keywords in the .feature files
   (Scenario, Scénář, Example, Příklad)
 - ability to tell the output human-language form via an option
 
 
 Possible extension of the BDDtool
-=================================
+---------------------------------
+
 - generating skeletons for Python unit testing -- then this application
   could test itself (eat my own dog's food for this Python application).
 - generating skeletons for Java, C# etc.
+
+- Extending GIVEN and THEN -- the input and output. Here is the example
+  from `asciidoctor/features/open_block.feature`
+  +
+  ------
+# language: en
+Feature: Open Blocks
+  In order to group content in a generic container
+  As a writer
+  I want to be able to wrap content in an open block
+
+
+  Scenario: Render an open block that contains a paragraph to HTML
+  Given the AsciiDoc source
+    """
+    --
+    A paragraph in an open block.
+    --
+    """
+  When it is converted to html
+  Then the result should match the HTML source
+    """
+    <div class="openblock">
+    <div class="content">
+    <div class="paragraph">
+    <p>A paragraph in an open block.</p>
+    </div>
+    </div>
+    </div>
+    """
+  ------
