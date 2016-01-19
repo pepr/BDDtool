@@ -161,39 +161,16 @@ class Iterator:
 
         # Reset the variables.
         self.symbol = None
-        self.lexem = None
         self.value = None
+        self.lexem = None
         self.tags = None
 
         # Return the result.
         return token
 
 
-    def expected(self, s):
-        """Forms error lexical token.
-        """
-
-        # Form the lexical token.
-        current = (self.symbol, ''.join(self.lst),
-                   ''.join(self.prelst), self.post)
-        source_name = self.source_name
-        line_no = self.lineno
-        token = ('error', '{!r}, {}: {!r} expected'.format(
-                    source_name, line_no, s),
-                repr(current), None)
-
-        # Reset the variables.
-        self.symbol = None
-        self.lst = []
-        self.prelst = []
-        self.post = None
-
-        # Return the result.
-        return token
-
-
     def __next__(self):
-        """Returns lexical tokens (symbol, lexem, text, tags).
+        """Returns lexical tokens (symbol, value, lexem, tags).
         """
         # Loop until the end of data.
         while self.status != 1000:
