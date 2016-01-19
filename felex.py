@@ -19,11 +19,11 @@ import re
 # readability of the text). The important subpaterns only are only described
 # below. The related full patterns are constructed in the build_rex_closures()
 # below.
-rulesRex = [
-    # Empty lines.
-    (r'emptyline dummy pat.',   'emptyline'),
-
-
+#
+# NOTE: The language independent elements (like 'emptyline' or 'ccommentstart'
+# are not captured here.
+#
+humanLanguageDependentRules = [
     # Labels that identify portions via free text (inside comments
     # of the Catch test sources).
     (r'(User\s+)?Story:',       'story'),
@@ -103,16 +103,17 @@ def buildRegexMatchFunctions():
     # The rules are defined by the global one; hence, captured inside.
     functions = []
 
-    for pat, lexsym in rulesRex:
-        if lexsym == 'emptyline':
-            pattern = r'^\s*$'
-        elif lexsym in ('scenario', 'test_case'):
+    for pat, lexsym in humanLanguageDependentRules:
+        if lexsym in ('scenario', 'test_case'):
             pattern = r'^\s*' + pat + \
                       r'\s*(?P<text>.*?)\s*(?P<tags>(\[\w+\])*)\s*$'
         else:
             pattern = r'^\s*' + pat + r'\s*(?P<text>.*?)\s*$'
 
         functions.append(build_rex_closures(pattern, lexsym))
+
+    # Language-independent patterns.
+    functions.append(build_rex_closures(r'^\s*$', 'emptyline'))
 
     return functions
 
@@ -234,7 +235,6 @@ class Container:
             self.lines = [line + '\n' for line in lines[:-1]]    # adding newlines back
             self.lines.append(lines[-1])
             self.source_name = '<str>'
-
 
     def __iter__(self):
         return Iterator(self, 0)
