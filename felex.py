@@ -103,6 +103,14 @@ def buildRegexMatchFunctions():
     # The rules are defined by the global one; hence, captured inside.
     functions = []
 
+    # Human-language independent patterns first. The order may be important.
+    functions.append(build_rex_closures(r'^\s*$', 'emptyline'))
+    functions.append(build_rex_closures(r'^\s*/\*(?P<text>.*?)\*/\s*$', 'ccommentoneliner'))
+    functions.append(build_rex_closures(r'^\s*/\*(?P<text>.*?)$', 'ccommentstart'))
+    functions.append(build_rex_closures(r'^(?P<text>.*?)\*/\s*$', 'ccommentend'))
+    functions.append(build_rex_closures(r'^\s*//(?P<text>.*?)$', 'cppcomment'))
+
+    # Human-language dependent patterns.
     for pat, lexsym in humanLanguageDependentRules:
         if lexsym in ('scenario', 'test_case'):
             pattern = r'^\s*' + pat + \
@@ -112,8 +120,6 @@ def buildRegexMatchFunctions():
 
         functions.append(build_rex_closures(pattern, lexsym))
 
-    # Language-independent patterns.
-    functions.append(build_rex_closures(r'^\s*$', 'emptyline'))
 
     return functions
 
