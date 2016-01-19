@@ -566,5 +566,64 @@ class LexAnalyzerForFeatureTests(unittest.TestCase):
         ])
 
 
+    def test_comment_lines(self):
+        """recognizing comment lines
+        """
+        # Empty C-comment start on a separate line.
+        source = '/*'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('ccommentstart', '', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # C-comment start with some text on the same line.
+        source = '/* some text '
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('ccommentstart', ' some text ', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # C-comment one liner.
+        source = '/* some text */'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('ccommentoneliner', ' some text ', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # Empty C-comment end on a separate line.
+        source = '*/'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('ccommentend', '', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # C-comment end with some text on the same line.
+        source = ' some text */'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('ccommentend', ' some text ', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # Empty C++ comment.
+        source = '//'
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('cppcomment', '', source, None),
+                               ('$', None, None, None)
+                              ])
+
+        # C++ comment with some text.
+        source = '// some text '
+        lst = list(felex.Container(source))
+        self.assertEqual(len(lst), 2)
+        self.assertEqual(lst, [('cppcomment', ' some text ', source, None),
+                               ('$', None, None, None)
+                              ])
+
 if __name__ == '__main__':
     unittest.main()
