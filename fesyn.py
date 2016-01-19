@@ -16,11 +16,11 @@ class SyntacticAnalyzerForFeature:
     def __init__(self, source):
         self.source = source
 
-        self.lextoken = None    # ... extracted to
-        self.sym   = None       # symbol
-        self.text  = None       # value
-        self.lexem = None       # lexem
-        self.tags  = None       # extra_info
+        self.lextoken = None    # tuple with elements (extracted to...)
+        self.sym   = None       # symbol like 'scenario'
+        self.text  = None       # value like 'abc'
+        self.lexem = None       # lexem like 'Scenario: abc [tag1][tag2]'
+        self.tags  = None       # extra_info like '[tag1][tag2]'
 
         self.it = iter(felex.Container(self.source))
         self.lex()              # getting the first token ready
@@ -127,7 +127,7 @@ class SyntacticAnalyzerForFeature:
     def Section_serie(self, upperlst):
         """Zero or more SECTION items (at the same level).
         """
-        self.Empty_lines()      # neccessary for the recursion
+        self.Empty_lines()      # necessary for the recursion
         if self.sym == 'section':
             self.Section(upperlst)
             self.Empty_lines()
