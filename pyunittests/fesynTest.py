@@ -81,6 +81,10 @@ class SyntaxFeatureTests(unittest.TestCase):
              ])
         ])
 
+
+    def test_story_with_keywords_in_description(self):
+        """The feature with a keyword in the description.
+        """
         source = textwrap.dedent('''\
             Story: story title
 
@@ -90,9 +94,9 @@ class SyntaxFeatureTests(unittest.TestCase):
 
             This should be a longer comment. However...
 
-            When the sentence starts like this one, syntactic parser
+            Given the sentence starts like this one, syntactic parser
             was confused in earlier implementation. This was because
-            the "When" was recognized as the token and it appeared
+            the "Given" was recognized as the token and it appeared
             on unexpected place.
             ''')
         sa = fesyn.SyntacticAnalyzerForFeature(source)
@@ -105,6 +109,102 @@ class SyntaxFeatureTests(unittest.TestCase):
                  'I want the feature',
                  'so that my life is to be easier.',
                  '',
+                 'This should be a longer comment. However...',
+                 '',
+                 'Given the sentence starts like this one, syntactic parser',
+                 'was confused in earlier implementation. This was because',
+                 'the "Given" was recognized as the token and it appeared',
+                 'on unexpected place.',
+                 ''
+             ])
+        ])
+
+        source = textwrap.dedent('''\
+            Story: story title
+
+            When the line in the description starts with "When",
+            the earlier parser was confused.
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 2)
+        self.assertEqual(tree, [
+            ('story', 'story title'),
+            ('description', [
+                 'When the line in the description starts with "When",',
+                 'the earlier parser was confused.',
+                 ''
+             ])
+        ])
+
+        source = textwrap.dedent('''\
+            Story: story title
+
+            Then the line in the description starts with "Then",
+            the earlier parser was confused.
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 2)
+        self.assertEqual(tree, [
+            ('story', 'story title'),
+            ('description', [
+                 'Then the line in the description starts with "Then",',
+                 'the earlier parser was confused.',
+                 ''
+             ])
+        ])
+
+        source = textwrap.dedent('''\
+            Story: story title
+
+            And the line in the description starts with "And",
+            the earlier parser was confused.
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 2)
+        self.assertEqual(tree, [
+            ('story', 'story title'),
+            ('description', [
+                 'And the line in the description starts with "And",',
+                 'the earlier parser was confused.',
+                 ''
+             ])
+        ])
+
+        source = textwrap.dedent('''\
+            Story: story title
+
+            But the line in the description starts with "But",
+            the earlier parser was confused.
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 2)
+        self.assertEqual(tree, [
+            ('story', 'story title'),
+            ('description', [
+                 'But the line in the description starts with "But",',
+                 'the earlier parser was confused.',
+                 ''
+             ])
+        ])
+
+        source = textwrap.dedent('''\
+            Story: story title
+
+            Section the line in the description starts with "Section",
+            the earlier parser was confused.
+            ''')
+        sa = fesyn.SyntacticAnalyzerForFeature(source)
+        tree = sa.Start()
+        self.assertEqual(len(tree), 2)
+        self.assertEqual(tree, [
+            ('story', 'story title'),
+            ('description', [
+                 'Section the line in the description starts with "Section",',
+                 'the earlier parser was confused.',
                  ''
              ])
         ])
@@ -571,6 +671,48 @@ class SyntaxFeatureTests(unittest.TestCase):
                 ])
             ]),
         ])
+
+    def test_comment_block(self):
+        """C-comments and C++ comments used in .feature
+        """
+
+##        #---------------------------------------------------------------------
+##        source = '/**/'
+##        sa = fesyn.SyntacticAnalyzerForFeature(source)
+##        tree = sa.Start()
+##        self.assertEqual(len(tree), 4)
+##        self.assertEqual(tree, [
+##            ('story', 'vytvoření plánu z výsledku analýzy'),
+##            ('description', [
+##                'Jako běžný uživatel',
+##                'chci vytvořit plán z výsledku analýzy,',
+##                'protože ruční vytváření plánu je pracné.',
+##                '',
+##                'Rozbor: Plán má podobu datové kostky.',
+##                '',
+##                ''
+##            ]),
+##            ('scenario', 'schopnost zjistit existující kostku plánu pro danou analýzu', [
+##                ('given', 'vlastnosti (typ, atributy) analýzy', [
+##                    ('when', 'vyhodnotíme atributy analýzy', [
+##                        ('and_when', 'kostka plánu existuje', [
+##                            ('then', 'jsme schopni vrátit atributy existující kostky plánu', [
+##                            ])
+##                        ])
+##                    ])
+##                ])
+##            ]),
+##            ('scenario', 'schopnost zjistit neexistenci kostky plánu', [
+##                ('given', 'vlastnosti (typ, atributy) analýzy', [
+##                    ('when', 'vyhodnotíme atributy analýzy', [
+##                        ('and_when', 'kostka plánu neexistuje', [
+##                            ('then', 'jsme schopni vrátit atributy budoucí kostky plánu', [
+##                            ])
+##                        ])
+##                    ])
+##                ])\
+##            ])
+##        ])
 
 
 if __name__ == '__main__':
