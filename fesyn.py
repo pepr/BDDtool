@@ -96,6 +96,13 @@ class SyntacticAnalyzerForFeature:
             descr_lst.append(self.text)
             self.lex()
             self.Description(descr_lst)
+        elif self.sym in ('given', 'when', 'then', 'and', 'but', 'section'):
+            # False recognition inside the description. The element must
+            # be consumed as line (including the keyword); hence,
+            # the lexem but with the newline stripped out.
+            descr_lst.append(self.lexem.rstrip())
+            self.lex()
+            self.Description(descr_lst)
 
 
     def Test_case_or_scenario_serie(self):
