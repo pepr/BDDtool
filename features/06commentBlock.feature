@@ -21,3 +21,14 @@ Scenario: vectors can be sized and resized
 
 In other words, this feature file will not generate any scenario construct.
 */
+
+    /* This is one-liner C-comment block */
+
+/* This is C-comment line on the same line where the opening starts
+and this is the line when the close sequence appear. */
+
+// This
+// block
+// of lines
+// is commented
+// by C++ comments.
