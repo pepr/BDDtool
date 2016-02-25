@@ -64,9 +64,14 @@ class SyntacticAnalyzerForCatch:
     def Ignored_symbols(self):
         """Nonterminal for the sequence of zero or more 'newline' or 'line' tokens.
         """
-        if self.sym in ('comment', 'hash', 'identifier', 'newline',
-                        'stringlit', 'lpar', 'rpar', 'semic', 'assignment',
+        if self.sym in ('comment', 'newline'):
+            self.lex()
+            self.Ignored_symbols()
+        ???    
+        elif self.sym in ('comment', 'hash', 'identifier', 'newline',
+                        'stringlit', 'semic', 'assignment',
                         'num', 'colon'):
+            ## print('Ignored_symbols():', repr(self.sym))
             self.lex()
             self.Ignored_symbols()
 
@@ -188,7 +193,7 @@ class SyntacticAnalyzerForCatch:
         self.expect('rbrace')
 
         # Output the previously collected symbol, identifier, and body
-        # of the section into the syntaxt tree.
+        # of the section into the syntax tree.
         upperlst.append(tuple(item))
 
     #-------------------------------------------------------------------------
@@ -228,7 +233,7 @@ class SyntacticAnalyzerForCatch:
         if self.sym == 'given':
             self.Given_serie(bodylst)
         elif self.sym == 'lbrace':
-            print('block')
+            ## print('block')
             self.Block_of_code()
 
         self.Ignored_symbols()
@@ -238,7 +243,7 @@ class SyntacticAnalyzerForCatch:
     def Given_serie(self, upperlst):
         """Zero or more GIVEN items (at the same level).
         """
-        self.Ignored_symbols()      # neccessary for the recursion
+        self.Ignored_symbols()      # necessary for the recursion
         if self.sym == 'given':
             self.Given(upperlst)
             self.Given_serie(upperlst)
