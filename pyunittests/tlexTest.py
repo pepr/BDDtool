@@ -311,12 +311,6 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         item = lst[0]
         self.assertEqual(item, ('semic', None, source, None) )
 
-        source = '#'
-        lst = list(tlex.Container(source))
-        self.assertEqual(len(lst), 2)
-        item = lst[0]
-        self.assertEqual(item, ('hash', None, source, None) )
-
         source = '='
         lst = list(tlex.Container(source))
         self.assertEqual(len(lst), 2)
@@ -354,6 +348,26 @@ class LexAnalyzerForCatchTests(unittest.TestCase):
         self.assertEqual(len(lst), 2)
         item = lst[0]
         self.assertEqual(item, ('num', '1234567890', source, None) )
+
+
+    def test_preprocessor_directive(self):
+        """recognizing preprocessor directives
+        """
+        source = '#endif'
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('preprocessor_directive', source, source, None) )
+
+        source = textwrap.dedent('''\
+            #define MACRO(arg) \\
+                if (arg == "xyz") \\
+                    return;
+            ''')
+        lst = list(tlex.Container(source))
+        self.assertEqual(len(lst), 2)
+        item = lst[0]
+        self.assertEqual(item, ('preprocessor_directive', source, source, None) )
 
 
     def test_simple_testcase_and_sections(self):

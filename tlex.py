@@ -19,10 +19,10 @@ known_id = {
 }
 
 # The BDD text Story/Feature with title that was generated into comments
-# is recognized as a special token when postprocessint a comment token.
+# is recognized as a special token when post-processing a comment token.
 # If recognized, the 'comment' is changed to 'story' or 'feature'.
 # The matched label may have more forms (think about more human languages
-# in the comment). The subpaterns for label are only described here.
+# in the comment). The subpaterns for labels are only described here.
 # The related full patterns are constructed in the buildRegexMatchFunctions()
 # below.
 rulesRex = [
@@ -153,7 +153,7 @@ class Iterator:
         self.extra_info = None
 
         # Return the result.
-        print(token)
+        ##print(token)
         return token
 
 
@@ -266,6 +266,9 @@ class Iterator:
                 elif self.status == 9:  # a number followed by $
                     self.status = 800
                     return self.lextoken()
+                elif self.status == 11: # preprocessor directive followed by $
+                    self.status = 800
+                    return self.lextoken()
                 else:
                     self.status = 800
 
@@ -303,9 +306,11 @@ class Iterator:
                 elif c == ';':          # semicolon
                     self.symbol = 'semic'
                     return self.lextoken()
-                elif c == '#':          # hash like in #include
-                    self.symbol = 'hash'
-                    return self.lextoken()
+                elif c == '#':          # hash starting the preprocessor directive
+                    ##print('*** {}: {!r}'.format(self.status, c))
+                    self.symbol = 'preprocessor_directive'
+                    self.valuelst.append(c)
+                    self.status = 10
                 elif c == '=':          # assignment or eq operator
                     self.status = 8
                 elif c.isalpha() or c == '_':   # identifier starts
@@ -396,7 +401,7 @@ class Iterator:
                     self.back_from_lexem()
                     self.status = 0
 
-                    # The idenfifier can be somehow special. Change the symbol
+                    # The identifier can be somehow special. Change the symbol
                     # if it is so. Return or the original  or the transformed
                     # token.
                     self.identifier_to_known_id()
@@ -422,6 +427,34 @@ class Iterator:
                     self.back_from_lexem()
                     self.status = 0
                     return self.lextoken()
+
+            #----------------------------   a #directive
+            elif self.status == 10:
+                ##print('*** {}: {!r}'.format(self.status, c))
+                self.valuelst.append(c)     # first char of the preprocessor directive
+                self.status = 11
+
+            #----------------------------   collecting a preprocessor directive
+            elif self.status == 11:
+                ##print('*** {}: {!r}'.format(self.status, c))
+                if c == '\\':
+                    self.valuelst.append(c) # possibly the continuation char
+                    self.status = 12
+                elif c == '\n':
+                    self.valuelst.append(c) # let the newline be the part of the preprocesor directive
+                    self.status = 0
+                    return self.lextoken()
+                else:
+                    self.valuelst.append(c) # char of the preprocessor directive
+
+            #----------------------------   preprocessor directive after backslash
+            elif self.status == 12:
+                # Or it is newline after a continuation backslash, or
+                # it is another char after backslash. In both cases, the
+                # preprocessor directive continues.
+                ##print('*** {}: {!r}'.format(self.status, c))
+                self.valuelst.append(c)
+                self.status = 11
 
             #----------------------------   end of data
             elif self.status == 800:
