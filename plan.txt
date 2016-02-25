@@ -2,16 +2,9 @@ BDD Tool -- Behaviour Driven Development
 ========================================
 Plan
 
-
-`fesyn.py` - If the text before the first Scenario: contains free text that
-is converted for example to "when", the syntactic parser shows error.
-The fix must recognize we are before the first TEST_CASE or SCENARIO
-description.
-
 - tlex must recognize C++ statements and nested code blocks in {} to skip them
-  correctly. The question is whether the nestet Catch construct can also
+  correctly. The question is whether the nested Catch construct can also
   be surrounded by C++ plain block braces {}.
-
 
 - How to capture nesting of SECTIONs in the feature file?
 - How to include include i18n portions for the tokens?
