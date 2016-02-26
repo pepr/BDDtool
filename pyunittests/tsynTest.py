@@ -99,7 +99,7 @@ class SyntaxCatchTests(unittest.TestCase):
             ])
         ])
 
-    
+
     def test_scenario_given_when(self):
         source = textwrap.dedent('''\
             SCENARIO( "scenario identifier" ) {
@@ -121,7 +121,7 @@ class SyntaxCatchTests(unittest.TestCase):
                 ])
             ])
         ])
-    
+
 
     def test_scenario_given_when_then(self):
         source = textwrap.dedent('''\
@@ -149,7 +149,12 @@ class SyntaxCatchTests(unittest.TestCase):
             ])
         ])
 
-        
+
+    def test_function_call(self):
+        """Function calls that are to be skipped when analyzing.
+        """
+
+
     def test_complex_source(self):
         source = textwrap.dedent('''\
             // Story: story identifier

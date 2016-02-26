@@ -62,18 +62,15 @@ class SyntacticAnalyzerForCatch:
 
 
     def Ignored_symbols(self):
-        """Nonterminal for the sequence of zero or more 'newline' or 'line' tokens.
+        """Nonterminal for the sequence of zero or more ignored tokens.
         """
         if self.sym in ('comment', 'newline'):
             self.lex()
             self.Ignored_symbols()
-        ???    
-        elif self.sym in ('comment', 'hash', 'identifier', 'newline',
-                        'stringlit', 'semic', 'assignment',
-                        'num', 'colon'):
-            ## print('Ignored_symbols():', repr(self.sym))
-            self.lex()
-            self.Ignored_symbols()
+        ##elif self.sym in ('identifier', 'stringlit', 'semic', 'assignment', 'num', 'colon'):
+        ##    ## print('Ignored_symbols():', repr(self.sym))
+        ##    self.lex()
+        ##    self.Ignored_symbols()
 
 
     #-------------------------------------------------------------------------
